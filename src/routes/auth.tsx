@@ -83,7 +83,7 @@ function AuthPage() {
       await runBootstrap({ data: { email, password, full_name: fullName, designation } });
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(error.message);
-      toast.success("Administrator account created");
+      toast.success("Manager account created");
       navigate({ to: "/admin" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Setup failed");
@@ -104,7 +104,7 @@ function AuthPage() {
       });
       if (signUpErr) throw new Error(signUpErr.message);
       if (!signUpData.session) {
-        throw new Error("Account created. Please check your email to confirm, then ask an administrator to approve you.");
+        throw new Error("Account created. Please check your email to confirm, then ask a manager to approve you.");
       }
 
       // Record the pending profile + employee role (RLS-scoped, no key needed).
@@ -125,7 +125,7 @@ function AuthPage() {
       // Don't leave them signed into a pending session.
       await supabase.auth.signOut();
 
-      toast.success("Account created! An administrator will approve it shortly.");
+      toast.success("Account created! A manager will approve it shortly.");
       setMode("login");
       setPassword("");
     } catch (err) {
@@ -181,7 +181,7 @@ function AuthPage() {
                   </Button>
                 ) : (
                   <Button variant="link" className="mt-2 w-full" onClick={() => setMode("setup")}>
-                    First time? Create the administrator account
+                    First time? Create the manager account
                   </Button>
                 )}
               </CardContent>
@@ -193,7 +193,7 @@ function AuthPage() {
                   <ShieldPlus className="h-5 w-5 text-primary" /> Create Your Account
                 </CardTitle>
                 <CardDescription>
-                  Sign up as an employee. An administrator will approve your account before you can sign in.
+                  Sign up as an employee. A manager will approve your account before you can sign in.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -237,10 +237,10 @@ function AuthPage() {
             <>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShieldPlus className="h-5 w-5 text-primary" /> Create Administrator
+                  <ShieldPlus className="h-5 w-5 text-primary" /> Create Manager
                 </CardTitle>
                 <CardDescription>
-                  This is the first account. The administrator can add employees afterwards.
+                  This is the first account. The manager can add employees afterwards.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -272,7 +272,7 @@ function AuthPage() {
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Administrator
+                    Create Manager
                   </Button>
                 </form>
                 {hasAdmin && (

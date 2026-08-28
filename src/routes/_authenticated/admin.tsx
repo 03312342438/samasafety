@@ -59,7 +59,7 @@ function AdminPage() {
         <AppHeader name={profile?.profile?.full_name} />
         <div className="mx-auto mt-20 max-w-md text-center">
           <ShieldAlert className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold">Admin access required</h2>
+          <h2 className="mt-4 text-lg font-semibold">Management access required</h2>
           <p className="text-sm text-muted-foreground">You do not have permission to view this page.</p>
         </div>
       </div>
@@ -70,7 +70,7 @@ function AdminPage() {
     <div className="min-h-screen bg-secondary/40">
       <AppHeader isAdmin name={profile?.profile?.full_name} roles={profile?.roles} />
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <h1 className="mb-5 text-2xl font-bold">Administration</h1>
+        <h1 className="mb-5 text-2xl font-bold">Management</h1>
         <SegmentedTabs
           value={tab}
           onChange={setTab}
@@ -169,10 +169,10 @@ function Employees() {
     try {
       if (isAdmin) {
         await dropAdmin({ data: { id } });
-        toast.success("Admin rights removed");
+        toast.success("Management rights removed");
       } else {
         await makeAdmin({ data: { id } });
-        toast.success("Admin rights granted");
+        toast.success("Management rights granted");
       }
       qc.invalidateQueries({ queryKey: ["employees"] });
     } catch (err) {
@@ -242,7 +242,7 @@ function Employees() {
                   {emp.full_name || "—"}{" "}
                   {emp.roles?.includes("admin") && (
                     <span className="ml-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      Admin
+                      Manager
                     </span>
                   )}
                   {emp.status === "pending" && (
@@ -276,11 +276,11 @@ function Employees() {
                         >
                           {isAdmin ? (
                             <>
-                              <ShieldMinus className="mr-1 h-4 w-4" /> Remove Admin
+                              <ShieldMinus className="mr-1 h-4 w-4" /> Remove Manager
                             </>
                           ) : (
                             <>
-                              <ShieldCheck className="mr-1 h-4 w-4" /> Make Admin
+                              <ShieldCheck className="mr-1 h-4 w-4" /> Make Manager
                             </>
                           )}
                         </Button>

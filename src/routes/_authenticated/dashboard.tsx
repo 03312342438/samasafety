@@ -13,6 +13,7 @@ import { MaintenanceTaskList } from "@/components/MaintenanceTaskList";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
 import { AppHeader } from "@/components/AppHeader";
+import { ManagementOverview } from "@/components/ManagementOverview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
@@ -22,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet, LayoutDashboard } from "lucide-react";
 import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
@@ -49,8 +50,10 @@ function Dashboard() {
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
-  const [tab, setTab] = useState("new");
+  const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
+  // Managers never see the report-filling form; they land on the overview.
+  const activeTab = isAdmin && tab === "new" ? "overview" : !isAdmin && tab === "overview" ? "new" : tab;
 
   const taskList = ((tasks as any[]) ?? []).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
@@ -78,7 +81,7 @@ function Dashboard() {
           <CalendarClock className="mx-auto h-12 w-12 text-muted-foreground" />
           <h2 className="mt-4 text-lg font-semibold">Account pending approval</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Thanks for signing up, {profile?.profile?.full_name || "there"}. An administrator
+            Thanks for signing up, {profile?.profile?.full_name || "there"}. A manager
             needs to approve your account before you can start creating reports. You'll be able
             to sign in normally once it's approved.
           </p>
@@ -104,23 +107,34 @@ function Dashboard() {
           </div>
         )}
         <div className="mb-5">
-          <h1 className="text-2xl font-bold">Maintenance Service Reports</h1>
+          <h1 className="text-2xl font-bold">
+            {isAdmin ? "Management Dashboard" : "Maintenance Service Reports"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Fill in a new report or download a previous one as PDF.
+            {isAdmin
+              ? "Live view of sales, costing, billing and project progress."
+              : "Fill in a new report or download a previous one as PDF."}
           </p>
         </div>
 
         <SegmentedTabs
-          value={tab}
+          value={activeTab}
           onChange={setTab}
           tabs={[
-            { value: "new", label: <><Plus className="mr-1 h-4 w-4" /> New Report</> },
+            ...(isAdmin
+              ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
+              : [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]),
             { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> History ({reports?.length ?? 0})</> },
             { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
         />
 
-        {tab === "new" && (
+        {activeTab === "overview" && isAdmin && (
+          <div className="mt-5">
+            <ManagementOverview />
+          </div>
+        )}
+        {activeTab === "new" && !isAdmin && (
           <div className="mt-5">
             <ReportForm
               defaultPerformedBy={profile?.profile?.full_name || profile?.profile?.email || ""}
@@ -128,12 +142,13 @@ function Dashboard() {
             />
           </div>
         )}
-        {tab === "history" && (
+        {activeTab === "history" && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
           </div>
         )}
-        {tab === "maintenance" && (
+
+        {activeTab === "maintenance" && (
           <div className="mt-5 space-y-6">
             <SearchInput
               value={taskQuery}
