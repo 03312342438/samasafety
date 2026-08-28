@@ -408,7 +408,7 @@ function InventoryPage() {
         <SegmentedTabs
           value={tab}
           onChange={setTab}
-          options={[
+          tabs={[
             { value: "stock", label: "Stock" },
             { value: "requests", label: "Material requests" },
             { value: "movements", label: "Movements" },
