@@ -24,6 +24,10 @@ import {
 } from "@/lib/accounts.functions";
 import { submitApproval } from "@/lib/approvals.functions";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
+import {
+  FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
+} from "@/components/AccountsFinance";
+
 
 export const Route = createFileRoute("/_authenticated/accounts")({
   component: AccountsPage,
@@ -321,8 +325,9 @@ function AccountsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            ) : (
+            ) : tab === "payments" ? (
               <Dialog open={payOpen} onOpenChange={(o) => { setPayOpen(o); if (!o) setPayForm(emptyPayment); }}>
+
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Record payment</Button>
                 </DialogTrigger>
@@ -349,7 +354,8 @@ function AccountsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            )}
+            ) : null}
+
           </div>
         </div>
 
@@ -357,12 +363,31 @@ function AccountsPage() {
           value={tab}
           onChange={setTab}
           tabs={[
+            { value: "dashboard", label: "Dashboard" },
             { value: "invoices", label: "Invoices" },
             { value: "payments", label: "Payments" },
+            { value: "suppliers", label: "Suppliers" },
+            { value: "payables", label: "Payables" },
+            { value: "costs", label: "Project costs" },
+            { value: "notes", label: "Credit / debit notes" },
           ]}
         />
 
         <div className="mt-4 space-y-3">
+          {tab === "dashboard" && <FinanceDashboard />}
+          {tab === "suppliers" && <SuppliersTab />}
+          {tab === "payables" && (
+            <PayablesTab projectOptions={projectOptions} jobOptions={jobOptions} isAdmin={profile?.isAdmin} />
+          )}
+          {tab === "costs" && <CostsTab projectOptions={projectOptions} jobOptions={jobOptions} />}
+          {tab === "notes" && (
+            <CreditNotesTab
+              invoiceOptions={invoiceOptions}
+              customerOptions={customerOptions}
+              isAdmin={profile?.isAdmin}
+            />
+          )}
+
           {tab === "invoices" &&
             invoiceList.map((i: any) => {
               const balance = Number(i.total_amount ?? 0) - Number(i.amount_paid ?? 0);
