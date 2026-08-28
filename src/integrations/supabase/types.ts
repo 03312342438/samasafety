@@ -485,6 +485,103 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_progress: {
+        Row: {
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          equipment_used: string
+          hours_worked: number
+          id: string
+          issues: string
+          job_number_id: string | null
+          log_date: string
+          manpower_count: number
+          materials_consumed: string
+          notes: string
+          progress_percent: number
+          project_id: string | null
+          reference: string
+          site_location: string
+          stage: string
+          status: string
+          supervisor: string
+          updated_at: string
+          weather: string
+          work_description: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          customer_id?: string | null
+          equipment_used?: string
+          hours_worked?: number
+          id?: string
+          issues?: string
+          job_number_id?: string | null
+          log_date?: string
+          manpower_count?: number
+          materials_consumed?: string
+          notes?: string
+          progress_percent?: number
+          project_id?: string | null
+          reference?: string
+          site_location?: string
+          stage?: string
+          status?: string
+          supervisor?: string
+          updated_at?: string
+          weather?: string
+          work_description?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          equipment_used?: string
+          hours_worked?: number
+          id?: string
+          issues?: string
+          job_number_id?: string | null
+          log_date?: string
+          manpower_count?: number
+          materials_consumed?: string
+          notes?: string
+          progress_percent?: number
+          project_id?: string | null
+          reference?: string
+          site_location?: string
+          stage?: string
+          status?: string
+          supervisor?: string
+          updated_at?: string
+          weather?: string
+          work_description?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_progress_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_progress_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           assigned_to: string | null
@@ -1566,6 +1663,97 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      work_completions: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          created_by: string
+          customer_confirmed: boolean
+          customer_confirmed_at: string | null
+          customer_designation: string
+          customer_id: string | null
+          customer_name: string
+          id: string
+          job_number_id: string | null
+          project_id: string | null
+          reference: string
+          remarks: string
+          scope_completed: string
+          site_location: string
+          snag_list: string
+          stage: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          created_by: string
+          customer_confirmed?: boolean
+          customer_confirmed_at?: string | null
+          customer_designation?: string
+          customer_id?: string | null
+          customer_name?: string
+          id?: string
+          job_number_id?: string | null
+          project_id?: string | null
+          reference?: string
+          remarks?: string
+          scope_completed?: string
+          site_location?: string
+          snag_list?: string
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string
+          customer_confirmed?: boolean
+          customer_confirmed_at?: string | null
+          customer_designation?: string
+          customer_id?: string | null
+          customer_name?: string
+          id?: string
+          job_number_id?: string | null
+          project_id?: string | null
+          reference?: string
+          remarks?: string
+          scope_completed?: string
+          site_location?: string
+          snag_list?: string
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_completions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_completions_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_completions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
