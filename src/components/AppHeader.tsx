@@ -5,9 +5,19 @@ import { SAMA_LOGO_BASE64 } from "@/lib/logo";
 import { Button } from "@/components/ui/button";
 import { MaintenanceReminder } from "@/components/MaintenanceReminder";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { NotificationBell } from "@/components/NotificationBell";
 import { LogOut } from "lucide-react";
+import { hasDept } from "@/lib/workflow";
 
-export function AppHeader({ isAdmin, name }: { isAdmin?: boolean; name?: string }) {
+export function AppHeader({
+  isAdmin,
+  name,
+  roles,
+}: {
+  isAdmin?: boolean;
+  name?: string;
+  roles?: string[];
+}) {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
