@@ -456,7 +456,28 @@ function ProjectsPage() {
                     )}
                     {j.status !== "approved" && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => { setJobForm({ ...emptyJob, ...j, start_date: j.start_date ?? "", target_date: j.target_date ?? "" }); setJobOpen(true); }}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            let steps: any[] = [];
+                            try {
+                              steps = ((await fetchSteps({ data: { job_number_id: j.id } })) as any[]) ?? [];
+                            } catch { /* ignore */ }
+                            setJobForm({
+                              ...emptyJob,
+                              ...j,
+                              job_kind: j.job_kind ?? "installation",
+                              bom_id: j.bom_id ?? "",
+                              maintenance_interval_months: j.maintenance_interval_months ?? "",
+                              start_date: j.start_date ?? "",
+                              target_date: j.target_date ?? "",
+                              steps: steps.map((s) => ({ title: s.title, expected_date: s.expected_date ?? "" })),
+                            });
+                            setJobOpen(true);
+                          }}
+                        >
+
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
