@@ -204,7 +204,16 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sdg">Designation</Label>
-                    <Input id="sdg" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Technician" />
+                    <Select value={designation} onValueChange={setDesignation} required>
+                      <SelectTrigger id="sdg">
+                        <SelectValue placeholder="Select your designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DESIGNATIONS.map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="semail">Email</Label>
