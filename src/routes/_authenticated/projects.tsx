@@ -71,6 +71,8 @@ function ProjectsPage() {
   const removeJob = useServerFn(deleteJobNumber);
   const requestApproval = useServerFn(submitApproval);
   const fetchBoms = useServerFn(listBoms);
+  const fetchSteps = useServerFn(listInstallationSteps);
+
 
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
   const { data: jobs } = useQuery({ queryKey: ["job-numbers"], queryFn: () => fetchJobs() });
