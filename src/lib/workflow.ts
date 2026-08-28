@@ -22,25 +22,23 @@ export const DEPARTMENTS: { value: Department; label: string; description: strin
   { value: "accounts", label: "Accounts", description: "Invoices, payments, project costs" },
 ];
 
-// Job designations offered at sign-up (free-form label stored on the profile).
-export const DESIGNATIONS: string[] = [
-  "Managing Director",
-  "General Manager",
-  "Operations Manager",
-  "Project Manager",
-  "Site Engineer",
-  "Sales Engineer",
-  "Sales Executive",
-  "Estimation Engineer",
-  "Draughtsman",
-  "Store Keeper",
-  "Procurement Officer",
-  "Accountant",
-  "Safety Officer",
-  "Technician",
-  "Helper",
-  "Administrator",
+/** Company currency. Everything is quoted, costed and billed in BHD. */
+export const CURRENCY = "BHD";
+
+// Job designations offered at sign-up. Each maps to exactly one department.
+export const DESIGNATIONS: { value: string; department: Department }[] = [
+  { value: "Sales", department: "sales" },
+  { value: "Project Manager", department: "project_manager" },
+  { value: "Inventory/Store", department: "inventory" },
+  { value: "Installation & Maintenance", department: "technician" },
+  { value: "Accounts", department: "accounts" },
+  { value: "Technician", department: "technician" },
 ];
+
+export function departmentForDesignation(designation: string): Department {
+  return DESIGNATIONS.find((d) => d.value === designation)?.department ?? "employee";
+}
+
 
 export const DEPARTMENT_LABELS: Record<string, string> = {
   admin: "Management",
