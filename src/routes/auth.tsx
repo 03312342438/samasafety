@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DESIGNATIONS } from "@/lib/workflow";
 
 import { toast } from "sonner";
 import { Loader2, ShieldPlus } from "lucide-react";
