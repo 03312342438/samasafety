@@ -23,9 +23,10 @@ import {
   listStockItems, saveStockItem, deleteStockItem,
   listMaterialRequests, saveMaterialRequest, deleteMaterialRequest,
   allocateMaterialRequest, issueMaterialRequest,
-  listStockMovements, recordStockMovement,
+  listStockMovements, recordStockMovement, setStockItemApproval,
 } from "@/lib/inventory.functions";
-import { humanize, statusBadgeClass } from "@/lib/workflow";
+import { UomSelect } from "@/components/UomSelect";
+import { can, humanize, statusBadgeClass } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   component: InventoryPage,
@@ -46,7 +47,7 @@ type LineRow = {
   quantity_requested: string; unit_cost: string; remarks: string;
 };
 
-const emptyLine: LineRow = { stock_item_id: "", description: "", unit: "pcs", quantity_requested: "1", unit_cost: "0", remarks: "" };
+const emptyLine: LineRow = { stock_item_id: "", description: "", unit: "", quantity_requested: "1", unit_cost: "0", remarks: "" };
 
 const emptyStock = {
   item_code: "", description: "", category: "", unit: "pcs",
@@ -71,6 +72,7 @@ function InventoryPage() {
   const [query, setQuery] = useState("");
 
   const fetchStock = useServerFn(listStockItems);
+  const approveItem = useServerFn(setStockItemApproval);
   const fetchRequests = useServerFn(listMaterialRequests);
   const fetchMovements = useServerFn(listStockMovements);
   const fetchProjects = useServerFn(listProjects);
@@ -274,7 +276,7 @@ function InventoryPage() {
                     <Field label="Item code (auto if blank)" value={stockForm.item_code} onChange={(v) => setStockForm({ ...stockForm, item_code: v })} />
                     <Field label="Description" value={stockForm.description} onChange={(v) => setStockForm({ ...stockForm, description: v })} />
                     <Field label="Category" value={stockForm.category} onChange={(v) => setStockForm({ ...stockForm, category: v })} />
-                    <Field label="Unit" value={stockForm.unit} onChange={(v) => setStockForm({ ...stockForm, unit: v })} />
+                    <UomSelect label="Unit" value={stockForm.unit} onChange={(v) => setStockForm({ ...stockForm, unit: v })} />
                     <Field label="Quantity on hand" value={stockForm.quantity_on_hand} onChange={(v) => setStockForm({ ...stockForm, quantity_on_hand: v })} />
                     <Field label="Reorder level" value={stockForm.reorder_level} onChange={(v) => setStockForm({ ...stockForm, reorder_level: v })} />
                     <Field label="Unit cost" value={stockForm.unit_cost} onChange={(v) => setStockForm({ ...stockForm, unit_cost: v })} />
@@ -340,8 +342,10 @@ function InventoryPage() {
                           </select>
                           <Input className="sm:col-span-3" placeholder="Description" value={l.description}
                             onChange={(e) => setLines(lines.map((r, i) => (i === idx ? { ...r, description: e.target.value } : r)))} />
-                          <Input className="sm:col-span-1" placeholder="Unit" value={l.unit}
-                            onChange={(e) => setLines(lines.map((r, i) => (i === idx ? { ...r, unit: e.target.value } : r)))} />
+                          <div className="sm:col-span-1">
+                            <UomSelect value={l.unit}
+                              onChange={(v) => setLines(lines.map((r, i) => (i === idx ? { ...r, unit: v } : r)))} />
+                          </div>
                           <Input className="sm:col-span-2" placeholder="Qty" value={l.quantity_requested}
                             onChange={(e) => setLines(lines.map((r, i) => (i === idx ? { ...r, quantity_requested: e.target.value } : r)))} />
                           <Input className="sm:col-span-1" placeholder="Cost" value={l.unit_cost}
@@ -426,6 +430,9 @@ function InventoryPage() {
                       <span className="font-medium">{s.item_code}</span>
                       <span className="text-sm text-muted-foreground">{s.description}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.status)}`}>{humanize(s.status)}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.approval_status ?? "pending")}`}>
+                        {humanize(s.approval_status ?? "pending")}
+                      </span>
                     </div>
                     <p className="mt-1 text-sm">
                       On hand <span className="font-medium">{s.quantity_on_hand} {s.unit}</span> · reserved {s.quantity_reserved} · reorder at {s.reorder_level}
@@ -435,6 +442,12 @@ function InventoryPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
+                    {canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
+                      <Button size="sm" onClick={() => decideItem(s.id, "approved")}>Approve</Button>
+                    )}
+                    {canApproveItems && (s.approval_status ?? "pending") === "pending" && (
+                      <Button variant="outline" size="sm" onClick={() => decideItem(s.id, "rejected")}>Reject</Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s, quantity_on_hand: String(s.quantity_on_hand ?? 0), reorder_level: String(s.reorder_level ?? 0), unit_cost: String(s.unit_cost ?? 0) }); setStockOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
