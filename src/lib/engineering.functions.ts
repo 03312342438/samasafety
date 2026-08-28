@@ -42,7 +42,7 @@ export const saveBom = createServerFn({ method: "POST" })
         customer_id: z.string().uuid().nullable().default(null),
         title: z.string().max(300).default(""),
         bom_type: z.enum(["material", "service"]).default("material"),
-        currency: z.string().max(10).default("SAR"),
+        currency: z.string().max(10).default("BHD"),
         stage: z.string().max(60).default("bom_bos_preparation"),
         status: z.string().max(40).default("draft"),
         notes: z.string().max(4000).default(""),

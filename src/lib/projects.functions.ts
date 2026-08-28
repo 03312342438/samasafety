@@ -52,7 +52,7 @@ export const saveProject = createServerFn({ method: "POST" })
         stage: z.string().max(60).default("project_initiated"),
         status: z.enum(["active", "on_hold", "closed"]).default("active"),
         contract_value: z.number().min(0).default(0),
-        currency: z.string().max(10).default("SAR"),
+        currency: z.string().max(10).default("BHD"),
         estimated_cost: z.number().min(0).default(0),
         start_date: z.string().max(40).nullable().default(null),
         target_date: z.string().max(40).nullable().default(null),

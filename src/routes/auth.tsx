@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DESIGNATIONS } from "@/lib/workflow";
+import { DESIGNATIONS, departmentForDesignation } from "@/lib/workflow";
 
 import { toast } from "sonner";
 import { Loader2, ShieldPlus } from "lucide-react";
@@ -119,8 +119,9 @@ function AuthPage() {
 
       const { error: roleErr } = await supabase
         .from("user_roles")
-        .insert({ user_id: signUpData.user!.id, role: "employee" });
+        .insert({ user_id: signUpData.user!.id, role: departmentForDesignation(designation) });
       if (roleErr) throw new Error(roleErr.message);
+
 
       // Don't leave them signed into a pending session.
       await supabase.auth.signOut();
@@ -210,7 +211,7 @@ function AuthPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {DESIGNATIONS.map((d) => (
-                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                          <SelectItem key={d.value} value={d.value}>{d.value}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -257,7 +258,7 @@ function AuthPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {DESIGNATIONS.map((d) => (
-                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                          <SelectItem key={d.value} value={d.value}>{d.value}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

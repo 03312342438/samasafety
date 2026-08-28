@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
+import { AnalyticsCharts } from "@/components/AnalyticsCharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ const emptyInquiry = {
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
 const emptyQuotation = {
-  inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "SAR",
+  inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
   payment_terms: "", delivery_terms: "", scope_notes: "",
 };
@@ -57,7 +58,7 @@ const emptyQuotation = {
 const emptyItem: ItemRow = { description: "", unit: "nos", quantity: "1", unit_price: "0" };
 
 const emptyPo = {
-  po_number: "", po_date: "", po_value: "0", currency: "SAR",
+  po_number: "", po_date: "", po_value: "0", currency: "BHD",
   quotation_id: "", customer_id: "", document_url: "", notes: "",
 };
 
@@ -366,10 +367,12 @@ function SalesPage() {
             { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
+            { value: "analytics", label: "Analytics" },
           ]}
         />
 
         <div className="mt-4 space-y-3">
+          {tab === "analytics" && <AnalyticsCharts />}
           {tab === "inquiries" && inquiryList.map((i) => (
             <Card key={i.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">

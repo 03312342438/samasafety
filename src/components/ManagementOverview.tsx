@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getManagementOverview } from "@/lib/overview.functions";
+import { AnalyticsCharts } from "@/components/AnalyticsCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
@@ -119,6 +120,8 @@ export function ManagementOverview() {
         </div>
       </div>
 
+      <AnalyticsCharts />
+
       <div className="grid gap-4 lg:grid-cols-3">
         <StageList title="Quotation pipeline" rows={data.pipelineByStage} />
         <StageList title="Projects by stage" rows={data.projectsByStage} />
@@ -127,13 +130,13 @@ export function ManagementOverview() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Live project progress</CardTitle>
+          <CardTitle className="text-sm">Project progress, value &amp; payments</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {data.topProjects.length === 0 && (
-            <p className="text-sm text-muted-foreground">No active projects.</p>
+          {data.projectProgress.length === 0 && (
+            <p className="text-sm text-muted-foreground">No projects yet.</p>
           )}
-          {data.topProjects.map((p) => (
+          {data.projectProgress.map((p) => (
             <div key={p.id} className="space-y-1.5">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="font-medium">
@@ -141,7 +144,8 @@ export function ManagementOverview() {
                   <span className="ml-1 text-muted-foreground">· {p.customer}</span>
                 </span>
                 <span className="text-muted-foreground">
-                  {money(p.contract_value, c)} · cost {money(p.estimated_cost, c)}
+                  Value {money(p.contract_value, c)} · paid {money(p.paid, c)} · outstanding{" "}
+                  {money(p.outstanding, c)}
                 </span>
               </div>
               <Progress value={p.progress_percent} />
@@ -149,12 +153,13 @@ export function ManagementOverview() {
                 <span className={cn("rounded-md px-2 py-0.5", statusBadgeClass(p.stage))}>
                   {humanize(p.stage)}
                 </span>
-                <span>{p.progress_percent}% · {p.site_location || "—"}</span>
+                <span>{p.progress_percent}% complete</span>
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
+
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

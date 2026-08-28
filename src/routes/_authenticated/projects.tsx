@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/projects")({
 const emptyProject = {
   project_number: "", name: "", customer_id: "", site_location: "",
   project_type: "installation", stage: "project_initiated", status: "active",
-  contract_value: "", currency: "SAR", estimated_cost: "", start_date: "",
+  contract_value: "", currency: "BHD", estimated_cost: "", start_date: "",
   target_date: "", progress_percent: "0", notes: "",
 };
 

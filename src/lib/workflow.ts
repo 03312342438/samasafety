@@ -22,25 +22,23 @@ export const DEPARTMENTS: { value: Department; label: string; description: strin
   { value: "accounts", label: "Accounts", description: "Invoices, payments, project costs" },
 ];
 
-// Job designations offered at sign-up (free-form label stored on the profile).
-export const DESIGNATIONS: string[] = [
-  "Managing Director",
-  "General Manager",
-  "Operations Manager",
-  "Project Manager",
-  "Site Engineer",
-  "Sales Engineer",
-  "Sales Executive",
-  "Estimation Engineer",
-  "Draughtsman",
-  "Store Keeper",
-  "Procurement Officer",
-  "Accountant",
-  "Safety Officer",
-  "Technician",
-  "Helper",
-  "Administrator",
+/** Company currency. Everything is quoted, costed and billed in BHD. */
+export const CURRENCY = "BHD";
+
+// Job designations offered at sign-up. Each maps to exactly one department.
+export const DESIGNATIONS: { value: string; department: Department }[] = [
+  { value: "Sales", department: "sales" },
+  { value: "Project Manager", department: "project_manager" },
+  { value: "Inventory/Store", department: "inventory" },
+  { value: "Installation & Maintenance", department: "technician" },
+  { value: "Accounts", department: "accounts" },
+  { value: "Technician", department: "technician" },
 ];
+
+export function departmentForDesignation(designation: string): Department {
+  return DESIGNATIONS.find((d) => d.value === designation)?.department ?? "employee";
+}
+
 
 export const DEPARTMENT_LABELS: Record<string, string> = {
   admin: "Management",
@@ -188,4 +186,54 @@ export function humanize(value: string | null | undefined): string {
     DECISION_LABELS[value] ??
     value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
   );
+}
+
+// --------------------------------------------------------------------------
+// Department capability matrix — the single source of truth for "who can do
+// what". Mirrored server-side by `assertCan` in permissions.ts.
+// --------------------------------------------------------------------------
+export type Capability =
+  | "report.fill"          // maintenance service report form
+  | "customer.manage"
+  | "sales.manage"         // inquiries, quotations, customer POs
+  | "project.create"       // projects & project numbers
+  | "bom.create"
+  | "jobnumber.create"
+  | "jobnumber.approve_pm"
+  | "stock.item.create"    // add a brand-new item code
+  | "stock.receive"        // feed quantity with supplier + price
+  | "stock.issue"          // release against a job number
+  | "material.request"
+  | "site.execution"
+  | "accounts.manage"      // invoices, payments, receivables, payables
+  | "management.analytics";
+
+const MATRIX: Record<Capability, Department[]> = {
+  "report.fill": ["technician"],
+  "customer.manage": ["sales", "project_manager"],
+  "sales.manage": ["sales"],
+  "project.create": ["project_manager"],
+  "bom.create": ["project_manager"],
+  "jobnumber.create": ["technician"],
+  "jobnumber.approve_pm": ["project_manager"],
+  "stock.item.create": ["project_manager"],
+  "stock.receive": ["inventory"],
+  "stock.issue": ["inventory"],
+  "material.request": ["inventory", "project_manager"],
+  "site.execution": ["technician", "project_manager"],
+  "accounts.manage": ["accounts"],
+  "management.analytics": ["admin"],
+};
+
+/** Management sees everything, but only these departments may act. */
+export function can(roles: string[] | undefined, cap: Capability): boolean {
+  const mine = normalizeRoles(roles);
+  if (mine.includes("admin") && cap !== "report.fill") return true;
+  return MATRIX[cap].some((d) => mine.includes(d));
+}
+
+/** Read-only visibility: management always, plus anyone who can act. */
+export function canView(roles: string[] | undefined, cap: Capability): boolean {
+  if (normalizeRoles(roles).includes("admin")) return true;
+  return can(roles, cap);
 }
