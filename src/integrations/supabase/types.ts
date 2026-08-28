@@ -211,6 +211,94 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_pos: {
+        Row: {
+          created_at: string
+          created_by: string
+          currency: string
+          customer_id: string | null
+          discrepancy_notes: string
+          document_url: string
+          id: string
+          notes: string
+          po_date: string | null
+          po_number: string
+          po_value: number
+          project_id: string | null
+          quotation_id: string | null
+          reference: string
+          stage: string
+          updated_at: string
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_id?: string | null
+          discrepancy_notes?: string
+          document_url?: string
+          id?: string
+          notes?: string
+          po_date?: string | null
+          po_number?: string
+          po_value?: number
+          project_id?: string | null
+          quotation_id?: string | null
+          reference: string
+          stage?: string
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_id?: string | null
+          discrepancy_notes?: string
+          document_url?: string
+          id?: string
+          notes?: string
+          po_date?: string | null
+          po_number?: string
+          po_value?: number
+          project_id?: string | null
+          quotation_id?: string | null
+          reference?: string
+          stage?: string
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_pos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_pos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_pos_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string
@@ -261,6 +349,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      inquiries: {
+        Row: {
+          assigned_to: string | null
+          contact_email: string
+          contact_person: string
+          contact_phone: string
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          id: string
+          notes: string
+          received_date: string
+          reference: string
+          requirement_details: string
+          scope_type: string
+          site_location: string
+          source: string
+          stage: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string
+          received_date?: string
+          reference: string
+          requirement_details?: string
+          scope_type?: string
+          site_location?: string
+          source?: string
+          stage?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string
+          received_date?: string
+          reference?: string
+          requirement_details?: string
+          scope_type?: string
+          site_location?: string
+          source?: string
+          stage?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_numbers: {
         Row: {
@@ -596,6 +758,149 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotation_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          quantity: number
+          quotation_id: string
+          sequence: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          quotation_id: string
+          sequence?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          quotation_id?: string
+          sequence?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_items_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotations: {
+        Row: {
+          created_at: string
+          created_by: string
+          currency: string
+          customer_id: string | null
+          decision_notes: string
+          delivery_terms: string
+          discount_amount: number
+          estimated_cost: number
+          id: string
+          inquiry_id: string | null
+          payment_terms: string
+          reference: string
+          revision: number
+          scope_notes: string
+          sent_at: string | null
+          site_location: string
+          stage: string
+          status: string
+          subtotal: number
+          title: string
+          total_amount: number
+          updated_at: string
+          validity_days: number
+          vat_percent: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_id?: string | null
+          decision_notes?: string
+          delivery_terms?: string
+          discount_amount?: number
+          estimated_cost?: number
+          id?: string
+          inquiry_id?: string | null
+          payment_terms?: string
+          reference: string
+          revision?: number
+          scope_notes?: string
+          sent_at?: string | null
+          site_location?: string
+          stage?: string
+          status?: string
+          subtotal?: number
+          title?: string
+          total_amount?: number
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_id?: string | null
+          decision_notes?: string
+          delivery_terms?: string
+          discount_amount?: number
+          estimated_cost?: number
+          id?: string
+          inquiry_id?: string | null
+          payment_terms?: string
+          reference?: string
+          revision?: number
+          scope_notes?: string
+          sent_at?: string | null
+          site_location?: string
+          stage?: string
+          status?: string
+          subtotal?: number
+          title?: string
+          total_amount?: number
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
             referencedColumns: ["id"]
           },
         ]
