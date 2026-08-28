@@ -32,20 +32,23 @@ export const submitApproval = createServerFn({ method: "POST" })
         details: z.string().max(4000).default(""),
         project_id: z.string().uuid().nullable().default(null),
         job_number_id: z.string().uuid().nullable().default(null),
+        entity_table: z.string().max(60).optional(),
+        entity_id: z.string().uuid().nullable().optional(),
         amount: z.number().min(0).default(0),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { entity_table, entity_id, ...fields } = data;
     const { data: created, error } = await supabase
       .from("approvals")
       .insert({
-        ...data,
+        ...fields,
         decision: "pending",
         submitted_by: userId,
-        entity_table: data.job_number_id ? "job_numbers" : "projects",
-        entity_id: data.job_number_id ?? data.project_id,
+        entity_table: entity_table ?? (data.job_number_id ? "job_numbers" : "projects"),
+        entity_id: entity_id ?? data.job_number_id ?? data.project_id,
       })
       .select("id")
       .single();
