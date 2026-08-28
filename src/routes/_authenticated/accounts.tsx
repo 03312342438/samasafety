@@ -357,12 +357,31 @@ function AccountsPage() {
           value={tab}
           onChange={setTab}
           tabs={[
+            { value: "dashboard", label: "Dashboard" },
             { value: "invoices", label: "Invoices" },
             { value: "payments", label: "Payments" },
+            { value: "suppliers", label: "Suppliers" },
+            { value: "payables", label: "Payables" },
+            { value: "costs", label: "Project costs" },
+            { value: "notes", label: "Credit / debit notes" },
           ]}
         />
 
         <div className="mt-4 space-y-3">
+          {tab === "dashboard" && <FinanceDashboard />}
+          {tab === "suppliers" && <SuppliersTab />}
+          {tab === "payables" && (
+            <PayablesTab projectOptions={projectOptions} jobOptions={jobOptions} isAdmin={profile?.isAdmin} />
+          )}
+          {tab === "costs" && <CostsTab projectOptions={projectOptions} jobOptions={jobOptions} />}
+          {tab === "notes" && (
+            <CreditNotesTab
+              invoiceOptions={invoiceOptions}
+              customerOptions={customerOptions}
+              isAdmin={profile?.isAdmin}
+            />
+          )}
+
           {tab === "invoices" &&
             invoiceList.map((i: any) => {
               const balance = Number(i.total_amount ?? 0) - Number(i.amount_paid ?? 0);
