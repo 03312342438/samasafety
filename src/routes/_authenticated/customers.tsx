@@ -197,8 +197,8 @@ function CustomersPage() {
 
         <SegmentedTabs
           value={tab}
-          onValueChange={setTab}
-          options={[
+          onChange={setTab}
+          tabs={[
             { value: "customers", label: `Customers (${customerList.length})` },
             { value: "assets", label: `Assets (${assetList.length})` },
           ]}
