@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/accounts")({
 const today = () => new Date().toISOString().slice(0, 10);
 
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
-const emptyItem: ItemRow = { description: "", unit: "pcs", quantity: "1", unit_price: "0" };
+const emptyItem: ItemRow = { description: "", unit: "", quantity: "1", unit_price: "0" };
 
 const emptyInvoice = {
   invoice_number: "", customer_id: "", project_id: "", job_number_id: "", title: "",
@@ -171,7 +171,7 @@ function AccountsPage() {
     setItems(
       rows.length
         ? rows.map((r: any) => ({
-            description: r.description ?? "", unit: r.unit ?? "pcs",
+            description: r.description ?? "", unit: r.unit ?? "",
             quantity: String(r.quantity ?? 0), unit_price: String(r.unit_price ?? 0),
           }))
         : [{ ...emptyItem }],
@@ -306,8 +306,10 @@ function AccountsPage() {
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
                           <Input className="sm:col-span-5" placeholder="Description" value={it.description}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, description: e.target.value } : r)))} />
-                          <Input className="sm:col-span-2" placeholder="Unit" value={it.unit}
-                            onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, unit: e.target.value } : r)))} />
+                          <div className="sm:col-span-2">
+                            <UomSelect value={it.unit}
+                              onChange={(v) => setItems(items.map((r, i) => (i === idx ? { ...r, unit: v } : r)))} />
+                          </div>
                           <Input className="sm:col-span-2" placeholder="Qty" value={it.quantity}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
                           <Input className="sm:col-span-2" placeholder="Unit price" value={it.unit_price}
