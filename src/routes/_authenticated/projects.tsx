@@ -508,7 +508,51 @@ function ProjectsPage() {
   );
 }
 
+function JobSteps({ jobId, onChanged }: { jobId: string; onChanged: () => void }) {
+  const fetchSteps = useServerFn(listInstallationSteps);
+  const setStatus = useServerFn(setInstallationStepStatus);
+  const { data, refetch } = useQuery({
+    queryKey: ["job-steps", jobId],
+    queryFn: () => fetchSteps({ data: { job_number_id: jobId } }),
+  });
+  const steps = ((data as any[]) ?? []);
+  if (steps.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {steps.map((s) => (
+        <li key={s.id} className="flex items-center gap-2 text-xs">
+          <span className={`rounded-full px-2 py-0.5 ${statusBadgeClass(s.status)}`}>{humanize(s.status)}</span>
+          <span className="font-medium">{s.sequence}. {s.title}</span>
+          <span className="text-muted-foreground">
+            {s.expected_date ? `due ${s.expected_date}` : "no date"}
+            {s.completed_date ? ` · done ${s.completed_date}` : ""}
+          </span>
+          {s.status !== "completed" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[11px]"
+              onClick={async () => {
+                try {
+                  await setStatus({ data: { id: s.id, status: "completed", completed_date: null } });
+                  await refetch();
+                  onChanged();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Could not update step");
+                }
+              }}
+            >
+              Mark done
+            </Button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Field({
+
   label, value, onChange, type = "text",
 }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
