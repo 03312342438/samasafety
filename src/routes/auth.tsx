@@ -54,10 +54,23 @@ function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast.error(error.message);
+      return;
+    }
+
+    // Block accounts that management has not approved yet.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", data.user!.id)
+      .maybeSingle();
+    setLoading(false);
+    if (profile && profile.status === "pending") {
+      await supabase.auth.signOut();
+      toast.error("Your account is awaiting manager approval.");
       return;
     }
     navigate({ to: "/dashboard" });
