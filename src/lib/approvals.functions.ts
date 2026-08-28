@@ -82,11 +82,13 @@ export const decideApproval = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Only management can decide approvals.");
+    const { data: myRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (!(myRoles ?? []).some((r) => r.role === "admin")) {
+      throw new Error("Only management can decide approvals.");
+    }
 
     const { data: approval } = await supabase
       .from("approvals")
