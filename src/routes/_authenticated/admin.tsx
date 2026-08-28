@@ -67,7 +67,7 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-secondary/40">
-      <AppHeader isAdmin name={profile?.profile?.full_name} />
+      <AppHeader isAdmin name={profile?.profile?.full_name} roles={profile?.roles} />
       <main className="mx-auto max-w-5xl px-4 py-6">
         <h1 className="mb-5 text-2xl font-bold">Administration</h1>
         <SegmentedTabs

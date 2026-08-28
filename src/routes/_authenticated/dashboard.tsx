@@ -89,7 +89,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-secondary/40">
-      <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} />
+      <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
 
       <main className="mx-auto max-w-5xl px-4 py-6">
         {profileError && (
