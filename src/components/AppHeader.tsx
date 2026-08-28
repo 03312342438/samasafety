@@ -9,7 +9,7 @@ import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
-  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, X,
+  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu,
 } from "lucide-react";
 import { hasDept } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,7 @@ export function AppHeader({
         <div className="flex items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
-              {open ? <Menu className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <Menu className="h-5 w-5" />
             </Button>
             <span className="text-sm font-semibold text-foreground">
               {items.find((i) => pathname.startsWith(i.to))?.label ?? "Sama Portal"}
