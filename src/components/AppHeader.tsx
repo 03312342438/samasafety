@@ -30,13 +30,26 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-10 border-b bg-card/95 shadow-[var(--shadow-card)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-2.5">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5">
         <Link to="/dashboard" className="flex items-center gap-3">
           <img src={SAMA_LOGO_BASE64} alt="Sama Safety & Security" className="h-12 w-auto" />
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex flex-wrap items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/dashboard">My Reports</Link>
+            <Link to="/dashboard">Reports</Link>
+          </Button>
+          {(isAdmin || canSeeCustomers) && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/customers">Customers</Link>
+            </Button>
+          )}
+          {(isAdmin || canSeeProjects) && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/projects">Projects</Link>
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/approvals">Approvals</Link>
           </Button>
           {isAdmin && (
             <Button asChild variant="ghost" size="sm">
@@ -44,6 +57,7 @@ export function AppHeader({
             </Button>
           )}
           {name && <span className="hidden text-sm text-muted-foreground sm:inline">{name}</span>}
+          <NotificationBell />
           <ChangePasswordDialog />
           <MaintenanceReminder />
           <Button variant="outline" size="sm" onClick={signOut}>
