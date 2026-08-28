@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useProfile } from "@/hooks/use-profile";
-import { listEmployees, createEmployee, deleteEmployee, grantAdmin, revokeAdmin, setEmployeePassword, setEmployeeStatus } from "@/lib/admin.functions";
+import { listEmployees, createEmployee, deleteEmployee, grantAdmin, revokeAdmin, setEmployeePassword, setEmployeeStatus, setUserDepartments } from "@/lib/admin.functions";
+import { DEPARTMENTS } from "@/lib/workflow";
 import { listRecipients, addRecipient, deleteRecipient } from "@/lib/report-recipients.functions";
 import {
   listAllMaintenanceTasks,
@@ -67,7 +68,7 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-secondary/40">
-      <AppHeader isAdmin name={profile?.profile?.full_name} />
+      <AppHeader isAdmin name={profile?.profile?.full_name} roles={profile?.roles} />
       <main className="mx-auto max-w-5xl px-4 py-6">
         <h1 className="mb-5 text-2xl font-bold">Administration</h1>
         <SegmentedTabs
@@ -253,6 +254,7 @@ function Employees() {
                 <p className="text-sm text-muted-foreground">
                   {emp.email} {emp.designation && `· ${emp.designation}`}
                 </p>
+                <DepartmentChips userId={emp.id} roles={emp.roles ?? []} />
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {(() => {
@@ -727,6 +729,55 @@ function SpareParts() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Department assignment — controls which workflow modules a user can reach.
+function DepartmentChips({ userId, roles }: { userId: string; roles: string[] }) {
+  const qc = useQueryClient();
+  const setDepartments = useServerFn(setUserDepartments);
+  const [busy, setBusy] = useState(false);
+
+  const current = new Set(roles.filter((r) => r !== "admin" && r !== "employee"));
+
+  const toggle = async (dept: string) => {
+    const next = new Set(current);
+    if (next.has(dept)) next.delete(dept);
+    else next.add(dept);
+    setBusy(true);
+    try {
+      await setDepartments({ data: { id: userId, departments: [...next] as any } });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Departments updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update departments");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {DEPARTMENTS.filter((d) => d.value !== "admin").map((d) => {
+        const on = current.has(d.value);
+        return (
+          <button
+            key={d.value}
+            type="button"
+            disabled={busy}
+            onClick={() => toggle(d.value)}
+            title={d.description}
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors disabled:opacity-50 ${
+              on
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-border bg-muted/50 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {d.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

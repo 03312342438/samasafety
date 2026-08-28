@@ -246,3 +246,37 @@ export const setEmployeeStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Assign the workflow departments (sales, project_manager, inventory,
+// technician, accounts) for a user. Admin rights are managed separately.
+export const setUserDepartments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        departments: z
+          .array(z.enum(["sales", "project_manager", "inventory", "technician", "accounts"]))
+          .max(5),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const { error: delErr } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.id)
+      .in("role", ["sales", "project_manager", "inventory", "technician", "accounts"]);
+    if (delErr) throw new Error(delErr.message);
+
+    if (data.departments.length > 0) {
+      const { error } = await supabase
+        .from("user_roles")
+        .insert(data.departments.map((role) => ({ user_id: data.id, role })));
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
