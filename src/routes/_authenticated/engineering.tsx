@@ -223,7 +223,7 @@ function EngineeringPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader isAdmin={profile?.isAdmin} name={profile?.fullName} roles={profile?.roles} />
+      <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
       <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
