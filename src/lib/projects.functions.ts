@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertCan, assertMutable } from "@/lib/permissions";
 
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -209,9 +210,10 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         .select("status, job_number")
         .eq("id", id)
         .maybeSingle();
-      if (existing?.status === "approved") {
-        throw new Error("An approved job number can no longer be edited.");
-      }
+      await assertMutable(supabase, userId, {
+        approved: existing?.status === "approved",
+        label: `Job number ${existing?.job_number ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("job_numbers").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       await writeSteps(id);
@@ -224,6 +226,8 @@ export const saveJobNumber = createServerFn({ method: "POST" })
       });
       return { ok: true, id };
     }
+
+    await assertCan(supabase, userId, "jobnumber.create");
 
     // A job number may only be created once the project itself is initiated
     // (management approval A2 sets the project stage).
@@ -339,7 +343,11 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prev } = await supabase.from("job_numbers").select("*").eq("id", data.id).maybeSingle();
-    if (prev?.status === "approved") throw new Error("An approved job number cannot be deleted.");
+    await assertMutable(supabase, userId, {
+      approved: prev?.status === "approved",
+      label: `Job number ${prev?.job_number ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("job_numbers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
