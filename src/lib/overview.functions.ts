@@ -116,7 +116,7 @@ export const getManagementOverview = createServerFn({ method: "GET" })
       (p: any) => !["closed", "final_review"].includes(p.stage),
     );
 
-    const currency = (quotations[0] as any)?.currency || (projects[0] as any)?.currency || "SAR";
+    const currency = (quotations[0] as any)?.currency || (projects[0] as any)?.currency || "BHD";
 
     return {
       currency,

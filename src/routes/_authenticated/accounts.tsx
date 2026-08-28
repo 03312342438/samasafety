@@ -46,7 +46,7 @@ const emptyItem: ItemRow = { description: "", unit: "pcs", quantity: "1", unit_p
 
 const emptyInvoice = {
   invoice_number: "", customer_id: "", project_id: "", job_number_id: "", title: "",
-  invoice_type: "final", invoice_date: today(), due_date: "", currency: "SAR",
+  invoice_type: "final", invoice_date: today(), due_date: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", payment_terms: "", notes: "",
 };
 

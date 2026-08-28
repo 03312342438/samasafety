@@ -48,7 +48,7 @@ const emptyItem: ItemRow = { description: "", category: "", unit: "pcs", quantit
 
 const emptyBom = {
   project_id: "", job_number_id: "", customer_id: "", title: "",
-  bom_type: "material", currency: "SAR", notes: "",
+  bom_type: "material", currency: "BHD", notes: "",
 };
 
 const emptyTask = {

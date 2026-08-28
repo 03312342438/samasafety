@@ -35,7 +35,7 @@ const invoiceSchema = z.object({
   invoice_type: z.enum(["advance", "progress", "final", "amc"]).default("final"),
   invoice_date: z.string().nullable().default(null),
   due_date: z.string().nullable().default(null),
-  currency: z.string().max(10).default("SAR"),
+  currency: z.string().max(10).default("BHD"),
   discount_amount: z.number().min(0).default(0),
   vat_percent: z.number().min(0).max(100).default(15),
   payment_terms: z.string().max(500).default(""),
