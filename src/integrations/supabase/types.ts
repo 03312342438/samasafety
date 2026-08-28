@@ -751,6 +751,151 @@ export type Database = {
           },
         ]
       }
+      material_request_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          quantity_allocated: number
+          quantity_issued: number
+          quantity_requested: number
+          remarks: string
+          request_id: string
+          sequence: number
+          stock_item_id: string | null
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          quantity_allocated?: number
+          quantity_issued?: number
+          quantity_requested?: number
+          remarks?: string
+          request_id: string
+          sequence?: number
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          quantity_allocated?: number
+          quantity_issued?: number
+          quantity_requested?: number
+          remarks?: string
+          request_id?: string
+          sequence?: number
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "material_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_request_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_requests: {
+        Row: {
+          bom_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          job_number_id: string | null
+          notes: string
+          project_id: string | null
+          received_by: string
+          reference: string
+          required_date: string | null
+          site_location: string
+          stage: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bom_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          job_number_id?: string | null
+          notes?: string
+          project_id?: string | null
+          received_by?: string
+          reference: string
+          required_date?: string | null
+          site_location?: string
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          bom_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          job_number_id?: string | null
+          notes?: string
+          project_id?: string | null
+          received_by?: string
+          reference?: string
+          required_date?: string | null
+          site_location?: string
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_requests_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_requests_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           category: string
@@ -1263,6 +1408,143 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_items: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          item_code: string
+          notes: string
+          quantity_on_hand: number
+          quantity_reserved: number
+          reorder_level: number
+          status: string
+          store_location: string
+          supplier: string
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          item_code?: string
+          notes?: string
+          quantity_on_hand?: number
+          quantity_reserved?: number
+          reorder_level?: number
+          status?: string
+          store_location?: string
+          supplier?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          item_code?: string
+          notes?: string
+          quantity_on_hand?: number
+          quantity_reserved?: number
+          reorder_level?: number
+          status?: string
+          store_location?: string
+          supplier?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          job_number_id: string | null
+          moved_by: string
+          movement_type: string
+          project_id: string | null
+          quantity: number
+          reference: string
+          remarks: string
+          request_id: string | null
+          stock_item_id: string | null
+          unit: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          job_number_id?: string | null
+          moved_by: string
+          movement_type?: string
+          project_id?: string | null
+          quantity?: number
+          reference?: string
+          remarks?: string
+          request_id?: string | null
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          job_number_id?: string | null
+          moved_by?: string
+          movement_type?: string
+          project_id?: string | null
+          quantity?: number
+          reference?: string
+          remarks?: string
+          request_id?: string | null
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "material_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
             referencedColumns: ["id"]
           },
         ]
