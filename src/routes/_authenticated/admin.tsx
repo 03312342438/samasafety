@@ -253,6 +253,7 @@ function Employees() {
                 <p className="text-sm text-muted-foreground">
                   {emp.email} {emp.designation && `· ${emp.designation}`}
                 </p>
+                <DepartmentChips userId={emp.id} roles={emp.roles ?? []} />
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {(() => {
