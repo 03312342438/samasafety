@@ -46,9 +46,12 @@ const emptyProject = {
 };
 
 const emptyJob = {
-  project_id: "", scope_type: "installation", description: "",
+  project_id: "", job_kind: "installation", scope_type: "installation", description: "",
   site_location: "", start_date: "", target_date: "",
+  maintenance_interval_months: "", bom_id: "",
+  steps: [] as { title: string; expected_date: string }[],
 };
+
 
 function ProjectsPage() {
   const { data: profile } = useProfile();
