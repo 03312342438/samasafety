@@ -23,7 +23,8 @@ import {
   listPayments, recordPayment, deletePayment,
 } from "@/lib/accounts.functions";
 import { submitApproval } from "@/lib/approvals.functions";
-import { humanize, statusBadgeClass } from "@/lib/workflow";
+import { UomSelect } from "@/components/UomSelect";
+import { can, humanize, statusBadgeClass } from "@/lib/workflow";
 import {
   FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
 } from "@/components/AccountsFinance";
@@ -62,7 +63,7 @@ const emptyPayment = {
 function AccountsPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
-  const [tab, setTab] = useState("invoices");
+  const [tab, setTab] = useState("dashboard");
   const [query, setQuery] = useState("");
 
   const fetchInvoices = useServerFn(listInvoices);
@@ -76,6 +77,9 @@ function AccountsPage() {
   const persistPayment = useServerFn(recordPayment);
   const removePayment = useServerFn(deletePayment);
   const requestApproval = useServerFn(submitApproval);
+
+  /** Management reviews the books but never raises an invoice itself. */
+  const canRaiseInvoice = can(profile?.roles, "invoice.create");
 
   const { data: invoices } = useQuery({ queryKey: ["invoices"], queryFn: () => fetchInvoices() });
   const { data: payments } = useQuery({ queryKey: ["payments"], queryFn: () => fetchPayments() });
@@ -261,7 +265,7 @@ function AccountsPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "invoices" ? (
+            {tab === "invoices" && canRaiseInvoice ? (
               <Dialog open={invOpen} onOpenChange={(o) => { setInvOpen(o); if (!o) { setInvForm(emptyInvoice); setItems([{ ...emptyItem }]); } }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New invoice</Button>
