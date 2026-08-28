@@ -325,8 +325,9 @@ function AccountsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            ) : (
+            ) : tab === "payments" ? (
               <Dialog open={payOpen} onOpenChange={(o) => { setPayOpen(o); if (!o) setPayForm(emptyPayment); }}>
+
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Record payment</Button>
                 </DialogTrigger>
