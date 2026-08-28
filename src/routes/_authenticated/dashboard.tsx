@@ -78,7 +78,7 @@ function Dashboard() {
           <CalendarClock className="mx-auto h-12 w-12 text-muted-foreground" />
           <h2 className="mt-4 text-lg font-semibold">Account pending approval</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Thanks for signing up, {profile?.profile?.full_name || "there"}. An administrator
+            Thanks for signing up, {profile?.profile?.full_name || "there"}. A manager
             needs to approve your account before you can start creating reports. You'll be able
             to sign in normally once it's approved.
           </p>
