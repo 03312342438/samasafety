@@ -270,26 +270,99 @@ function ProjectsPage() {
                       </select>
                     </div>
                     <div>
-                      <Label className="text-xs">Scope</Label>
+                      <Label className="text-xs">Installation or maintenance?</Label>
                       <select
                         className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={jobForm.scope_type}
-                        onChange={(e) => setJobForm({ ...jobForm, scope_type: e.target.value })}
+                        value={jobForm.job_kind}
+                        onChange={(e) => setJobForm({ ...jobForm, job_kind: e.target.value, scope_type: e.target.value })}
                       >
                         <option value="installation">Installation</option>
                         <option value="maintenance">Maintenance</option>
-                        <option value="service">Service</option>
-                        <option value="repair">Repair</option>
                       </select>
                     </div>
+                    <div>
+                      <Label className="text-xs">Linked BOM / BOS (required)</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={jobForm.bom_id}
+                        onChange={(e) => setJobForm({ ...jobForm, bom_id: e.target.value })}
+                      >
+                        <option value="">— select BOM/BOS —</option>
+                        {((boms as any[]) ?? [])
+                          .filter((b) => !jobForm.project_id || b.project_id === jobForm.project_id || !b.project_id)
+                          .map((b) => (
+                            <option key={b.id} value={b.id}>{b.reference} — {b.title}</option>
+                          ))}
+                      </select>
+                    </div>
+                    {jobForm.job_kind === "maintenance" && (
+                      <Field
+                        label="Maintenance interval (months)"
+                        value={jobForm.maintenance_interval_months}
+                        onChange={(v) => setJobForm({ ...jobForm, maintenance_interval_months: v })}
+                      />
+                    )}
                     <Field label="Site location" value={jobForm.site_location} onChange={(v) => setJobForm({ ...jobForm, site_location: v })} />
                     <Field label="Start date" type="date" value={jobForm.start_date} onChange={(v) => setJobForm({ ...jobForm, start_date: v })} />
                     <Field label="Target date" type="date" value={jobForm.target_date} onChange={(v) => setJobForm({ ...jobForm, target_date: v })} />
+                    {jobForm.job_kind === "installation" && (
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">Installation steps & expected completion</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setJobForm({ ...jobForm, steps: [...(jobForm.steps ?? []), { title: "", expected_date: "" }] })}
+                          >
+                            <Plus className="mr-1 h-3 w-3" /> Add step
+                          </Button>
+                        </div>
+                        <div className="mt-2 space-y-2">
+                          {((jobForm.steps ?? []) as any[]).map((s, i) => (
+                            <div key={i} className="flex gap-2">
+                              <Input
+                                className="flex-1"
+                                placeholder={`Step ${i + 1}`}
+                                value={s.title}
+                                onChange={(e) => {
+                                  const steps = [...jobForm.steps];
+                                  steps[i] = { ...steps[i], title: e.target.value };
+                                  setJobForm({ ...jobForm, steps });
+                                }}
+                              />
+                              <Input
+                                className="w-40"
+                                type="date"
+                                value={s.expected_date}
+                                onChange={(e) => {
+                                  const steps = [...jobForm.steps];
+                                  steps[i] = { ...steps[i], expected_date: e.target.value };
+                                  setJobForm({ ...jobForm, steps });
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setJobForm({ ...jobForm, steps: jobForm.steps.filter((_: any, x: number) => x !== i) })}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          {(jobForm.steps ?? []).length === 0 && (
+                            <p className="text-xs text-muted-foreground">Add at least one installation step.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Scope description</Label>
                       <Textarea rows={3} value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} />
                     </div>
                   </div>
+
                   <DialogFooter>
                     <Button onClick={submitJob} disabled={!jobForm.project_id}>Save</Button>
                   </DialogFooter>
