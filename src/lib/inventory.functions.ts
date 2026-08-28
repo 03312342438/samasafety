@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertCan, assertMutable, isManagement } from "@/lib/permissions";
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -47,6 +48,10 @@ export const saveStockItem = createServerFn({ method: "POST" })
 
     if (id) {
       const { data: prev } = await supabase.from("stock_items").select("*").eq("id", id).maybeSingle();
+      await assertMutable(supabase, userId, {
+        approved: prev?.approval_status === "approved",
+        label: `Item ${prev?.item_code ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("stock_items").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       await logActivity(supabase, userId, {
@@ -60,10 +65,19 @@ export const saveStockItem = createServerFn({ method: "POST" })
       return { ok: true, id };
     }
 
+    await assertCan(supabase, userId, "stock.item.create");
+    const admin = await isManagement(supabase, userId);
     const item_code = fields.item_code || (await nextSequence(supabase, "stock_items", "item_code", "ITM"));
     const { data: created, error } = await supabase
       .from("stock_items")
-      .insert({ ...fields, item_code, created_by: userId })
+      .insert({
+        ...fields,
+        item_code,
+        created_by: userId,
+        approval_status: admin ? "approved" : "pending",
+        approved_by: admin ? userId : null,
+        approved_at: admin ? new Date().toISOString() : null,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -97,10 +111,67 @@ export const deleteStockItem = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { data: prev } = await supabase
+      .from("stock_items")
+      .select("item_code, approval_status")
+      .eq("id", data.id)
+      .maybeSingle();
+    await assertMutable(supabase, userId, {
+      approved: prev?.approval_status === "approved",
+      label: `Item ${prev?.item_code ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("stock_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
       action: "delete",
+      entity_table: "stock_items",
+      entity_id: data.id,
+    });
+    return { ok: true };
+  });
+
+/** Management clears (or rejects) a new item code before it can be used. */
+export const setStockItemApproval = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        approval_status: z.enum(["approved", "rejected", "pending"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCan(supabase, userId, "stock.item.approve");
+    const { data: item } = await supabase
+      .from("stock_items")
+      .select("item_code, description")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabase
+      .from("stock_items")
+      .update({
+        approval_status: data.approval_status,
+        approved_by: data.approval_status === "approved" ? userId : null,
+        approved_at: data.approval_status === "approved" ? new Date().toISOString() : null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    await logActivity(supabase, userId, {
+      action: `item_${data.approval_status}`,
+      entity_table: "stock_items",
+      entity_id: data.id,
+      entity_label: `${item?.item_code ?? ""} — ${item?.description ?? ""}`,
+      new_value: { approval_status: data.approval_status },
+    });
+    await notifyDepartments(supabase, ["project_manager", "inventory"], {
+      title: `Item ${item?.item_code ?? ""} ${data.approval_status}`,
+      message: item?.description ?? "",
+      category: "inventory",
+      link: "/inventory",
       entity_table: "stock_items",
       entity_id: data.id,
     });
