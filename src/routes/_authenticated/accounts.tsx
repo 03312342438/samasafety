@@ -354,7 +354,8 @@ function AccountsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            )}
+            ) : null}
+
           </div>
         </div>
 
