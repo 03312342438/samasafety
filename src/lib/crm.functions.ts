@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
+import { nextSequence } from "@/lib/sequence";
+import { assertCan } from "@/lib/permissions";
 
 export const listCustomers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -35,6 +37,7 @@ export const saveCustomer = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid().optional(),
         name: z.string().trim().min(1).max(300),
+        customer_number: z.string().trim().max(60).default(""),
         contact_person: z.string().max(200).default(""),
         email: z.string().max(320).default(""),
         phone: z.string().max(60).default(""),
@@ -49,6 +52,7 @@ export const saveCustomer = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, "customer.manage");
     const { id, ...fields } = data;
 
     if (id) {
@@ -66,9 +70,11 @@ export const saveCustomer = createServerFn({ method: "POST" })
       return { ok: true, id };
     }
 
+    const customerNumber =
+      fields.customer_number || (await nextSequence(supabase, "customers", "customer_number", "CUS"));
     const { data: created, error } = await supabase
       .from("customers")
-      .insert({ ...fields, created_by: userId })
+      .insert({ ...fields, customer_number: customerNumber, created_by: userId })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -76,10 +82,10 @@ export const saveCustomer = createServerFn({ method: "POST" })
       action: "create",
       entity_table: "customers",
       entity_id: created.id,
-      entity_label: fields.name,
-      new_value: fields,
+      entity_label: `${customerNumber} — ${fields.name}`,
+      new_value: { ...fields, customer_number: customerNumber },
     });
-    return { ok: true, id: created.id };
+    return { ok: true, id: created.id, customer_number: customerNumber };
   });
 
 export const deleteCustomer = createServerFn({ method: "POST" })
@@ -87,6 +93,7 @@ export const deleteCustomer = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, "customer.manage");
     const { data: prev } = await supabase.from("customers").select("*").eq("id", data.id).maybeSingle();
     const { error } = await supabase.from("customers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);

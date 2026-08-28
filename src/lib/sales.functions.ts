@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertMutable } from "@/lib/permissions";
 
 // ================================================================ inquiries ==
 
@@ -167,6 +168,10 @@ export const saveQuotation = createServerFn({ method: "POST" })
 
     if (id) {
       const { data: prev } = await supabase.from("quotations").select("*").eq("id", id).maybeSingle();
+      await assertMutable(supabase, userId, {
+        approved: ["approved", "accepted", "won"].includes(prev?.status ?? ""),
+        label: `Quotation ${prev?.reference ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("quotations").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       reference = prev?.reference ?? "";
@@ -314,6 +319,12 @@ export const deleteQuotation = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { data: prev } = await supabase.from("quotations").select("reference, status").eq("id", data.id).maybeSingle();
+    await assertMutable(supabase, userId, {
+      approved: ["approved", "accepted", "won"].includes(prev?.status ?? ""),
+      label: `Quotation ${prev?.reference ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("quotations").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
@@ -360,6 +371,15 @@ export const saveCustomerPo = createServerFn({ method: "POST" })
     const fields = { ...raw, po_date: raw.po_date || null };
 
     if (id) {
+      const { data: prevPo } = await supabase
+        .from("customer_pos")
+        .select("po_number, verification_status")
+        .eq("id", id)
+        .maybeSingle();
+      await assertMutable(supabase, userId, {
+        approved: prevPo?.verification_status === "verified",
+        label: `PO ${prevPo?.po_number ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("customer_pos").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       await logActivity(supabase, userId, {

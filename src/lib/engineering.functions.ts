@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertCan, assertMutable } from "@/lib/permissions";
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -22,6 +23,7 @@ export const listBoms = createServerFn({ method: "GET" })
   });
 
 const bomItemSchema = z.object({
+  stock_item_id: z.string().uuid().nullable().default(null),
   description: z.string().max(500).default(""),
   category: z.string().max(120).default(""),
   unit: z.string().max(40).default("pcs"),
@@ -61,6 +63,10 @@ export const saveBom = createServerFn({ method: "POST" })
 
     if (id) {
       const { data: prev } = await supabase.from("boms").select("*").eq("id", id).maybeSingle();
+      await assertMutable(supabase, userId, {
+        approved: prev?.status === "approved",
+        label: `BOM ${prev?.reference ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("boms").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       reference = prev?.reference ?? "";
@@ -73,6 +79,7 @@ export const saveBom = createServerFn({ method: "POST" })
         new_value: fields,
       });
     } else {
+      await assertCan(supabase, userId, "bom.create");
       reference = await nextSequence(supabase, "boms", "reference", "BOM");
       const { data: created, error } = await supabase
         .from("boms")
@@ -96,6 +103,7 @@ export const saveBom = createServerFn({ method: "POST" })
         items.map((i, index) => ({
           bom_id: bomId!,
           sequence: index + 1,
+          stock_item_id: i.stock_item_id || null,
           description: i.description,
           category: i.category,
           unit: i.unit,
@@ -120,6 +128,12 @@ export const deleteBom = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { data: prev } = await supabase.from("boms").select("reference, status").eq("id", data.id).maybeSingle();
+    await assertMutable(supabase, userId, {
+      approved: prev?.status === "approved",
+      label: `BOM ${prev?.reference ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("boms").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {

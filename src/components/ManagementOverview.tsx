@@ -84,6 +84,8 @@ export function ManagementOverview() {
 
   return (
     <div className="space-y-6">
+      <AnalyticsCharts />
+
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Sales &amp; pipeline
@@ -119,8 +121,6 @@ export function ManagementOverview() {
           <Metric label="Open material requests" value={String(k.openMaterialRequests)} hint={`${k.hoursLogged} site hours logged`} icon={Boxes} />
         </div>
       </div>
-
-      <AnalyticsCharts />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <StageList title="Quotation pipeline" rows={data.pipelineByStage} />

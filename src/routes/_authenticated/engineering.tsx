@@ -23,6 +23,10 @@ import {
   listProjectTasks, saveProjectTask, deleteProjectTask,
 } from "@/lib/engineering.functions";
 import { submitApproval } from "@/lib/approvals.functions";
+import { listStockItems } from "@/lib/inventory.functions";
+import { UomSelect } from "@/components/UomSelect";
+import { UomManager } from "@/components/UomManager";
+import { can } from "@/lib/workflow";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/engineering")({
@@ -40,11 +44,12 @@ export const Route = createFileRoute("/_authenticated/engineering")({
 });
 
 type ItemRow = {
+  stock_item_id: string;
   description: string; category: string; unit: string;
   quantity: string; unit_cost: string; remarks: string;
 };
 
-const emptyItem: ItemRow = { description: "", category: "", unit: "pcs", quantity: "1", unit_cost: "0", remarks: "" };
+const emptyItem: ItemRow = { stock_item_id: "", description: "", category: "", unit: "pcs", quantity: "1", unit_cost: "0", remarks: "" };
 
 const emptyBom = {
   project_id: "", job_number_id: "", customer_id: "", title: "",
@@ -68,6 +73,18 @@ function EngineeringPage() {
   const fetchProjects = useServerFn(listProjects);
   const fetchJobs = useServerFn(listJobNumbers);
   const fetchCustomers = useServerFn(listCustomers);
+  const fetchStockItems = useServerFn(listStockItems);
+
+  const { data: stockItems } = useQuery({
+    queryKey: ["stock-items", "approved"],
+    queryFn: () => fetchStockItems(),
+    staleTime: 60_000,
+  });
+  /** Only item codes Management has approved may be pulled into a BOM. */
+  const approvedItems = ((stockItems as any[]) ?? []).filter(
+    (i) => (i.approval_status ?? "approved") === "approved",
+  );
+  const canManageUnits = can(profile?.roles, "uom.manage");
   const persistBom = useServerFn(saveBom);
   const removeBom = useServerFn(deleteBom);
   const moveBom = useServerFn(setBomStage);
@@ -129,6 +146,7 @@ function EngineeringPage() {
           items: items
             .filter((i) => i.description.trim())
             .map((i) => ({
+              stock_item_id: i.stock_item_id || null,
               description: i.description,
               category: i.category,
               unit: i.unit,
@@ -157,7 +175,8 @@ function EngineeringPage() {
     setItems(
       rows.length
         ? rows.map((i: any) => ({
-            description: i.description ?? "", category: i.category ?? "", unit: i.unit ?? "pcs",
+            stock_item_id: i.stock_item_id ?? "",
+            description: i.description ?? "", category: i.category ?? "", unit: i.unit ?? "",
             quantity: String(i.quantity ?? 0), unit_cost: String(i.unit_cost ?? 0), remarks: i.remarks ?? "",
           }))
         : [{ ...emptyItem }],
@@ -277,13 +296,35 @@ function EngineeringPage() {
                     <div className="space-y-2">
                       {items.map((it, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
-                          <Input className="sm:col-span-4" placeholder="Description" value={it.description}
+                          <select
+                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-3"
+                            value={it.stock_item_id}
+                            onChange={(e) => {
+                              const picked = approvedItems.find((s: any) => s.id === e.target.value);
+                              setItems(items.map((r, i) => (i === idx
+                                ? {
+                                    ...r,
+                                    stock_item_id: e.target.value,
+                                    description: picked ? picked.description : r.description,
+                                    category: picked ? (picked.category ?? r.category) : r.category,
+                                    unit: picked ? (picked.unit ?? r.unit) : r.unit,
+                                    unit_cost: picked ? String(picked.unit_cost ?? r.unit_cost) : r.unit_cost,
+                                  }
+                                : r)));
+                            }}
+                          >
+                            <option value="">— item code —</option>
+                            {approvedItems.map((s: any) => (
+                              <option key={s.id} value={s.id}>{s.item_code} — {s.description}</option>
+                            ))}
+                          </select>
+                          <Input className="sm:col-span-3" placeholder="Description" value={it.description}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, description: e.target.value } : r)))} />
-                          <Input className="sm:col-span-2" placeholder="Category" value={it.category}
-                            onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, category: e.target.value } : r)))} />
-                          <Input className="sm:col-span-1" placeholder="Unit" value={it.unit}
-                            onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, unit: e.target.value } : r)))} />
-                          <Input className="sm:col-span-2" placeholder="Qty" value={it.quantity}
+                          <div className="sm:col-span-2">
+                            <UomSelect value={it.unit}
+                              onChange={(v) => setItems(items.map((r, i) => (i === idx ? { ...r, unit: v } : r)))} />
+                          </div>
+                          <Input className="sm:col-span-1" placeholder="Qty" value={it.quantity}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
                           <Input className="sm:col-span-2" placeholder="Unit cost" value={it.unit_cost}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, unit_cost: e.target.value } : r)))} />
@@ -348,10 +389,13 @@ function EngineeringPage() {
           tabs={[
             { value: "boms", label: `BOM / BOS (${bomList.length})` },
             { value: "tasks", label: `Plan tasks (${taskList.length})` },
+            ...(canManageUnits ? [{ value: "units", label: "Units of measure" }] : []),
           ]}
         />
 
         <div className="mt-4 space-y-3">
+          {tab === "units" && canManageUnits && <UomManager />}
+
           {tab === "boms" &&
             bomList.map((b: any) => (
               <Card key={b.id}>

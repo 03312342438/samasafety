@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertCan, assertMutable } from "@/lib/permissions";
 
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -209,9 +210,10 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         .select("status, job_number")
         .eq("id", id)
         .maybeSingle();
-      if (existing?.status === "approved") {
-        throw new Error("An approved job number can no longer be edited.");
-      }
+      await assertMutable(supabase, userId, {
+        approved: existing?.status === "approved",
+        label: `Job number ${existing?.job_number ?? ""}`.trim(),
+      });
       const { error } = await supabase.from("job_numbers").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       await writeSteps(id);
@@ -224,6 +226,8 @@ export const saveJobNumber = createServerFn({ method: "POST" })
       });
       return { ok: true, id };
     }
+
+    await assertCan(supabase, userId, "jobnumber.create");
 
     // A job number may only be created once the project itself is initiated
     // (management approval A2 sets the project stage).
@@ -339,7 +343,11 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prev } = await supabase.from("job_numbers").select("*").eq("id", data.id).maybeSingle();
-    if (prev?.status === "approved") throw new Error("An approved job number cannot be deleted.");
+    await assertMutable(supabase, userId, {
+      approved: prev?.status === "approved",
+      label: `Job number ${prev?.job_number ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("job_numbers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
@@ -348,6 +356,79 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
       entity_id: data.id,
       entity_label: prev?.job_number ?? "",
       previous_value: prev,
+    });
+    return { ok: true };
+  });
+
+/**
+ * Project Manager sign-off on a job number raised by Installation & Maintenance.
+ * Once the PM clears it, Management still has the final approval (A4).
+ */
+export const pmApproveJobNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        decision: z.enum(["approved", "rejected"]),
+        notes: z.string().max(2000).default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCan(supabase, userId, "jobnumber.approve_pm");
+
+    const { data: job } = await supabase
+      .from("job_numbers")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!job) throw new Error("Job number not found");
+    if (job.status === "approved") throw new Error("This job number is already approved.");
+
+    const approved = data.decision === "approved";
+    const { error } = await supabase
+      .from("job_numbers")
+      .update({
+        status: approved ? "pending_approval" : "rejected",
+        pm_approved_by: approved ? userId : null,
+        pm_approved_at: approved ? new Date().toISOString() : null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    if (approved) {
+      await supabase.from("approvals").insert({
+        approval_type: "job_number",
+        entity_table: "job_numbers",
+        entity_id: data.id,
+        reference: job.job_number,
+        project_id: job.project_id,
+        job_number_id: data.id,
+        title: `Job number ${job.job_number}`,
+        details: data.notes || job.description || "",
+        decision: "pending",
+        submitted_by: userId,
+      });
+    }
+
+    await logActivity(supabase, userId, {
+      action: `jobnumber_pm_${data.decision}`,
+      entity_table: "job_numbers",
+      entity_id: data.id,
+      entity_label: job.job_number,
+      new_value: { decision: data.decision, notes: data.notes },
+    });
+    await notifyDepartments(supabase, approved ? ["admin"] : ["technician"], {
+      title: approved
+        ? `Job number ${job.job_number} — awaiting Management approval`
+        : `Job number ${job.job_number} returned by the Project Manager`,
+      message: data.notes || job.description || "",
+      category: "approval",
+      link: approved ? "/approvals" : "/projects",
+      entity_table: "job_numbers",
+      entity_id: data.id,
     });
     return { ok: true };
   });

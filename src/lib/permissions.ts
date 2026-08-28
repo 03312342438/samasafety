@@ -14,15 +14,19 @@ export async function isManagement(supabase: AnyClient, userId: string): Promise
 
 const MESSAGES: Partial<Record<Capability, string>> = {
   "report.fill": "Only Installation & Maintenance / Technician staff can submit service reports.",
+  "customer.manage": "Only Sales and Management can create or change customer records.",
   "sales.manage": "Only the Sales department can manage inquiries, quotations and customer POs.",
   "project.create": "Only the Project Manager can create projects and project numbers.",
   "bom.create": "Only the Project Manager can create a BOM/BOS.",
-  "jobnumber.create": "Only Installation & Maintenance can create a job number.",
-  "jobnumber.approve_pm": "Only the Project Manager can approve a job number.",
+  "jobnumber.create": "Only Installation & Maintenance, the Project Manager or Management can create a job number.",
+  "jobnumber.approve_pm": "Only the Project Manager or Management can approve a job number.",
+  "uom.manage": "Only the Project Manager can maintain the units of measurement.",
   "stock.item.create": "Only the Project Manager can add a new inventory item.",
+  "stock.item.approve": "Only Management can approve an inventory item.",
   "stock.receive": "Only the Store can receive stock.",
   "stock.issue": "Only the Store can release material.",
   "accounts.manage": "Only the Accounts department can handle invoices and payments.",
+  "invoice.create": "Invoices are raised by the Accounts department only.",
 };
 
 /** Throw unless the caller's department allows this action. */
@@ -36,4 +40,29 @@ export async function assertCan(
     throw new Error(MESSAGES[cap] ?? "You do not have permission to do this.");
   }
   return roles;
+}
+
+/**
+ * Once a record has been approved it is frozen: only Management may still
+ * edit or delete it. Everyone else gets a clear refusal.
+ */
+export async function assertMutable(
+  supabase: AnyClient,
+  userId: string,
+  opts: { approved: boolean; label: string; action?: "edit" | "delete" },
+): Promise<void> {
+  if (!opts.approved) return;
+  if (await isManagement(supabase, userId)) return;
+  throw new Error(
+    `${opts.label} has been approved — only Management can ${opts.action ?? "edit"} it now.`,
+  );
+}
+
+/** True when a record's status means "approved / issued / verified". */
+export function isApprovedStatus(...values: (string | null | undefined)[]): boolean {
+  return values.some((v) =>
+    ["approved", "verified", "issued", "paid", "partially_paid", "closed", "accepted"].includes(
+      (v ?? "").toLowerCase(),
+    ),
+  );
 }
