@@ -169,6 +169,7 @@ function ApprovalsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          )}
         </div>
 
         <SegmentedTabs
