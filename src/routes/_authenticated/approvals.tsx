@@ -116,9 +116,13 @@ function ApprovalsPage() {
           <div>
             <h1 className="text-xl font-semibold">Approvals</h1>
             <p className="text-sm text-muted-foreground">
-              Approval gates A1–A6. Nothing downstream may proceed until management decides.
+              {isAdmin
+                ? "Every request raised by the departments lands here for your decision."
+                : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
+          {/* Management decides on requests — it never raises them. */}
+          {!isAdmin && (
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyRequest); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Request approval</Button>
