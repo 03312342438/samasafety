@@ -84,6 +84,8 @@ export function ManagementOverview() {
 
   return (
     <div className="space-y-6">
+      <AnalyticsCharts />
+
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Sales &amp; pipeline
