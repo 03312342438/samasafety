@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
+import { assertCan, assertMutable } from "@/lib/permissions";
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;
@@ -68,6 +69,9 @@ export const saveInvoice = createServerFn({ method: "POST" })
 
     if (id) {
       const { data: prev } = await supabase.from("invoices").select("*").eq("id", id).maybeSingle();
+      if (prev && prev.status !== "draft") {
+        throw new Error("An issued invoice can no longer be edited — raise a credit/debit note instead.");
+      }
       const { error } = await supabase.from("invoices").update({ ...fields, ...totals }).eq("id", id);
       if (error) throw new Error(error.message);
       await supabase.from("invoice_items").delete().eq("invoice_id", id);
@@ -80,6 +84,7 @@ export const saveInvoice = createServerFn({ method: "POST" })
         new_value: { ...fields, ...totals },
       });
     } else {
+      await assertCan(supabase, userId, "invoice.create");
       const reference = await nextSequence(supabase, "invoices", "reference", "INV");
       const { data: created, error } = await supabase
         .from("invoices")
@@ -128,6 +133,12 @@ export const deleteInvoice = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { data: prev } = await supabase.from("invoices").select("reference, status").eq("id", data.id).maybeSingle();
+    await assertMutable(supabase, userId, {
+      approved: (prev?.status ?? "draft") !== "draft",
+      label: `Invoice ${prev?.reference ?? ""}`.trim(),
+      action: "delete",
+    });
     const { error } = await supabase.from("invoices").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
