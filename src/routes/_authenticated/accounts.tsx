@@ -24,6 +24,10 @@ import {
 } from "@/lib/accounts.functions";
 import { submitApproval } from "@/lib/approvals.functions";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
+import {
+  FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
+} from "@/components/AccountsFinance";
+
 
 export const Route = createFileRoute("/_authenticated/accounts")({
   component: AccountsPage,
