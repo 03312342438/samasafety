@@ -28,6 +28,13 @@ export function AppHeader({
     navigate({ to: "/auth", replace: true });
   };
 
+  const canSeeCustomers = hasDept(roles, "sales") || hasDept(roles, "project_manager");
+  const canSeeProjects =
+    canSeeCustomers ||
+    hasDept(roles, "inventory") ||
+    hasDept(roles, "technician") ||
+    hasDept(roles, "accounts");
+
   return (
     <header className="sticky top-0 z-10 border-b bg-card/95 shadow-[var(--shadow-card)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5">
