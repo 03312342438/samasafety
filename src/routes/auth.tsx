@@ -119,8 +119,9 @@ function AuthPage() {
 
       const { error: roleErr } = await supabase
         .from("user_roles")
-        .insert({ user_id: signUpData.user!.id, role: "employee" });
+        .insert({ user_id: signUpData.user!.id, role: departmentForDesignation(designation) });
       if (roleErr) throw new Error(roleErr.message);
+
 
       // Don't leave them signed into a pending session.
       await supabase.auth.signOut();
