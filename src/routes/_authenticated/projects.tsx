@@ -191,19 +191,21 @@ function ProjectsPage() {
                   <DialogHeader><DialogTitle>{form.id ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Project name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-                    <div>
-                      <Label className="text-xs">Customer</Label>
-                      <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={form.customer_id}
-                        onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
-                      >
-                        <option value="">— none —</option>
-                        {((customers as any[]) ?? []).map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                     <div>
+                       <Label className="text-xs">Customer (customer number)</Label>
+                       <select
+                         className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                         value={form.customer_id}
+                         onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
+                       >
+                         <option value="">— none —</option>
+                         {((customers as any[]) ?? []).map((c) => (
+                           <option key={c.id} value={c.id}>
+                             {c.customer_number ? `${c.customer_number} — ` : ""}{c.name}
+                           </option>
+                         ))}
+                       </select>
+                     </div>
                     <Field label="Site location" value={form.site_location} onChange={(v) => setForm({ ...form, site_location: v })} />
                     <div>
                       <Label className="text-xs">Type</Label>
