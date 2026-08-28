@@ -49,7 +49,7 @@ function Dashboard() {
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
-  const [tab, setTab] = useState("new");
+  const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
 
   const taskList = ((tasks as any[]) ?? []).filter((t) =>
