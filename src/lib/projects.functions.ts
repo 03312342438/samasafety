@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
+import { nextSequence } from "@/lib/sequence";
 
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -245,24 +246,3 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
-
-// Generate the next SAMA-YYYY-NNNN style reference for a table/column.
-async function nextSequence(
-  supabase: any,
-  table: string,
-  column: string,
-  prefix: string,
-): Promise<string> {
-  const year = new Date().getFullYear();
-  const like = `${prefix}-${year}-%`;
-  const { data } = await supabase
-    .from(table)
-    .select(column)
-    .like(column, like)
-    .order(column, { ascending: false })
-    .limit(1);
-  const last = (data ?? [])[0]?.[column] as string | undefined;
-  const lastNum = last ? parseInt(last.split("-").pop() ?? "0", 10) : 0;
-  const next = (Number.isFinite(lastNum) ? lastNum : 0) + 1;
-  return `${prefix}-${year}-${String(next).padStart(4, "0")}`;
-}
