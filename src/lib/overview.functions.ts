@@ -57,7 +57,7 @@ export const getManagementOverview = createServerFn({ method: "GET" })
       supabase
         .from("projects")
         .select(
-          "id, project_number, name, stage, status, progress_percent, contract_value, estimated_cost, currency, site_location, target_date, customer_id",
+          "id, project_number, name, stage, status, progress_percent, contract_value, estimated_cost, currency, site_location, target_date, completed_date, customer_id",
         )
         .order("created_at", { ascending: false }),
       supabase.from("job_numbers").select("id, status, progress_percent"),
