@@ -187,3 +187,53 @@ export function humanize(value: string | null | undefined): string {
     value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
   );
 }
+
+// --------------------------------------------------------------------------
+// Department capability matrix — the single source of truth for "who can do
+// what". Mirrored server-side by `assertCan` in permissions.ts.
+// --------------------------------------------------------------------------
+export type Capability =
+  | "report.fill"          // maintenance service report form
+  | "customer.manage"
+  | "sales.manage"         // inquiries, quotations, customer POs
+  | "project.create"       // projects & project numbers
+  | "bom.create"
+  | "jobnumber.create"
+  | "jobnumber.approve_pm"
+  | "stock.item.create"    // add a brand-new item code
+  | "stock.receive"        // feed quantity with supplier + price
+  | "stock.issue"          // release against a job number
+  | "material.request"
+  | "site.execution"
+  | "accounts.manage"      // invoices, payments, receivables, payables
+  | "management.analytics";
+
+const MATRIX: Record<Capability, Department[]> = {
+  "report.fill": ["technician"],
+  "customer.manage": ["sales", "project_manager"],
+  "sales.manage": ["sales"],
+  "project.create": ["project_manager"],
+  "bom.create": ["project_manager"],
+  "jobnumber.create": ["technician"],
+  "jobnumber.approve_pm": ["project_manager"],
+  "stock.item.create": ["project_manager"],
+  "stock.receive": ["inventory"],
+  "stock.issue": ["inventory"],
+  "material.request": ["inventory", "project_manager"],
+  "site.execution": ["technician", "project_manager"],
+  "accounts.manage": ["accounts"],
+  "management.analytics": ["admin"],
+};
+
+/** Management sees everything, but only these departments may act. */
+export function can(roles: string[] | undefined, cap: Capability): boolean {
+  const mine = normalizeRoles(roles);
+  if (mine.includes("admin") && cap !== "report.fill") return true;
+  return MATRIX[cap].some((d) => mine.includes(d));
+}
+
+/** Read-only visibility: management always, plus anyone who can act. */
+export function canView(roles: string[] | undefined, cap: Capability): boolean {
+  if (normalizeRoles(roles).includes("admin")) return true;
+  return can(roles, cap);
+}
