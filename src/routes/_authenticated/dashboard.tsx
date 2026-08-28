@@ -13,6 +13,7 @@ import { MaintenanceTaskList } from "@/components/MaintenanceTaskList";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
 import { AppHeader } from "@/components/AppHeader";
+import { ManagementOverview } from "@/components/ManagementOverview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
@@ -22,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet, LayoutDashboard } from "lucide-react";
 import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
@@ -51,6 +52,8 @@ function Dashboard() {
   });
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
+  // Managers never see the report-filling form; they land on the overview.
+  const activeTab = isAdmin && tab === "new" ? "overview" : !isAdmin && tab === "overview" ? "new" : tab;
 
   const taskList = ((tasks as any[]) ?? []).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
@@ -145,7 +148,7 @@ function Dashboard() {
           </div>
         )}
 
-        {tab === "maintenance" && (
+        {activeTab === "maintenance" && (
           <div className="mt-5 space-y-6">
             <SearchInput
               value={taskQuery}
