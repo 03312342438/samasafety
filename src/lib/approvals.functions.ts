@@ -40,7 +40,13 @@ export const submitApproval = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: created, error } = await supabase
       .from("approvals")
-      .insert({ ...data, decision: "pending", requested_by: userId })
+      .insert({
+        ...data,
+        decision: "pending",
+        submitted_by: userId,
+        entity_table: data.job_number_id ? "job_numbers" : "projects",
+        entity_id: data.job_number_id ?? data.project_id,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -102,8 +108,10 @@ export const decideApproval = createServerFn({ method: "POST" })
       .from("approvals")
       .update({
         decision: data.decision,
-        decision_notes: data.decision_notes,
-        decided_by: userId,
+        decision_comments: data.decision_notes,
+        rejection_reason: data.decision === "rejected" ? data.decision_notes : "",
+        revision_requested: data.decision === "revision_requested",
+        approver_id: userId,
         decided_at: new Date().toISOString(),
       })
       .eq("id", data.id);
@@ -114,7 +122,8 @@ export const decideApproval = createServerFn({ method: "POST" })
       await supabase
         .from("job_numbers")
         .update({
-          status: data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "draft",
+          status:
+            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "draft",
           approved_by: data.decision === "approved" ? userId : null,
           approved_at: data.decision === "approved" ? new Date().toISOString() : null,
         })
@@ -139,7 +148,7 @@ export const decideApproval = createServerFn({ method: "POST" })
       previous_value: { decision: approval.decision },
       new_value: { decision: data.decision, notes: data.decision_notes },
     });
-    await notifyUsers(supabase, [approval.requested_by], {
+    await notifyUsers(supabase, [approval.submitted_by], {
       title: `Approval ${data.decision.replace("_", " ")}`,
       message: approval.title,
       category: "approval",
