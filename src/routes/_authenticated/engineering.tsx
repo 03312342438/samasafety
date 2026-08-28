@@ -430,15 +430,16 @@ function EngineeringPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
+                      onClick={() => {
                         setTaskForm({
                           ...emptyTask, ...t,
                           project_id: t.project_id ?? "", job_number_id: t.job_number_id ?? "",
                           planned_start: t.planned_start ?? "", planned_end: t.planned_end ?? "",
                           actual_start: t.actual_start ?? "", actual_end: t.actual_end ?? "",
                           progress_percent: String(t.progress_percent ?? 0),
-                        }) || setTaskOpen(true)
-                      }
+                        });
+                        setTaskOpen(true);
+                      }}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
