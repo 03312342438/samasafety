@@ -104,23 +104,34 @@ function Dashboard() {
           </div>
         )}
         <div className="mb-5">
-          <h1 className="text-2xl font-bold">Maintenance Service Reports</h1>
+          <h1 className="text-2xl font-bold">
+            {isAdmin ? "Management Dashboard" : "Maintenance Service Reports"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Fill in a new report or download a previous one as PDF.
+            {isAdmin
+              ? "Live view of sales, costing, billing and project progress."
+              : "Fill in a new report or download a previous one as PDF."}
           </p>
         </div>
 
         <SegmentedTabs
-          value={tab}
+          value={activeTab}
           onChange={setTab}
           tabs={[
-            { value: "new", label: <><Plus className="mr-1 h-4 w-4" /> New Report</> },
+            ...(isAdmin
+              ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
+              : [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]),
             { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> History ({reports?.length ?? 0})</> },
             { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
         />
 
-        {tab === "new" && (
+        {activeTab === "overview" && isAdmin && (
+          <div className="mt-5">
+            <ManagementOverview />
+          </div>
+        )}
+        {activeTab === "new" && !isAdmin && (
           <div className="mt-5">
             <ReportForm
               defaultPerformedBy={profile?.profile?.full_name || profile?.profile?.email || ""}
@@ -128,11 +139,12 @@ function Dashboard() {
             />
           </div>
         )}
-        {tab === "history" && (
+        {activeTab === "history" && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
           </div>
         )}
+
         {tab === "maintenance" && (
           <div className="mt-5 space-y-6">
             <SearchInput
