@@ -28,6 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
+import { can } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -50,10 +51,13 @@ function Dashboard() {
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
+  // Only Installation & Maintenance / Technician staff may fill service reports.
+  const canFillReport = can(profile?.roles, "report.fill");
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
-  // Managers never see the report-filling form; they land on the overview.
-  const activeTab = isAdmin && tab === "new" ? "overview" : !isAdmin && tab === "overview" ? "new" : tab;
+  const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
+  const activeTab =
+    (tab === "overview" && !isAdmin) || (tab === "new" && !canFillReport) ? fallbackTab : tab;
 
   const taskList = ((tasks as any[]) ?? []).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
@@ -94,7 +98,7 @@ function Dashboard() {
     <div className="min-h-screen bg-secondary/40">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className={isAdmin ? "mx-auto max-w-7xl px-4 py-6" : "mx-auto max-w-5xl px-4 py-6"}>
         {profileError && (
           <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
             <p className="font-semibold">Server configuration problem</p>
@@ -123,7 +127,10 @@ function Dashboard() {
           tabs={[
             ...(isAdmin
               ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
-              : [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]),
+              : []),
+            ...(canFillReport
+              ? [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]
+              : []),
             { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> History ({reports?.length ?? 0})</> },
             { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
@@ -134,7 +141,7 @@ function Dashboard() {
             <ManagementOverview />
           </div>
         )}
-        {activeTab === "new" && !isAdmin && (
+        {activeTab === "new" && canFillReport && (
           <div className="mt-5">
             <ReportForm
               defaultPerformedBy={profile?.profile?.full_name || profile?.profile?.email || ""}
