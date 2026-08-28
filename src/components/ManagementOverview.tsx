@@ -122,8 +122,6 @@ export function ManagementOverview() {
         </div>
       </div>
 
-      <AnalyticsCharts />
-
       <div className="grid gap-4 lg:grid-cols-3">
         <StageList title="Quotation pipeline" rows={data.pipelineByStage} />
         <StageList title="Projects by stage" rows={data.projectsByStage} />
