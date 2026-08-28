@@ -440,6 +440,13 @@ function ProjectsPage() {
                       {[j.projects?.project_number, j.customers?.name, j.scope_type, j.site_location].filter(Boolean).join(" · ")}
                     </p>
                     {j.description && <p className="text-xs text-muted-foreground">{j.description}</p>}
+                    <p className="text-xs text-muted-foreground">
+                      {j.job_kind === "maintenance"
+                        ? `Maintenance · every ${j.maintenance_interval_months ?? "—"} month(s)`
+                        : `Installation · progress ${j.progress_percent ?? 0}%`}
+                    </p>
+                    {j.job_kind !== "maintenance" && <JobSteps jobId={j.id} onChanged={refresh} />}
+
                   </div>
                   <div className="flex gap-2">
                     {j.status === "draft" && (
