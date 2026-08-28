@@ -222,6 +222,7 @@ export type Database = {
           quantity: number
           remarks: string
           sequence: number
+          stock_item_id: string | null
           unit: string
           unit_cost: number
           updated_at: string
@@ -236,6 +237,7 @@ export type Database = {
           quantity?: number
           remarks?: string
           sequence?: number
+          stock_item_id?: string | null
           unit?: string
           unit_cost?: number
           updated_at?: string
@@ -250,6 +252,7 @@ export type Database = {
           quantity?: number
           remarks?: string
           sequence?: number
+          stock_item_id?: string | null
           unit?: string
           unit_cost?: number
           updated_at?: string
@@ -260,6 +263,13 @@ export type Database = {
             columns: ["bom_id"]
             isOneToOne: false
             referencedRelation: "boms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bom_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1940,6 +1950,9 @@ export type Database = {
       }
       stock_items: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           category: string
           created_at: string
           created_by: string
@@ -1958,6 +1971,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string
           created_at?: string
           created_by: string
@@ -1976,6 +1992,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string
           created_at?: string
           created_by?: string
@@ -2305,6 +2324,36 @@ export type Database = {
           payment_terms?: string
           phone?: string
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      units_of_measure: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
           updated_at?: string
         }
         Relationships: []
