@@ -67,10 +67,13 @@ function ProjectsPage() {
   const saveJob = useServerFn(saveJobNumber);
   const removeJob = useServerFn(deleteJobNumber);
   const requestApproval = useServerFn(submitApproval);
+  const fetchBoms = useServerFn(listBoms);
 
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
   const { data: jobs } = useQuery({ queryKey: ["job-numbers"], queryFn: () => fetchJobs() });
   const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => fetchCustomers() });
+  const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
+
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(emptyProject);
