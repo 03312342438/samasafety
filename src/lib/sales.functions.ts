@@ -259,17 +259,15 @@ export const setQuotationStage = createServerFn({ method: "POST" })
       customer_accepted: "accepted",
     };
 
-    const patch: Record<string, unknown> = {
+    const patch = {
       stage: data.stage,
       status: statusByStage[data.stage] ?? quotation.status,
       decision_notes: data.notes || quotation.decision_notes,
+      ...(data.stage === "quotation_sent" && !quotation.sent_at
+        ? { sent_at: new Date().toISOString() }
+        : {}),
+      ...(data.stage === "negotiation" ? { revision: (quotation.revision ?? 0) + 1 } : {}),
     };
-    if (data.stage === "quotation_sent" && !quotation.sent_at) {
-      patch['sent_at'] = new Date().toISOString();
-    }
-    if (data.stage === "negotiation") {
-      patch['revision'] = (quotation.revision ?? 0) + 1;
-    }
 
     const { error } = await supabase.from("quotations").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
