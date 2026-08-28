@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DESIGNATIONS } from "@/lib/workflow";
 
 import { toast } from "sonner";
 import { Loader2, ShieldPlus } from "lucide-react";
@@ -52,10 +54,23 @@ function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast.error(error.message);
+      return;
+    }
+
+    // Block accounts that management has not approved yet.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", data.user!.id)
+      .maybeSingle();
+    setLoading(false);
+    if (profile && profile.status === "pending") {
+      await supabase.auth.signOut();
+      toast.error("Your account is awaiting manager approval.");
       return;
     }
     navigate({ to: "/dashboard" });
@@ -189,7 +204,16 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sdg">Designation</Label>
-                    <Input id="sdg" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Technician" />
+                    <Select value={designation} onValueChange={setDesignation} required>
+                      <SelectTrigger id="sdg">
+                        <SelectValue placeholder="Select your designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DESIGNATIONS.map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="semail">Email</Label>
@@ -227,7 +251,16 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="dg">Designation</Label>
-                    <Input id="dg" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Manager" />
+                    <Select value={designation} onValueChange={setDesignation}>
+                      <SelectTrigger id="dg">
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DESIGNATIONS.map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email2">Email</Label>

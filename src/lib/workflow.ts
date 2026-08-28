@@ -22,6 +22,26 @@ export const DEPARTMENTS: { value: Department; label: string; description: strin
   { value: "accounts", label: "Accounts", description: "Invoices, payments, project costs" },
 ];
 
+// Job designations offered at sign-up (free-form label stored on the profile).
+export const DESIGNATIONS: string[] = [
+  "Managing Director",
+  "General Manager",
+  "Operations Manager",
+  "Project Manager",
+  "Site Engineer",
+  "Sales Engineer",
+  "Sales Executive",
+  "Estimation Engineer",
+  "Draughtsman",
+  "Store Keeper",
+  "Procurement Officer",
+  "Accountant",
+  "Safety Officer",
+  "Technician",
+  "Helper",
+  "Administrator",
+];
+
 export const DEPARTMENT_LABELS: Record<string, string> = {
   admin: "Management",
   sales: "Sales",
