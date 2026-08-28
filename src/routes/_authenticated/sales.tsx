@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
+import { AnalyticsCharts } from "@/components/AnalyticsCharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -366,10 +367,12 @@ function SalesPage() {
             { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
+            { value: "analytics", label: "Analytics" },
           ]}
         />
 
         <div className="mt-4 space-y-3">
+          {tab === "analytics" && <AnalyticsCharts />}
           {tab === "inquiries" && inquiryList.map((i) => (
             <Card key={i.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
