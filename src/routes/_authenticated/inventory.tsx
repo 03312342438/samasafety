@@ -110,6 +110,18 @@ function InventoryPage() {
     qc.invalidateQueries({ queryKey: ["notifications"] });
   };
 
+  /** Only Management clears a new item code for use in BOMs and requests. */
+  const canApproveItems = can(profile?.roles, "stock.item.approve");
+  const decideItem = async (id: string, approval_status: "approved" | "rejected") => {
+    try {
+      await approveItem({ data: { id, approval_status } });
+      toast.success(`Item ${approval_status}`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update the item");
+    }
+  };
+
   const stockOptions = useMemo(
     () =>
       [["", "— free text —"] as [string, string]].concat(
