@@ -211,7 +211,13 @@ export const setCompletionStage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Completion record not found");
 
-    const patch: Record<string, string | boolean | null> = { stage: data.stage };
+    const patch: {
+      stage: string;
+      status?: string;
+      remarks?: string;
+      customer_confirmed?: boolean;
+      customer_confirmed_at?: string;
+    } = { stage: data.stage };
     if (data.stage === "customer_confirmation" && data.customer_confirmed) {
       patch["customer_confirmed"] = true;
       patch["customer_confirmed_at"] = new Date().toISOString();
