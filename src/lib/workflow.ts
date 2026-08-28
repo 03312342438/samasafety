@@ -200,35 +200,47 @@ export type Capability =
   | "bom.create"
   | "jobnumber.create"
   | "jobnumber.approve_pm"
+  | "uom.manage"           // units of measurement master list
   | "stock.item.create"    // add a brand-new item code
+  | "stock.item.approve"   // management clears an item code for use
   | "stock.receive"        // feed quantity with supplier + price
   | "stock.issue"          // release against a job number
   | "material.request"
   | "site.execution"
   | "accounts.manage"      // invoices, payments, receivables, payables
+  | "invoice.create"       // raising an invoice — Accounts only
   | "management.analytics";
 
 const MATRIX: Record<Capability, Department[]> = {
   "report.fill": ["technician"],
-  "customer.manage": ["sales", "project_manager"],
+  "customer.manage": ["sales"],
   "sales.manage": ["sales"],
   "project.create": ["project_manager"],
   "bom.create": ["project_manager"],
-  "jobnumber.create": ["technician"],
+  "jobnumber.create": ["technician", "project_manager"],
   "jobnumber.approve_pm": ["project_manager"],
+  "uom.manage": ["project_manager"],
   "stock.item.create": ["project_manager"],
+  "stock.item.approve": ["admin"],
   "stock.receive": ["inventory"],
   "stock.issue": ["inventory"],
   "material.request": ["inventory", "project_manager"],
   "site.execution": ["technician", "project_manager"],
   "accounts.manage": ["accounts"],
+  "invoice.create": ["accounts"],
   "management.analytics": ["admin"],
 };
+
+/**
+ * Capabilities Management deliberately does NOT inherit — Management reviews
+ * and approves this work rather than performing it.
+ */
+const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create"];
 
 /** Management sees everything, but only these departments may act. */
 export function can(roles: string[] | undefined, cap: Capability): boolean {
   const mine = normalizeRoles(roles);
-  if (mine.includes("admin") && cap !== "report.fill") return true;
+  if (mine.includes("admin") && !ADMIN_EXCLUDED.includes(cap)) return true;
   return MATRIX[cap].some((d) => mine.includes(d));
 }
 
@@ -237,3 +249,4 @@ export function canView(roles: string[] | undefined, cap: Capability): boolean {
   if (normalizeRoles(roles).includes("admin")) return true;
   return can(roles, cap);
 }
+
