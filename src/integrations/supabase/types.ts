@@ -211,6 +211,141 @@ export type Database = {
         }
         Relationships: []
       }
+      bom_items: {
+        Row: {
+          amount: number
+          bom_id: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          quantity: number
+          remarks: string
+          sequence: number
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          bom_id: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bom_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_items_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boms: {
+        Row: {
+          bom_type: string
+          created_at: string
+          created_by: string
+          currency: string
+          customer_id: string | null
+          estimated_cost: number
+          id: string
+          job_number_id: string | null
+          notes: string
+          prepared_by: string | null
+          project_id: string | null
+          reference: string
+          revision: number
+          stage: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bom_type?: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          customer_id?: string | null
+          estimated_cost?: number
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          prepared_by?: string | null
+          project_id?: string | null
+          reference: string
+          revision?: number
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          bom_type?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_id?: string | null
+          estimated_cost?: number
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          prepared_by?: string | null
+          project_id?: string | null
+          reference?: string
+          revision?: number
+          stage?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boms_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boms_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boms_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_pos: {
         Row: {
           created_at: string
@@ -684,6 +819,84 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      project_tasks: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          job_number_id: string | null
+          notes: string
+          planned_end: string | null
+          planned_start: string | null
+          priority: string
+          progress_percent: number
+          project_id: string | null
+          sequence: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          planned_end?: string | null
+          planned_start?: string | null
+          priority?: string
+          progress_percent?: number
+          project_id?: string | null
+          sequence?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          planned_end?: string | null
+          planned_start?: string | null
+          priority?: string
+          progress_percent?: number
+          project_id?: string | null
+          sequence?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
