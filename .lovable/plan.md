@@ -1,29 +1,55 @@
-## Why you're seeing this
+# SAMA Fire & Safety ERP — Integration Plan
 
-The error text "Check that SENDGRID_API_KEY is valid and the sender address is a verified Single Sender…" is **not** proof that the API key is wrong. The send code (`src/lib/email.functions.ts`, `formatSendgridError`) returns that exact same generic sentence for **both** a `401` and a `403` response from SendGrid:
+## What already exists (audited, will be preserved)
 
-- **401** = the API key is actually invalid/revoked.
-- **403** = the key is fine, but the request is forbidden — almost always because the **sender `ibrahim.ali2438@gmail.com` is not a verified Single Sender**, or the API key was created without the **"Mail Send"** permission.
+| Existing | Role in new workflow |
+|---|---|
+| Auth + roles (`admin`, `employee`), approval of new sign-ups | Extended with more departments, not replaced |
+| `reports` table + Report form, signature pad, PDF, Excel export | Becomes the **Service Report**, linked to Job Number |
+| `maintenance_tasks` + reminder emails + cron hook | Becomes the Maintenance side of Job execution |
+| Employee dashboard (my reports / my tasks) | Becomes the **Technician dashboard** |
+| Admin console (employees, recipients, tasks, spare parts) | Becomes the **Management** console |
+| Email sending, global search helper, shared header/tabs/badges | Extended, reused everywhere |
 
-Because both map to the same message, you can't tell which one it is. Given you just re-entered the key, the most likely cause is a **403 (sender not verified / key missing Mail Send scope)**, not a bad key.
+Nothing above is deleted or duplicated.
 
-## The fix
+## What is missing and must be built
 
-Update `formatSendgridError` in `src/lib/email.functions.ts` so it distinguishes the cases and includes SendGrid's own error detail:
+Customers, Assets, Inquiries, Quotations (with revisions), Purchase Orders + PO verification, Projects, Job Numbers, Drawings, BOM/BOS, Inventory + material issue/return/consumption, Daily Progress, Site Issues, Invoices, Payments, Project Costs, a single Approvals engine, Notifications, Audit trail, and role-based dashboards.
 
-- `401` → message clearly stating the **API key is invalid**.
-- `403` → message clearly stating the **key is valid but the sender address isn't verified or the key lacks the "Mail Send" permission**.
-- Append the actual reason text SendGrid returns (its JSON `errors[].message`) so the true cause is visible in the toast/logs.
+That is a large system. Building it in one shot would be unstable and unreviewable, so it ships in phases — each phase leaves a working app.
 
-```text
-401  -> "SendGrid rejected the key (401). The SENDGRID_API_KEY is invalid or revoked. Reason: <sendgrid message>"
-403  -> "SendGrid forbade the send (403). The key is valid but the sender 'ibrahim.ali2438@gmail.com' is not a verified Single Sender, or the key lacks 'Mail Send' permission. Reason: <sendgrid message>"
-```
+## Phases
 
-I'll apply the same change to the reminder path in `src/routes/api/public/hooks/maintenance-reminders.ts` if it has the same generic handler, so both routes report the true reason.
+**Phase 1 — Foundation (this phase)**
+- Extend the role enum to: `admin` (management), `sales`, `project_manager`, `inventory`, `technician` (existing employees map here), `accounts`. Existing admin/employee rows are migrated, not dropped.
+- One central `approvals` table (types A1–A6) + one `notifications` table + one `audit_log` table — reused by every later module.
+- Core entities: `customers`, `assets`, `projects`, `job_numbers`, with `reports` and `maintenance_tasks` gaining optional `customer_id` / `project_id` / `job_number_id` links so existing rows stay valid.
+- Role-aware navigation shell and a role router that sends each user to their dashboard. Technician dashboard = today's dashboard, unchanged in behaviour.
 
-## What you should check on SendGrid's side
-1. **Single Sender**: Settings → Sender Authentication → confirm `ibrahim.ali2438@gmail.com` shows **Verified** (a Gmail address can only be used as a Single Sender, and it must be confirmed via the email SendGrid sent).
-2. **API key scope**: Settings → API Keys → the key used must have **Full Access** or at least **Mail Send** enabled.
+**Phase 2 — Sales chain**
+Inquiry → Requirement Review → Quotation (with revision history) → Follow-ups → Customer Acceptance → Customer PO → PO Verification gate (match / clarification loop) → A1 & A2 management approvals. Sales dashboard.
 
-After the code change, retry once — the new message will tell us exactly whether it's the key (401) or the sender/scope (403), and we'll act on that.
+**Phase 3 — Project Manager & Engineering**
+Project planning, drawings with revision/status, BOM, BOS, Job Number creation with A3/A4 approval gates, task assignment. PM dashboard. Unified Project record page with tabs.
+
+**Phase 4 — Inventory & material control**
+Stock, reservation/allocation, Material Issue Notes bound to an approved Job Number + approved BOM (enforced in the database, not just the UI), returns, consumption, shortage reporting, A5 additional-material approval. Inventory dashboard.
+
+**Phase 5 — Execution & Service**
+Daily Progress, Site Issues, mobile-first job screens, and wiring the existing service report + customer signature into Job Number → PM review.
+
+**Phase 6 — Accounts & Closure**
+Invoices, payments, receivables, project costs by Job Number, profitability, A6 final review and the controlled Project Closure checklist. Accounts + Management dashboards, global search across all numbers, full audit timeline.
+
+## Technical notes
+
+- All new tables live in the existing backend with RLS, `GRANT`s and department-scoped policies driven by the existing `private.has_role` security-definer function (extended for new roles). Management sees everything; departments see their own scope.
+- Approval gates and the material-issue rule are enforced with database triggers/policies so they cannot be bypassed from the UI.
+- Server access continues to use `createServerFn` + `requireSupabaseAuth`, matching the current `src/lib/*.functions.ts` pattern.
+- UI keeps the current shadcn/Tailwind design language, `AppHeader`, `SegmentedTabs`, and existing status-badge styling.
+- Status values come from one shared master-lifecycle constant module so no module invents its own.
+
+## Scope check
+
+This plan starts with Phase 1 only. After it is running I'll continue phase by phase, each ending with a working, testable app, up to the full end-to-end scenario.
