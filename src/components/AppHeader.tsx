@@ -66,6 +66,11 @@ export function AppHeader({
               <Link to="/engineering">Planning</Link>
             </Button>
           )}
+          {(isAdmin || hasDept(roles, "inventory") || hasDept(roles, "project_manager")) && (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/inventory">Store</Link>
+            </Button>
+          )}
           <Button asChild variant="ghost" size="sm">
             <Link to="/approvals">Approvals</Link>
           </Button>
