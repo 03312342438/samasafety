@@ -14,6 +14,69 @@ export const listApprovals = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/** Full detail of the record a request is attached to, for the approver. */
+export const getApprovalEntity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: approval } = await supabase
+      .from("approvals")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!approval) throw new Error("Approval not found");
+    if (!approval.entity_id) return { kind: "none" as const, approval };
+
+    if (approval.entity_table === "quotations") {
+      const [{ data: quotation }, { data: items }] = await Promise.all([
+        supabase
+          .from("quotations")
+          .select("*, customers(name, customer_number)")
+          .eq("id", approval.entity_id)
+          .maybeSingle(),
+        supabase
+          .from("quotation_items")
+          .select("*")
+          .eq("quotation_id", approval.entity_id)
+          .order("sequence"),
+      ]);
+      return { kind: "quotation" as const, approval, quotation, items: items ?? [] };
+    }
+    if (approval.entity_table === "customer_pos") {
+      const { data: po } = await supabase
+        .from("customer_pos")
+        .select("*, customers(name, customer_number), quotations(reference, total_amount)")
+        .eq("id", approval.entity_id)
+        .maybeSingle();
+      return { kind: "customer_po" as const, approval, po };
+    }
+    return { kind: "none" as const, approval };
+  });
+
+/** Management may clear a decided request out of the record. */
+export const deleteApproval = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (!(myRoles ?? []).some((r) => r.role === "admin")) {
+      throw new Error("Only Management can delete an approval record.");
+    }
+    const { data: prev } = await supabase.from("approvals").select("*").eq("id", data.id).maybeSingle();
+    const { error } = await supabase.from("approvals").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logActivity(supabase, userId, {
+      action: "delete",
+      entity_table: "approvals",
+      entity_id: data.id,
+      entity_label: prev?.title ?? "",
+      previous_value: prev,
+    });
+    return { ok: true };
+  });
+
 /** Raise an approval request (A1 - A6). Management is notified immediately. */
 export const submitApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
