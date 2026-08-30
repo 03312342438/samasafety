@@ -104,9 +104,11 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
     );
 
     return {
+      performance,
       last30Counts,
       last30Values,
       monthly,
+
       potential: {
         months: data.potentialMonths,
         count: openQuotes.length,
