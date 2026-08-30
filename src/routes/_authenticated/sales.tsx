@@ -445,8 +445,21 @@ function SalesPage() {
                     <Field label="PO value" value={poForm.po_value} onChange={(v) => setPoForm({ ...poForm, po_value: v })} />
                     <Select label="Customer" value={poForm.customer_id} onChange={(v) => setPoForm({ ...poForm, customer_id: v })}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Select label="Against quotation" value={poForm.quotation_id} onChange={(v) => setPoForm({ ...poForm, quotation_id: v })}
-                      options={((quotations as any[]) ?? []).map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))} />
+                    <Select
+                      label="Against quotation"
+                      value={poForm.quotation_id}
+                      onChange={(v) => {
+                        const q = ((quotations as any[]) ?? []).find((x) => x.id === v);
+                        setPoForm({
+                          ...poForm,
+                          quotation_id: v,
+                          customer_id: q?.customer_id ?? poForm.customer_id,
+                          po_value: q ? String(q.total_amount ?? 0) : poForm.po_value,
+                          currency: q?.currency ?? poForm.currency,
+                        });
+                      }}
+                      options={((quotations as any[]) ?? []).map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))}
+                    />
                     <Field label="Document link" value={poForm.document_url} onChange={(v) => setPoForm({ ...poForm, document_url: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>

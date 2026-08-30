@@ -159,7 +159,7 @@ function CustomersPage() {
                         )}
                       </select>
                     </div>
-                    <Field label="Payment terms" value={form.payment_terms} onChange={(v) => setForm({ ...form, payment_terms: v })} />
+                    
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Complete address</Label>
                       <Textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
