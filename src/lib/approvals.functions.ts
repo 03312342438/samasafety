@@ -41,7 +41,35 @@ export const getApprovalEntity = createServerFn({ method: "GET" })
           .eq("quotation_id", approval.entity_id)
           .order("sequence"),
       ]);
-      return { kind: "quotation" as const, approval, quotation, items: items ?? [] };
+
+      // Preliminary BOM/BOS lines linked to this quotation.
+      let bom: any = null;
+      let bomItems: any[] = [];
+      if (quotation?.bom_id) {
+        const [{ data: b }, { data: bi }] = await Promise.all([
+          supabase.from("boms").select("reference, title, estimated_cost, currency").eq("id", quotation.bom_id).maybeSingle(),
+          supabase
+            .from("bom_items")
+            .select("*, stock_items(item_code, description)")
+            .eq("bom_id", quotation.bom_id)
+            .order("sequence"),
+        ]);
+        bom = b;
+        bomItems = bi ?? [];
+      }
+
+      // Project linked to the approval request (or to the quotation's inquiry chain).
+      let project: any = null;
+      if (approval.project_id) {
+        const { data: p } = await supabase
+          .from("projects")
+          .select("project_number, name, site_location")
+          .eq("id", approval.project_id)
+          .maybeSingle();
+        project = p;
+      }
+
+      return { kind: "quotation" as const, approval, quotation, items: items ?? [], bom, bomItems, project };
     }
     if (approval.entity_table === "customer_pos") {
       const { data: po } = await supabase
