@@ -18,7 +18,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { listCustomers } from "@/lib/crm.functions";
-import { submitApproval } from "@/lib/approvals.functions";
+import { submitApproval, listApprovals } from "@/lib/approvals.functions";
 import {
   listInquiries, saveInquiry, deleteInquiry,
   listQuotations, saveQuotation, setQuotationStage, deleteQuotation,
@@ -78,6 +78,8 @@ function SalesPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("inquiries");
   const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState("all");
+
 
   const fetchCustomers = useServerFn(listCustomers);
   const fetchInquiries = useServerFn(listInquiries);
@@ -100,6 +102,26 @@ function SalesPage() {
   const fetchBoms = useServerFn(listBoms);
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
   const bomList = (boms as any[]) ?? [];
+  const fetchApprovals = useServerFn(listApprovals);
+  const { data: approvals } = useQuery({ queryKey: ["approvals"], queryFn: () => fetchApprovals() });
+
+  /** Latest approval decision per record, so Sales can see where a request stands. */
+  const approvalByEntity = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of ((approvals as any[]) ?? []).slice().reverse()) {
+      if (a.entity_id) map.set(a.entity_id, a.decision);
+    }
+    return map;
+  }, [approvals]);
+
+  const approvalState = (id: string) => {
+    const d = approvalByEntity.get(id);
+    if (!d) return null;
+    if (d === "approved") return { label: "Approved", cls: "bg-emerald-100 text-emerald-700" };
+    if (d === "rejected") return { label: "Rejected", cls: "bg-destructive/10 text-destructive" };
+    return { label: "Under Approval", cls: "bg-amber-100 text-amber-700" };
+  };
+
 
   const [inqOpen, setInqOpen] = useState(false);
   const [inqForm, setInqForm] = useState<any>(emptyInquiry);
@@ -249,8 +271,11 @@ function SalesPage() {
     (i) => !q || [i.reference, i.customers?.name, i.site_location, i.scope_type].join(" ").toLowerCase().includes(q),
   );
   const quotationList = ((quotations as any[]) ?? []).filter(
-    (x) => !q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q),
+    (x) =>
+      (!q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q)) &&
+      (stageFilter === "all" || x.stage === stageFilter),
   );
+
   const poList = ((pos as any[]) ?? []).filter(
     (p) => !q || [p.reference, p.po_number, p.customers?.name, p.quotations?.reference].join(" ").toLowerCase().includes(q),
   );
@@ -458,7 +483,13 @@ function SalesPage() {
                     <Inbox className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{i.reference}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(i.stage)}`}>{humanize(i.stage)}</span>
+                    {approvalState(i.id) && (
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(i.id)!.cls}`}>
+                        {approvalState(i.id)!.label}
+                      </span>
+                    )}
                   </div>
+
                   <p className="mt-1 text-sm text-muted-foreground">
                     {[i.customers?.name, humanize(i.scope_type), i.site_location].filter(Boolean).join(" · ") || "—"}
                   </p>
@@ -487,7 +518,33 @@ function SalesPage() {
             </Card>
           ))}
 
-          {tab === "quotations" && quotationList.map((x) => (
+          {tab === "quotations" && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Filter:</span>
+              {[
+                { value: "all", label: "All" },
+                { value: "quotation_sent", label: "Quotation sent" },
+                { value: "follow_up", label: "Follow up" },
+                { value: "negotiation", label: "Negotiation / Revision" },
+                { value: "customer_accepted", label: "Customer accepted" },
+              ].map((f) => (
+                <Button key={f.value} size="sm" className="h-7 text-xs"
+                  variant={stageFilter === f.value ? "default" : "outline"}
+                  onClick={() => setStageFilter(f.value)}>
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          )}
+          {tab === "quotations" && quotationList.map((x) => {
+            const appr = approvalState(x.id);
+            const isApproved = appr?.label === "Approved";
+            const stages = isApproved
+              ? QUOTATION_STAGES.filter(
+                  (s) => !["quotation_draft", "technical_review", "quotation_approval"].includes(s),
+                )
+              : QUOTATION_STAGES;
+            return (
             <Card key={x.id}>
               <CardContent className="space-y-3 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -496,6 +553,7 @@ function SalesPage() {
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{x.reference}{x.revision ? ` R${x.revision}` : ""}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(x.stage)}`}>{humanize(x.stage)}</span>
+                      {appr && <span className={`rounded-full px-2 py-0.5 text-[11px] ${appr.cls}`}>{appr.label}</span>}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {[x.customers?.name, x.title, x.site_location].filter(Boolean).join(" · ") || "—"}
@@ -507,16 +565,19 @@ function SalesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <QuotationPdfButton quotation={x} customerName={x.customers?.name} />
-                    <Button variant="outline" size="sm" onClick={() => askApproval(
-                      "quotation_commercial",
-                      `A1 — ${x.reference}`,
-                      `${x.customers?.name ?? ""} · ${x.title ?? ""} · total ${money(x.total_amount)} ${x.currency}`,
-                      Number(x.total_amount ?? 0),
-                      "quotations",
-                      x.id,
-                    )}>
-                      <ShieldCheck className="mr-1 h-4 w-4" /> Request A1
-                    </Button>
+                    {!appr && (
+                      <Button variant="outline" size="sm" onClick={() => askApproval(
+                        "quotation_commercial",
+                        `A1 — ${x.reference}`,
+                        `${x.customers?.name ?? ""} · ${x.title ?? ""} · total ${money(x.total_amount)} ${x.currency}`,
+                        Number(x.total_amount ?? 0),
+                        "quotations",
+                        x.id,
+                      )}>
+                        <ShieldCheck className="mr-1 h-4 w-4" /> Request A1
+                      </Button>
+                    )}
+                    {!isApproved && (
                     <Button variant="outline" size="sm" onClick={() => {
                       setQtnForm({
                         ...emptyQuotation, ...x,
@@ -536,25 +597,31 @@ function SalesPage() {
                     }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    )}
+                    {(!isApproved || profile?.isAdmin) && (
                     <Button variant="outline" size="sm" onClick={async () => {
                       try { await removeQuotation({ data: { id: x.id } }); refresh(); toast.success("Quotation deleted"); }
                       catch (e) { toast.error(msg(e, "Could not delete")); }
                     }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 border-t pt-3">
-                  {QUOTATION_STAGES.map((s) => (
+                  {stages.map((s) => (
                     <Button key={s} size="sm" variant={x.stage === s ? "default" : "ghost"}
                       className="h-7 text-xs" onClick={() => moveStage(x.id, s)}>
                       {humanize(s)}
                     </Button>
                   ))}
                 </div>
+
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
+
 
           {tab === "orders" && poList.map((p) => (
             <Card key={p.id}>
@@ -567,7 +634,13 @@ function SalesPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.verification_status)}`}>
                         {humanize(p.verification_status)}
                       </span>
+                      {approvalState(p.id) && (
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(p.id)!.cls}`}>
+                          {approvalState(p.id)!.label}
+                        </span>
+                      )}
                     </div>
+
                     <p className="mt-1 text-sm text-muted-foreground">
                       {[p.customers?.name, p.quotations?.reference, p.po_date].filter(Boolean).join(" · ") || "—"}
                     </p>

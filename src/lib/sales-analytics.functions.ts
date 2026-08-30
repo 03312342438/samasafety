@@ -21,14 +21,10 @@ function lastTwelveMonths() {
   return out;
 }
 
-const SENT_STAGES = [
-  "quotation_sent",
-  "follow_up",
-  "negotiation",
-  "customer_accepted",
-  "po_received",
-  "po_verification",
-];
+// A quotation counts as "submitted" unless it was dropped. Draft-stage quotes
+// are included so potential business is never understated.
+const DEAD_STAGES = ["cancelled", "rejected", "lost", "declined"];
+
 
 /**
  * Sales-desk analytics: quotations sent vs customer POs received, by count and
@@ -53,7 +49,7 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
     const quotations = qRes.data ?? [];
     const pos = pRes.data ?? [];
 
-    const sent = quotations.filter((q: any) => SENT_STAGES.includes(q.stage));
+    const sent = quotations.filter((q: any) => !DEAD_STAGES.includes(q.stage));
     const sentDate = (q: any) => new Date(q.sent_at ?? q.created_at);
     const poDate = (p: any) => new Date(p.po_date ?? p.created_at);
 
@@ -81,8 +77,23 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
         pos: ps.length,
         quotedValue: qs.reduce((a: number, q: any) => a + num(q.total_amount), 0),
         poValue: ps.reduce((a: number, p: any) => a + num(p.po_value), 0),
+        performance: qs.length ? Math.round((ps.length / qs.length) * 100) : 0,
       };
     });
+
+    // ---- performance (this month) -----------------------------------------
+    const thisKey = monthKey(new Date());
+    const qThis = sent.filter((q: any) => monthKey(sentDate(q)) === thisKey);
+    const pThis = pos.filter((p: any) => monthKey(poDate(p)) === thisKey);
+    const performance = {
+      month: new Date().toLocaleString("en", { month: "long", year: "numeric" }),
+      quotedCount: qThis.length,
+      quotedValue: qThis.reduce((a: number, q: any) => a + num(q.total_amount), 0),
+      poCount: pThis.length,
+      poValue: pThis.reduce((a: number, p: any) => a + num(p.po_value), 0),
+      percent: qThis.length ? Math.round((pThis.length / qThis.length) * 100) : 0,
+    };
+
 
     // ---- potential business ------------------------------------------------
     const withPo = new Set(pos.map((p: any) => p.quotation_id).filter(Boolean));
@@ -93,9 +104,11 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
     );
 
     return {
+      performance,
       last30Counts,
       last30Values,
       monthly,
+
       potential: {
         months: data.potentialMonths,
         count: openQuotes.length,

@@ -43,8 +43,8 @@ export async function assertCan(
 }
 
 /**
- * Once a record has been approved it is frozen: only Management may still
- * edit or delete it. Everyone else gets a clear refusal.
+ * Once a record has been approved it is frozen: nobody may edit it any more,
+ * and only Management may delete it.
  */
 export async function assertMutable(
   supabase: AnyClient,
@@ -52,11 +52,14 @@ export async function assertMutable(
   opts: { approved: boolean; label: string; action?: "edit" | "delete" },
 ): Promise<void> {
   if (!opts.approved) return;
-  if (await isManagement(supabase, userId)) return;
-  throw new Error(
-    `${opts.label} has been approved — only Management can ${opts.action ?? "edit"} it now.`,
-  );
+  const action = opts.action ?? "edit";
+  if (action === "delete" && (await isManagement(supabase, userId))) return;
+  if (action === "edit") {
+    throw new Error(`${opts.label} has been approved — it can no longer be edited.`);
+  }
+  throw new Error(`${opts.label} has been approved — only Management can delete it now.`);
 }
+
 
 /** True when a record's status means "approved / issued / verified". */
 export function isApprovedStatus(...values: (string | null | undefined)[]): boolean {

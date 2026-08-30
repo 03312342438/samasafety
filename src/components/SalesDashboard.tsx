@@ -63,6 +63,48 @@ export function SalesDashboard() {
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <TrendingUp className="h-4 w-4 text-primary" /> Performance
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Purchase orders received vs quotations submitted — {data.performance.month}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-3xl font-semibold text-primary">{data.performance.percent}%</p>
+            <p className="text-xs text-muted-foreground">
+              {data.performance.poCount} PO(s) out of {data.performance.quotedCount} quotation(s)
+            </p>
+          </div>
+          <div>
+            <p className="text-xl font-semibold">{money(data.performance.quotedValue)}</p>
+            <p className="text-xs text-muted-foreground">Total quoted this month</p>
+          </div>
+          <div>
+            <p className="text-xl font-semibold">{money(data.performance.poValue)}</p>
+            <p className="text-xs text-muted-foreground">Total purchase orders received</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Panel title="Performance — last 12 months" description="Quotations submitted, POs received and conversion %">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data.monthly} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+            <Tooltip formatter={(v: any, n: any) => (n === "Performance %" ? `${fmt(Number(v))}%` : fmt(Number(v)))} />
+            <Legend iconSize={10} />
+            <Bar dataKey="quotations" name="Quotations submitted" fill={COLORS[0]} radius={[3, 3, 0, 0]} />
+            <Bar dataKey="pos" name="POs received" fill={COLORS[1]} radius={[3, 3, 0, 0]} />
+            <Bar dataKey="performance" name="Performance %" fill={COLORS[2]} radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Panel>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Last 30 days — count" description="Quotations sent vs customer POs received">
           <Slice data={data.last30Counts} valueFormatter={fmt} />
@@ -71,6 +113,7 @@ export function SalesDashboard() {
           <Slice data={data.last30Values} valueFormatter={money} />
         </Panel>
       </div>
+
 
       <Panel title="Last 12 months — count" description="Quotations sent vs POs received each month">
         <ResponsiveContainer width="100%" height="100%">

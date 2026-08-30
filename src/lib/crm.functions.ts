@@ -96,8 +96,31 @@ export const deleteCustomer = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCan(supabase, userId, "customer.manage");
     const { data: prev } = await supabase.from("customers").select("*").eq("id", data.id).maybeSingle();
-    const { error } = await supabase.from("customers").delete().eq("id", data.id);
+
+    // A customer number that is already used on a project cannot be removed.
+    const { data: linkedProjects } = await supabase
+      .from("projects")
+      .select("project_number, name")
+      .eq("customer_id", data.id)
+      .limit(5);
+    if ((linkedProjects ?? []).length > 0) {
+      const list = (linkedProjects ?? [])
+        .map((p: any) => `${p.project_number}${p.name ? ` (${p.name})` : ""}`)
+        .join(", ");
+      throw new Error(
+        `Customer ${prev?.customer_number ?? ""} cannot be deleted — it is entered in project ${list}.`,
+      );
+    }
+
+    const { data: removed, error } = await supabase
+      .from("customers")
+      .delete()
+      .eq("id", data.id)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!removed || removed.length === 0) {
+      throw new Error("You do not have permission to delete this customer.");
+    }
     await logActivity(supabase, userId, {
       action: "delete",
       entity_table: "customers",
@@ -107,6 +130,7 @@ export const deleteCustomer = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
 
 // ---------------------------------------------------------------- assets ----
 
