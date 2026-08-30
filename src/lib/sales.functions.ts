@@ -173,14 +173,17 @@ export const saveQuotation = createServerFn({ method: "POST" })
     const buildUp = costBase > 0;
 
     const lineTotals = totals(items, raw.discount_amount, raw.vat_percent);
-    const subtotal = buildUp ? round2(costBase * (1 + raw.margin_percent / 100)) : lineTotals.subtotal;
+    const miscSubtotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+    const subtotal = buildUp
+      ? round2(costBase * (1 + raw.margin_percent / 100) + miscSubtotal)
+      : lineTotals.subtotal;
     const net = Math.max(subtotal - raw.discount_amount, 0);
     const total = buildUp ? round2(net + (net * raw.vat_percent) / 100) : lineTotals.total;
 
     const fields = {
       ...raw,
       inland_cost,
-      estimated_cost: buildUp ? round2(costBase) : raw.estimated_cost,
+      estimated_cost: buildUp ? round2(costBase + miscSubtotal) : round2(miscSubtotal),
       subtotal,
       total_amount: total,
     };
