@@ -584,6 +584,23 @@ function InventoryPage() {
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
+
+        <Dialog open={!!approvalPrompt} onOpenChange={(o) => { if (!o) setApprovalPrompt(null); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Send item code for approval?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{approvalPrompt?.item_code}</span>
+              {approvalPrompt?.description ? ` — ${approvalPrompt.description}` : ""} is saved but not live.
+              It can only be used in BOM / BOS once Management approves it.
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApprovalPrompt(null)}>Not now</Button>
+              <Button onClick={() => approvalPrompt && sendItemForApproval(approvalPrompt)}>
+                Send for approval
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
