@@ -100,6 +100,26 @@ function SalesPage() {
   const fetchBoms = useServerFn(listBoms);
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
   const bomList = (boms as any[]) ?? [];
+  const fetchApprovals = useServerFn(listApprovals);
+  const { data: approvals } = useQuery({ queryKey: ["approvals"], queryFn: () => fetchApprovals() });
+
+  /** Latest approval decision per record, so Sales can see where a request stands. */
+  const approvalByEntity = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of ((approvals as any[]) ?? []).slice().reverse()) {
+      if (a.entity_id) map.set(a.entity_id, a.decision);
+    }
+    return map;
+  }, [approvals]);
+
+  const approvalState = (id: string) => {
+    const d = approvalByEntity.get(id);
+    if (!d) return null;
+    if (d === "approved") return { label: "Approved", cls: "bg-emerald-100 text-emerald-700" };
+    if (d === "rejected") return { label: "Rejected", cls: "bg-destructive/10 text-destructive" };
+    return { label: "Under Approval", cls: "bg-amber-100 text-amber-700" };
+  };
+
 
   const [inqOpen, setInqOpen] = useState(false);
   const [inqForm, setInqForm] = useState<any>(emptyInquiry);
