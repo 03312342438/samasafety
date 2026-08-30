@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { listCustomers, saveCustomer, deleteCustomer, listAssets, saveAsset, deleteAsset } from "@/lib/crm.functions";
 import { statusBadgeClass } from "@/lib/workflow";
+import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/customers")({
   component: CustomersPage,
@@ -301,7 +302,7 @@ function CustomersPage() {
               </Card>
             ))}
 
-          {((tab === "customers" && customerList.length === 0) || (tab === "assets" && assetList.length === 0)) && (
+          {tab === "assets" && assetList.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
