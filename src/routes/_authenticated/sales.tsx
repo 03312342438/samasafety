@@ -663,6 +663,8 @@ function SalesPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                  {!approvalState(p.id) && (
+                    <>
                   <Button size="sm" variant="outline" className="h-7 text-xs"
                     onClick={async () => {
                       try { await verifyPo({ data: { id: p.id, verification_status: "verified", discrepancy_notes: "" } }); refresh(); toast.success("PO verified"); }
@@ -690,6 +692,9 @@ function SalesPage() {
                     )}>
                     <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Request A2
                   </Button>
+                    </>
+                  )}
+
                   {!p.project_id && (
                     <Button size="sm" className="h-7 text-xs"
                       onClick={async () => {
