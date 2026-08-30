@@ -131,11 +131,26 @@ export const deleteBom = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prev } = await supabase.from("boms").select("reference, status").eq("id", data.id).maybeSingle();
+
+    // A BOM/BOS that a quotation is built on must stay intact.
+    const { data: usedBy } = await supabase
+      .from("quotations")
+      .select("reference")
+      .eq("bom_id", data.id)
+      .limit(5);
+    if ((usedBy ?? []).length > 0) {
+      const refs = (usedBy ?? []).map((q) => q.reference).filter(Boolean).join(", ");
+      throw new Error(
+        `BOM/BOS ${prev?.reference ?? ""} is used in quotation ${refs} and cannot be deleted.`.trim(),
+      );
+    }
+
     await assertMutable(supabase, userId, {
       approved: prev?.status === "approved",
       label: `BOM ${prev?.reference ?? ""}`.trim(),
       action: "delete",
     });
+
     const { error } = await supabase.from("boms").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
