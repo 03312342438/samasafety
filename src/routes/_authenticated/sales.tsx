@@ -512,7 +512,33 @@ function SalesPage() {
             </Card>
           ))}
 
-          {tab === "quotations" && quotationList.map((x) => (
+          {tab === "quotations" && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Filter:</span>
+              {[
+                { value: "all", label: "All" },
+                { value: "quotation_sent", label: "Quotation sent" },
+                { value: "follow_up", label: "Follow up" },
+                { value: "negotiation", label: "Negotiation / Revision" },
+                { value: "customer_accepted", label: "Customer accepted" },
+              ].map((f) => (
+                <Button key={f.value} size="sm" className="h-7 text-xs"
+                  variant={stageFilter === f.value ? "default" : "outline"}
+                  onClick={() => setStageFilter(f.value)}>
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          )}
+          {tab === "quotations" && quotationList.map((x) => {
+            const appr = approvalState(x.id);
+            const isApproved = appr?.label === "Approved";
+            const stages = isApproved
+              ? QUOTATION_STAGES.filter(
+                  (s) => !["quotation_draft", "technical_review", "quotation_approval"].includes(s),
+                )
+              : QUOTATION_STAGES;
+            return (
             <Card key={x.id}>
               <CardContent className="space-y-3 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -521,6 +547,7 @@ function SalesPage() {
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{x.reference}{x.revision ? ` R${x.revision}` : ""}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(x.stage)}`}>{humanize(x.stage)}</span>
+                      {appr && <span className={`rounded-full px-2 py-0.5 text-[11px] ${appr.cls}`}>{appr.label}</span>}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {[x.customers?.name, x.title, x.site_location].filter(Boolean).join(" · ") || "—"}
@@ -532,16 +559,19 @@ function SalesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <QuotationPdfButton quotation={x} customerName={x.customers?.name} />
-                    <Button variant="outline" size="sm" onClick={() => askApproval(
-                      "quotation_commercial",
-                      `A1 — ${x.reference}`,
-                      `${x.customers?.name ?? ""} · ${x.title ?? ""} · total ${money(x.total_amount)} ${x.currency}`,
-                      Number(x.total_amount ?? 0),
-                      "quotations",
-                      x.id,
-                    )}>
-                      <ShieldCheck className="mr-1 h-4 w-4" /> Request A1
-                    </Button>
+                    {!appr && (
+                      <Button variant="outline" size="sm" onClick={() => askApproval(
+                        "quotation_commercial",
+                        `A1 — ${x.reference}`,
+                        `${x.customers?.name ?? ""} · ${x.title ?? ""} · total ${money(x.total_amount)} ${x.currency}`,
+                        Number(x.total_amount ?? 0),
+                        "quotations",
+                        x.id,
+                      )}>
+                        <ShieldCheck className="mr-1 h-4 w-4" /> Request A1
+                      </Button>
+                    )}
+                    {!isApproved && (
                     <Button variant="outline" size="sm" onClick={() => {
                       setQtnForm({
                         ...emptyQuotation, ...x,
@@ -561,22 +591,26 @@ function SalesPage() {
                     }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    )}
+                    {(!isApproved || profile?.isAdmin) && (
                     <Button variant="outline" size="sm" onClick={async () => {
                       try { await removeQuotation({ data: { id: x.id } }); refresh(); toast.success("Quotation deleted"); }
                       catch (e) { toast.error(msg(e, "Could not delete")); }
                     }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 border-t pt-3">
-                  {QUOTATION_STAGES.map((s) => (
+                  {stages.map((s) => (
                     <Button key={s} size="sm" variant={x.stage === s ? "default" : "ghost"}
                       className="h-7 text-xs" onClick={() => moveStage(x.id, s)}>
                       {humanize(s)}
                     </Button>
                   ))}
                 </div>
+
               </CardContent>
             </Card>
           ))}
