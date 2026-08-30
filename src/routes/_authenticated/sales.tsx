@@ -647,11 +647,6 @@ function SalesPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.verification_status)}`}>
                         {humanize(p.verification_status)}
                       </span>
-                      {approvalState(p.id) && (
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(p.id)!.cls}`}>
-                          {approvalState(p.id)!.label}
-                        </span>
-                      )}
                     </div>
 
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -693,17 +688,6 @@ function SalesPage() {
                       catch (e) { toast.error(msg(e, "Could not update")); }
                     }}>
                     Clarification
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs"
-                    onClick={() => askApproval(
-                      "project_initiation",
-                      `A2 — ${p.po_number || p.reference}`,
-                      `${p.customers?.name ?? ""} · PO value ${money(p.po_value)} ${p.currency}`,
-                      Number(p.po_value ?? 0),
-                      "customer_pos",
-                      p.id,
-                    )}>
-                    <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Request A2
                   </Button>
                     </>
                   )}

@@ -429,9 +429,15 @@ function EngineeringPage() {
                         <Package className="mr-1 h-4 w-4" /> Release to store
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => editBom(b)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    {b.used_in_quotation ? (
+                      <span className="self-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                        Locked — used in quotation {b.used_in_quotation}
+                      </span>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => editBom(b)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
