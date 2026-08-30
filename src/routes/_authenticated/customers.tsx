@@ -225,38 +225,45 @@ function CustomersPage() {
         />
 
         <div className="mt-4 space-y-3">
-          {tab === "customers" &&
-            customerList.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{c.name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(c.status)}`}>{c.status}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {[c.contact_person, c.phone, c.email, c.city].filter(Boolean).join(" · ") || "No contact details"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyCustomer, ...c }); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try { await remove({ data: { id: c.id } }); refresh(); toast.success("Customer deleted"); }
-                        catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {tab === "customers" && (
+            <FilterTable
+              rows={customerList}
+              empty="No customers yet."
+              columns={[
+                { key: "customer_number", header: "Customer no.", value: (c: any) => c.customer_number },
+                { key: "name", header: "Customer name", value: (c: any) => c.name },
+                { key: "contact_person", header: "Contact person", value: (c: any) => c.contact_person },
+                { key: "cr_cpr_number", header: "CR / CPR", value: (c: any) => c.cr_cpr_number },
+                { key: "email", header: "Email", value: (c: any) => c.email },
+                { key: "phone", header: "Phone", value: (c: any) => c.phone },
+                { key: "city", header: "City", value: (c: any) => c.city },
+                { key: "address", header: "Address", value: (c: any) => c.address },
+                {
+                  key: "status", header: "Status", value: (c: any) => c.status,
+                  cell: (c: any) => (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(c.status)}`}>{c.status}</span>
+                  ),
+                },
+              ]}
+              actions={(c: any) => (
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyCustomer, ...c }); setOpen(true); }}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try { await remove({ data: { id: c.id } }); refresh(); toast.success("Customer deleted"); }
+                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            />
+          )}
 
           {tab === "assets" &&
             assetList.map((a) => (
