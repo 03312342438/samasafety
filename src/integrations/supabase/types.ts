@@ -512,6 +512,7 @@ export type Database = {
           address: string
           city: string
           contact_person: string
+          cr_cpr_number: string
           created_at: string
           created_by: string
           credit_terms: string
@@ -529,6 +530,7 @@ export type Database = {
           address?: string
           city?: string
           contact_person?: string
+          cr_cpr_number?: string
           created_at?: string
           created_by?: string
           credit_terms?: string
@@ -546,6 +548,7 @@ export type Database = {
           address?: string
           city?: string
           contact_person?: string
+          cr_cpr_number?: string
           created_at?: string
           created_by?: string
           credit_terms?: string
@@ -1705,6 +1708,7 @@ export type Database = {
       }
       quotations: {
         Row: {
+          bom_id: string | null
           created_at: string
           created_by: string
           currency: string
@@ -1714,7 +1718,12 @@ export type Database = {
           discount_amount: number
           estimated_cost: number
           id: string
+          inland_cost: number
+          inland_percent: number
           inquiry_id: string | null
+          labour_cost: number
+          margin_percent: number
+          material_cost: number
           payment_terms: string
           reference: string
           revision: number
@@ -1726,11 +1735,13 @@ export type Database = {
           subtotal: number
           title: string
           total_amount: number
+          transport_cost: number
           updated_at: string
           validity_days: number
           vat_percent: number
         }
         Insert: {
+          bom_id?: string | null
           created_at?: string
           created_by?: string
           currency?: string
@@ -1740,7 +1751,12 @@ export type Database = {
           discount_amount?: number
           estimated_cost?: number
           id?: string
+          inland_cost?: number
+          inland_percent?: number
           inquiry_id?: string | null
+          labour_cost?: number
+          margin_percent?: number
+          material_cost?: number
           payment_terms?: string
           reference: string
           revision?: number
@@ -1752,11 +1768,13 @@ export type Database = {
           subtotal?: number
           title?: string
           total_amount?: number
+          transport_cost?: number
           updated_at?: string
           validity_days?: number
           vat_percent?: number
         }
         Update: {
+          bom_id?: string | null
           created_at?: string
           created_by?: string
           currency?: string
@@ -1766,7 +1784,12 @@ export type Database = {
           discount_amount?: number
           estimated_cost?: number
           id?: string
+          inland_cost?: number
+          inland_percent?: number
           inquiry_id?: string | null
+          labour_cost?: number
+          margin_percent?: number
+          material_cost?: number
           payment_terms?: string
           reference?: string
           revision?: number
@@ -1778,11 +1801,19 @@ export type Database = {
           subtotal?: number
           title?: string
           total_amount?: number
+          transport_cost?: number
           updated_at?: string
           validity_days?: number
           vat_percent?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "quotations_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quotations_customer_id_fkey"
             columns: ["customer_id"]
