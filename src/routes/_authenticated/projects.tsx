@@ -25,7 +25,8 @@ import {
 import { listBoms } from "@/lib/engineering.functions";
 
 import { submitApproval } from "@/lib/approvals.functions";
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept } from "@/lib/workflow";
+import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   component: ProjectsPage,
@@ -61,6 +62,14 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("projects");
   const [query, setQuery] = useState("");
+  // Sales staff never see job numbers — that is a PM / site responsibility.
+  const salesOnly =
+    !profile?.isAdmin &&
+    hasDept(profile?.roles, "sales") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !hasDept(profile?.roles, "technician");
+  const activeTab = salesOnly ? "projects" : tab;
+
 
   const fetchProjects = useServerFn(listProjects);
   const fetchJobs = useServerFn(listJobNumbers);
