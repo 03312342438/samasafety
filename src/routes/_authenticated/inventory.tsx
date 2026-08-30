@@ -101,6 +101,9 @@ function InventoryPage() {
   const [lines, setLines] = useState<LineRow[]>([{ ...emptyLine }]);
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveForm, setMoveForm] = useState<any>(emptyMovement);
+  const [approvalPrompt, setApprovalPrompt] = useState<
+    { id: string; item_code?: string; description?: string } | null
+  >(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["stock-items"] });
