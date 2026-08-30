@@ -147,8 +147,27 @@ export const deleteProject = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prev } = await supabase.from("projects").select("*").eq("id", data.id).maybeSingle();
-    const { error } = await supabase.from("projects").delete().eq("id", data.id);
+    await assertMutable(supabase, userId, {
+      approved: prev?.status === "closed",
+      label: `Project ${prev?.project_number ?? ""}`.trim(),
+      action: "delete",
+    });
+
+    // Clear links that would otherwise block the delete.
+    await supabase.from("customer_pos").update({ project_id: null }).eq("project_id", data.id);
+    await supabase.from("boms").update({ project_id: null }).eq("project_id", data.id);
+
+    const { data: removed, error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", data.id)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!removed || removed.length === 0) {
+      throw new Error(
+        "This project could not be deleted — it is either linked to job numbers/invoices or only Management can remove it.",
+      );
+    }
     await logActivity(supabase, userId, {
       action: "delete",
       entity_table: "projects",
@@ -158,6 +177,7 @@ export const deleteProject = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
 
 // ----------------------------------------------------------- job numbers ----
 
