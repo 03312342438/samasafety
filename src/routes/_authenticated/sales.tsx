@@ -613,7 +613,9 @@ function SalesPage() {
 
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
+
 
           {tab === "orders" && poList.map((p) => (
             <Card key={p.id}>
