@@ -483,7 +483,13 @@ function SalesPage() {
                     <Inbox className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{i.reference}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(i.stage)}`}>{humanize(i.stage)}</span>
+                    {approvalState(i.id) && (
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(i.id)!.cls}`}>
+                        {approvalState(i.id)!.label}
+                      </span>
+                    )}
                   </div>
+
                   <p className="mt-1 text-sm text-muted-foreground">
                     {[i.customers?.name, humanize(i.scope_type), i.site_location].filter(Boolean).join(" · ") || "—"}
                   </p>
