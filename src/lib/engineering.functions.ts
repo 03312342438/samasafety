@@ -69,6 +69,17 @@ export const saveBom = createServerFn({ method: "POST" })
         approved: prev?.status === "approved",
         label: `BOM ${prev?.reference ?? ""}`.trim(),
       });
+      const { data: usedIn } = await supabase
+        .from("quotations")
+        .select("reference")
+        .eq("bom_id", id)
+        .limit(1)
+        .maybeSingle();
+      if (usedIn) {
+        throw new Error(
+          `BOM ${prev?.reference ?? ""} is used in quotation ${usedIn.reference} — it can no longer be edited.`,
+        );
+      }
       const { error } = await supabase.from("boms").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       reference = prev?.reference ?? "";
