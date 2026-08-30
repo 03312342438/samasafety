@@ -49,7 +49,7 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
     const quotations = qRes.data ?? [];
     const pos = pRes.data ?? [];
 
-    const sent = quotations.filter((q: any) => SENT_STAGES.includes(q.stage));
+    const sent = quotations.filter((q: any) => !DEAD_STAGES.includes(q.stage));
     const sentDate = (q: any) => new Date(q.sent_at ?? q.created_at);
     const poDate = (p: any) => new Date(p.po_date ?? p.created_at);
 
