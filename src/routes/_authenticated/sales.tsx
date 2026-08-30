@@ -96,6 +96,9 @@ function SalesPage() {
   const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: () => fetchInquiries() });
   const { data: quotations } = useQuery({ queryKey: ["quotations"], queryFn: () => fetchQuotations() });
   const { data: pos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchPos() });
+  const fetchBoms = useServerFn(listBoms);
+  const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
+  const bomList = (boms as any[]) ?? [];
 
   const [inqOpen, setInqOpen] = useState(false);
   const [inqForm, setInqForm] = useState<any>(emptyInquiry);
