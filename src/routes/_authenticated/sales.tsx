@@ -18,7 +18,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { listCustomers } from "@/lib/crm.functions";
-import { submitApproval } from "@/lib/approvals.functions";
+import { submitApproval, listApprovals } from "@/lib/approvals.functions";
 import {
   listInquiries, saveInquiry, deleteInquiry,
   listQuotations, saveQuotation, setQuotationStage, deleteQuotation,
