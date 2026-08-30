@@ -101,6 +101,9 @@ function InventoryPage() {
   const [lines, setLines] = useState<LineRow[]>([{ ...emptyLine }]);
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveForm, setMoveForm] = useState<any>(emptyMovement);
+  const [approvalPrompt, setApprovalPrompt] = useState<
+    { id: string; item_code?: string; description?: string } | null
+  >(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["stock-items"] });
@@ -146,7 +149,7 @@ function InventoryPage() {
 
   const submitStock = async () => {
     try {
-      await persistStock({
+      const res: any = await persistStock({
         data: {
           ...stockForm,
           id: stockForm.id || undefined,
@@ -155,12 +158,40 @@ function InventoryPage() {
           unit_cost: Number(stockForm.unit_cost || 0),
         },
       });
+      const isNew = !stockForm.id;
       toast.success(stockForm.id ? "Item updated" : "Item added to store");
       setStockOpen(false);
+      const created = {
+        id: res?.id as string,
+        item_code: res?.item_code ?? stockForm.item_code,
+        description: stockForm.description,
+      };
       setStockForm(emptyStock);
       refresh();
+      // A new code is not live until Management clears it — ask before sending.
+      if (isNew && !canApproveItems && created.id) setApprovalPrompt(created);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save item");
+    }
+  };
+
+  /** Send a pending item code to Management for approval. */
+  const sendItemForApproval = async (item: { id: string; item_code?: string; description?: string }) => {
+    try {
+      await requestApproval({
+        data: {
+          approval_type: "item_code",
+          title: `Item code approval — ${item.item_code ?? ""}`.trim(),
+          details: item.description ?? "",
+          entity_table: "stock_items",
+          entity_id: item.id,
+        },
+      });
+      toast.success("Sent to Management for approval");
+      setApprovalPrompt(null);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not request approval");
     }
   };
 
@@ -266,7 +297,7 @@ function InventoryPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-[1400px] px-4 py-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">Store & Material Control</h1>
@@ -460,6 +491,11 @@ function InventoryPage() {
                     {canApproveItems && (s.approval_status ?? "pending") === "pending" && (
                       <Button variant="outline" size="sm" onClick={() => decideItem(s.id, "rejected")}>Reject</Button>
                     )}
+                    {!canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
+                      <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
+                        Send for approval
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s, quantity_on_hand: String(s.quantity_on_hand ?? 0), reorder_level: String(s.reorder_level ?? 0), unit_cost: String(s.unit_cost ?? 0) }); setStockOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -548,6 +584,23 @@ function InventoryPage() {
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
+
+        <Dialog open={!!approvalPrompt} onOpenChange={(o) => { if (!o) setApprovalPrompt(null); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Send item code for approval?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{approvalPrompt?.item_code}</span>
+              {approvalPrompt?.description ? ` — ${approvalPrompt.description}` : ""} is saved but not live.
+              It can only be used in BOM / BOS once Management approves it.
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApprovalPrompt(null)}>Not now</Button>
+              <Button onClick={() => approvalPrompt && sendItemForApproval(approvalPrompt)}>
+                Send for approval
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

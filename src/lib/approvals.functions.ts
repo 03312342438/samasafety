@@ -92,6 +92,7 @@ export const submitApproval = createServerFn({ method: "POST" })
           "final_review",
           "customer_po",
           "commercial_review",
+          "item_code",
         ]),
         title: z.string().trim().min(1).max(300),
         details: z.string().max(4000).default(""),
@@ -186,6 +187,17 @@ export const decideApproval = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Propagate the decision to the gated record.
+    if (approval.entity_table === "stock_items" && approval.entity_id) {
+      await supabase
+        .from("stock_items")
+        .update({
+          approval_status:
+            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "pending",
+          approved_by: data.decision === "approved" ? userId : null,
+          approved_at: data.decision === "approved" ? new Date().toISOString() : null,
+        })
+        .eq("id", approval.entity_id);
+    }
     if (approval.job_number_id) {
       await supabase
         .from("job_numbers")

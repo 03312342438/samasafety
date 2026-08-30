@@ -78,11 +78,11 @@ export function FilterTable<T extends { id?: string }>({
         </div>
       )}
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-muted/60">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={cn("px-3 py-2 text-left font-medium", c.className)}>
+                <th key={c.key} className={cn("whitespace-nowrap px-3 py-2 text-left font-medium", c.className)}>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -107,7 +107,7 @@ export function FilterTable<T extends { id?: string }>({
                   </div>
                 </th>
               ))}
-              {actions && <th className="px-3 py-2 text-right font-medium">Actions</th>}
+              {actions && <th className="whitespace-nowrap px-3 py-2 text-right font-medium">Actions</th>}
             </tr>
           </thead>
           <tbody>

@@ -101,7 +101,7 @@ function Dashboard() {
     return (
       <div className="min-h-screen bg-secondary/40">
         <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
-        <main className="mx-auto max-w-6xl px-4 py-6">
+        <main className="mx-auto max-w-[1400px] px-4 py-6">
           <div className="mb-5">
             <h1 className="text-2xl font-bold">Sales Dashboard</h1>
             <p className="text-sm text-muted-foreground">
