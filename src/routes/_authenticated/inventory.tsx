@@ -146,7 +146,7 @@ function InventoryPage() {
 
   const submitStock = async () => {
     try {
-      await persistStock({
+      const res: any = await persistStock({
         data: {
           ...stockForm,
           id: stockForm.id || undefined,
@@ -155,12 +155,40 @@ function InventoryPage() {
           unit_cost: Number(stockForm.unit_cost || 0),
         },
       });
+      const isNew = !stockForm.id;
       toast.success(stockForm.id ? "Item updated" : "Item added to store");
       setStockOpen(false);
+      const created = {
+        id: res?.id as string,
+        item_code: res?.item_code ?? stockForm.item_code,
+        description: stockForm.description,
+      };
       setStockForm(emptyStock);
       refresh();
+      // A new code is not live until Management clears it — ask before sending.
+      if (isNew && !canApproveItems && created.id) setApprovalPrompt(created);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save item");
+    }
+  };
+
+  /** Send a pending item code to Management for approval. */
+  const sendItemForApproval = async (item: { id: string; item_code?: string; description?: string }) => {
+    try {
+      await requestApproval({
+        data: {
+          approval_type: "item_code",
+          title: `Item code approval — ${item.item_code ?? ""}`.trim(),
+          details: item.description ?? "",
+          entity_table: "stock_items",
+          entity_id: item.id,
+        },
+      });
+      toast.success("Sent to Management for approval");
+      setApprovalPrompt(null);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not request approval");
     }
   };
 
