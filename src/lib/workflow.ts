@@ -156,6 +156,7 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
   final_review: "A6 — Final Project / Commercial Review",
   customer_po: "Purchase Order approval",
   commercial_review: "Commercial review",
+  item_code: "Item code approval",
 };
 
 export type ApprovalDecision = "pending" | "approved" | "rejected" | "revision_requested";
