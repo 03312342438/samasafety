@@ -122,32 +122,6 @@ function ProjectsPage() {
     }
   };
 
-  const submitJob = async () => {
-    try {
-      const res: any = await saveJob({
-        data: {
-          ...jobForm,
-          id: jobForm.id || undefined,
-          bom_id: jobForm.bom_id || null,
-          maintenance_interval_months: jobForm.maintenance_interval_months
-            ? Number(jobForm.maintenance_interval_months)
-            : null,
-          steps:
-            jobForm.job_kind === "installation"
-              ? (jobForm.steps ?? [])
-                  .filter((s: any) => s.title.trim())
-                  .map((s: any) => ({ title: s.title.trim(), expected_date: s.expected_date || null }))
-              : [],
-        },
-      });
-      toast.success(res?.job_number ? `Job number ${res.job_number} created` : "Job number updated");
-      setJobOpen(false);
-      setJobForm(emptyJob);
-      refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save job number");
-    }
-  };
 
 
   const sendForApproval = async (job: any) => {
