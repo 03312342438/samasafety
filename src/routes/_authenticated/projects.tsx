@@ -253,8 +253,8 @@ function ProjectsPage() {
                         <option value="closed">Closed</option>
                       </select>
                     </div>
-                    <Field label="Contract value" value={form.contract_value} onChange={(v) => setForm({ ...form, contract_value: v })} />
-                    <Field label="Estimated cost" value={form.estimated_cost} onChange={(v) => setForm({ ...form, estimated_cost: v })} />
+                    <Field label={`Price (${CURRENCY})`} value={form.contract_value} onChange={(v) => setForm({ ...form, contract_value: v })} />
+                    <Field label={`Cost (${CURRENCY})`} value={form.estimated_cost} onChange={(v) => setForm({ ...form, estimated_cost: v })} />
                     <Field label="Start date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
                     <Field label="Target date" type="date" value={form.target_date} onChange={(v) => setForm({ ...form, target_date: v })} />
                     <Field label="Progress %" value={form.progress_percent} onChange={(v) => setForm({ ...form, progress_percent: v })} />
