@@ -427,6 +427,7 @@ function SalesPage() {
           onChange={setTab}
           tabs={[
             { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
+            { value: "bom", label: `Preliminary BOM/BOS (${bomList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
             { value: "analytics", label: "Analytics" },
@@ -435,6 +436,7 @@ function SalesPage() {
 
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
+          {tab === "bom" && <PreliminaryBomPanel />}
           {tab === "inquiries" && inquiryList.map((i) => (
             <Card key={i.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
