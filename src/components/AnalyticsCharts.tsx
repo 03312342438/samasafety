@@ -9,9 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CURRENCY } from "@/lib/workflow";
 
 const SLICE_COLORS = [
-  "hsl(var(--chart-1, 217 91% 45%))",
-  "hsl(var(--chart-2, 38 92% 50%))",
-  "hsl(var(--chart-3, 152 60% 40%))",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 const fmt = (n: number) =>
