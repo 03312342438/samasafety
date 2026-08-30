@@ -90,6 +90,8 @@ export const submitApproval = createServerFn({ method: "POST" })
           "job_number",
           "additional_material",
           "final_review",
+          "customer_po",
+          "commercial_review",
         ]),
         title: z.string().trim().min(1).max(300),
         details: z.string().max(4000).default(""),
