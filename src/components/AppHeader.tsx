@@ -9,7 +9,7 @@ import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
-  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu,
+  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp,
 } from "lucide-react";
 import { hasDept } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,10 @@ export function AppHeader({
     {
       to: "/execution", label: "Site", icon: HardHat,
       show: !!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager"),
+    },
+    {
+      to: "/progress", label: "Progress", icon: TrendingUp,
+      show: hasDept(roles, "sales"),
     },
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },

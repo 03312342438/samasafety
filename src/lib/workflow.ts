@@ -154,6 +154,8 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
   job_number: "A4 — Job Number",
   additional_material: "A5 — Additional Material / Cost",
   final_review: "A6 — Final Project / Commercial Review",
+  customer_po: "Purchase Order approval",
+  commercial_review: "Commercial review",
 };
 
 export type ApprovalDecision = "pending" | "approved" | "rejected" | "revision_requested";
