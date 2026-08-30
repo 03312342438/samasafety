@@ -122,32 +122,6 @@ function ProjectsPage() {
     }
   };
 
-  const submitJob = async () => {
-    try {
-      const res: any = await saveJob({
-        data: {
-          ...jobForm,
-          id: jobForm.id || undefined,
-          bom_id: jobForm.bom_id || null,
-          maintenance_interval_months: jobForm.maintenance_interval_months
-            ? Number(jobForm.maintenance_interval_months)
-            : null,
-          steps:
-            jobForm.job_kind === "installation"
-              ? (jobForm.steps ?? [])
-                  .filter((s: any) => s.title.trim())
-                  .map((s: any) => ({ title: s.title.trim(), expected_date: s.expected_date || null }))
-              : [],
-        },
-      });
-      toast.success(res?.job_number ? `Job number ${res.job_number} created` : "Job number updated");
-      setJobOpen(false);
-      setJobForm(emptyJob);
-      refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save job number");
-    }
-  };
 
 
   const sendForApproval = async (job: any) => {
@@ -270,127 +244,7 @@ function ProjectsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            ) : (
-              <Dialog open={jobOpen} onOpenChange={(o) => { setJobOpen(o); if (!o) setJobForm(emptyJob); }}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New job number</Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
-                  <DialogHeader><DialogTitle>{jobForm.id ? "Edit job number" : "New job number"}</DialogTitle></DialogHeader>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                      <Label className="text-xs">Project</Label>
-                      <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={jobForm.project_id}
-                        onChange={(e) => setJobForm({ ...jobForm, project_id: e.target.value })}
-                      >
-                        <option value="">— select project —</option>
-                        {((projects as any[]) ?? []).map((p) => (
-                          <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Installation or maintenance?</Label>
-                      <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={jobForm.job_kind}
-                        onChange={(e) => setJobForm({ ...jobForm, job_kind: e.target.value, scope_type: e.target.value })}
-                      >
-                        <option value="installation">Installation</option>
-                        <option value="maintenance">Maintenance</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Linked BOM / BOS (required)</Label>
-                      <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
-                        value={jobForm.bom_id}
-                        onChange={(e) => setJobForm({ ...jobForm, bom_id: e.target.value })}
-                      >
-                        <option value="">— select BOM/BOS —</option>
-                        {((boms as any[]) ?? [])
-                          .filter((b) => !jobForm.project_id || b.project_id === jobForm.project_id || !b.project_id)
-                          .map((b) => (
-                            <option key={b.id} value={b.id}>{b.reference} — {b.title}</option>
-                          ))}
-                      </select>
-                    </div>
-                    {jobForm.job_kind === "maintenance" && (
-                      <Field
-                        label="Maintenance interval (months)"
-                        value={jobForm.maintenance_interval_months}
-                        onChange={(v) => setJobForm({ ...jobForm, maintenance_interval_months: v })}
-                      />
-                    )}
-                    <Field label="Site location" value={jobForm.site_location} onChange={(v) => setJobForm({ ...jobForm, site_location: v })} />
-                    <Field label="Start date" type="date" value={jobForm.start_date} onChange={(v) => setJobForm({ ...jobForm, start_date: v })} />
-                    <Field label="Target date" type="date" value={jobForm.target_date} onChange={(v) => setJobForm({ ...jobForm, target_date: v })} />
-                    {jobForm.job_kind === "installation" && (
-                      <div className="sm:col-span-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs">Installation steps & expected completion</Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setJobForm({ ...jobForm, steps: [...(jobForm.steps ?? []), { title: "", expected_date: "" }] })}
-                          >
-                            <Plus className="mr-1 h-3 w-3" /> Add step
-                          </Button>
-                        </div>
-                        <div className="mt-2 space-y-2">
-                          {((jobForm.steps ?? []) as any[]).map((s, i) => (
-                            <div key={i} className="flex gap-2">
-                              <Input
-                                className="flex-1"
-                                placeholder={`Step ${i + 1}`}
-                                value={s.title}
-                                onChange={(e) => {
-                                  const steps = [...jobForm.steps];
-                                  steps[i] = { ...steps[i], title: e.target.value };
-                                  setJobForm({ ...jobForm, steps });
-                                }}
-                              />
-                              <Input
-                                className="w-40"
-                                type="date"
-                                value={s.expected_date}
-                                onChange={(e) => {
-                                  const steps = [...jobForm.steps];
-                                  steps[i] = { ...steps[i], expected_date: e.target.value };
-                                  setJobForm({ ...jobForm, steps });
-                                }}
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setJobForm({ ...jobForm, steps: jobForm.steps.filter((_: any, x: number) => x !== i) })}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          {(jobForm.steps ?? []).length === 0 && (
-                            <p className="text-xs text-muted-foreground">Add at least one installation step.</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <div className="sm:col-span-2">
-                      <Label className="text-xs">Scope description</Label>
-                      <Textarea rows={3} value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <DialogFooter>
-                    <Button onClick={submitJob} disabled={!jobForm.project_id}>Save</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -479,30 +333,6 @@ function ProjectsPage() {
                     )}
                     {j.status !== "approved" && (
                       <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            let steps: any[] = [];
-                            try {
-                              steps = ((await fetchSteps({ data: { job_number_id: j.id } })) as any[]) ?? [];
-                            } catch { /* ignore */ }
-                            setJobForm({
-                              ...emptyJob,
-                              ...j,
-                              job_kind: j.job_kind ?? "installation",
-                              bom_id: j.bom_id ?? "",
-                              maintenance_interval_months: j.maintenance_interval_months ?? "",
-                              start_date: j.start_date ?? "",
-                              target_date: j.target_date ?? "",
-                              steps: steps.map((s) => ({ title: s.title, expected_date: s.expected_date ?? "" })),
-                            });
-                            setJobOpen(true);
-                          }}
-                        >
-
-                          <Pencil className="h-4 w-4" />
-                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
