@@ -72,8 +72,11 @@ export function AppHeader({
     },
     {
       to: "/execution", label: "Site", icon: HardHat,
-      show: !!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager"),
+      show:
+        (!!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager")) &&
+        !(hasDept(roles, "sales") && !hasDept(roles, "technician") && !hasDept(roles, "project_manager")),
     },
+
     {
       to: "/progress", label: "Progress", icon: TrendingUp,
       show: hasDept(roles, "sales"),
