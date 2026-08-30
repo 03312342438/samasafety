@@ -336,7 +336,10 @@ function SalesPage() {
                           label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
                         }))}
                       />
-                      <Field label={`Total material cost (${CURRENCY})`} value={qtnForm.material_cost} onChange={(v) => setQtnForm({ ...qtnForm, material_cost: v })} />
+                      <div>
+                        <Label className="text-xs">Total material cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={num(qtnForm.material_cost).toFixed(2)} />
+                      </div>
                       <Field label={`Total labour cost (${CURRENCY})`} value={qtnForm.labour_cost} onChange={(v) => setQtnForm({ ...qtnForm, labour_cost: v })} />
                       <Field label="Inland %" value={qtnForm.inland_percent} onChange={(v) => setQtnForm({ ...qtnForm, inland_percent: v })} />
                       <div>
@@ -345,15 +348,21 @@ function SalesPage() {
                       </div>
                       <Field label={`Transport cost (${CURRENCY})`} value={qtnForm.transport_cost} onChange={(v) => setQtnForm({ ...qtnForm, transport_cost: v })} />
                       <Field label="G-Margin %" value={qtnForm.margin_percent} onChange={(v) => setQtnForm({ ...qtnForm, margin_percent: v })} />
+                      <div>
+                        <Label className="text-xs">Estimated cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={preview.estimatedCost.toFixed(2)} />
+                      </div>
                       <div className="sm:col-span-2">
                         <Label className="text-xs">Total price ({CURRENCY})</Label>
                         <Input className="mt-1 font-semibold" readOnly value={preview.subtotal.toFixed(2)} />
                       </div>
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Leave the build-up at zero to price the quotation from the line items instead.
+                      Material cost comes from the selected preliminary BOM/BOS; inland cost, estimated cost
+                      and total price are calculated automatically.
                     </p>
                   </div>
+
 
 
 
