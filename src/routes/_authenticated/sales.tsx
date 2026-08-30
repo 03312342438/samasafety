@@ -634,7 +634,13 @@ function SalesPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.verification_status)}`}>
                         {humanize(p.verification_status)}
                       </span>
+                      {approvalState(p.id) && (
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(p.id)!.cls}`}>
+                          {approvalState(p.id)!.label}
+                        </span>
+                      )}
                     </div>
+
                     <p className="mt-1 text-sm text-muted-foreground">
                       {[p.customers?.name, p.quotations?.reference, p.po_date].filter(Boolean).join(" · ") || "—"}
                     </p>
