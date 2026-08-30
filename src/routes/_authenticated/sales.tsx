@@ -114,11 +114,19 @@ function SalesPage() {
   const customerList = (customers as any[]) ?? [];
 
   const preview = useMemo(() => {
-    const subtotal = items.reduce((s, i) => s + num(i.quantity) * num(i.unit_price), 0);
+    const material = num(qtnForm.material_cost);
+    const inlandCost = (material * num(qtnForm.inland_percent)) / 100;
+    const costBase = material + num(qtnForm.labour_cost) + inlandCost + num(qtnForm.transport_cost);
+    const buildUp = costBase > 0;
+    const lineSubtotal = items.reduce((s, i) => s + num(i.quantity) * num(i.unit_price), 0);
+    const subtotal = buildUp ? costBase * (1 + num(qtnForm.margin_percent) / 100) : lineSubtotal;
     const net = Math.max(subtotal - num(qtnForm.discount_amount), 0);
     const total = net + (net * num(qtnForm.vat_percent)) / 100;
-    return { subtotal, total };
-  }, [items, qtnForm.discount_amount, qtnForm.vat_percent]);
+    return { subtotal, total, inlandCost, costBase };
+  }, [
+    items, qtnForm.discount_amount, qtnForm.vat_percent, qtnForm.material_cost,
+    qtnForm.labour_cost, qtnForm.inland_percent, qtnForm.transport_cost, qtnForm.margin_percent,
+  ]);
 
   const submitInquiry = async () => {
     try {
