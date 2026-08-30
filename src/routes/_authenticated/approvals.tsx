@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShieldCheck, Plus, History } from "lucide-react";
+import { ShieldCheck, Plus, History, FileSearch, Trash2, Lock } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
@@ -15,10 +15,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { listApprovals, submitApproval, decideApproval } from "@/lib/approvals.functions";
+import {
+  listApprovals, submitApproval, decideApproval, deleteApproval, getApprovalEntity,
+} from "@/lib/approvals.functions";
 import { listActivity } from "@/lib/notifications.functions";
 import { listProjects } from "@/lib/projects.functions";
-import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass } from "@/lib/workflow";
+import { listQuotations, listCustomerPos } from "@/lib/sales.functions";
+import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass, hasDept } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   component: ApprovalsPage,
@@ -40,22 +43,45 @@ const emptyRequest = {
   details: "",
   project_id: "",
   amount: "",
+  quotation_id: "",
+  customer_po_id: "",
 };
+
+/** Sales may only raise these three requests. */
+const SALES_GATES: Record<string, string> = {
+  quotation_commercial: "Quotation approval",
+  customer_po: "Purchase Order approval",
+  commercial_review: "Commercial review",
+};
+
+const money = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3 });
 
 function ApprovalsPage() {
   const { data: profile } = useProfile();
   const isAdmin = !!profile?.isAdmin;
+  const isSales = hasDept(profile?.roles, "sales");
   const qc = useQueryClient();
   const [tab, setTab] = useState("pending");
 
   const fetchApprovals = useServerFn(listApprovals);
   const fetchActivity = useServerFn(listActivity);
   const fetchProjects = useServerFn(listProjects);
+  const fetchQuotations = useServerFn(listQuotations);
+  const fetchPos = useServerFn(listCustomerPos);
+  const fetchEntity = useServerFn(getApprovalEntity);
   const submit = useServerFn(submitApproval);
   const decide = useServerFn(decideApproval);
+  const remove = useServerFn(deleteApproval);
 
   const { data: approvals } = useQuery({ queryKey: ["approvals"], queryFn: () => fetchApprovals() });
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
+  const { data: quotations } = useQuery({
+    queryKey: ["quotations"], queryFn: () => fetchQuotations(), enabled: isSales,
+  });
+  const { data: pos } = useQuery({
+    queryKey: ["customer-pos"], queryFn: () => fetchPos(), enabled: isSales,
+  });
+
   const { data: activity } = useQuery({
     queryKey: ["activity"],
     queryFn: () => fetchActivity(),
@@ -65,6 +91,15 @@ function ApprovalsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(emptyRequest);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  const { data: detail } = useQuery({
+    queryKey: ["approval-entity", detailId],
+    queryFn: () => fetchEntity({ data: { id: detailId as string } }),
+    enabled: !!detailId,
+  });
+
+  const gates = isSales ? SALES_GATES : APPROVAL_TYPE_LABELS;
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["approvals"] });
@@ -75,14 +110,32 @@ function ApprovalsPage() {
 
   const send = async () => {
     try {
+      const quotation = ((quotations as any[]) ?? []).find((q) => q.id === form.quotation_id);
+      const po = ((pos as any[]) ?? []).find((p) => p.id === form.customer_po_id);
+      let entity_table: string | undefined;
+      let entity_id: string | null | undefined;
+      let title = form.title;
+
+      if (form.approval_type === "quotation_commercial" && quotation) {
+        entity_table = "quotations";
+        entity_id = quotation.id;
+        title = title || `Quotation ${quotation.reference}`;
+      }
+      if (form.approval_type === "customer_po" && po) {
+        entity_table = "customer_pos";
+        entity_id = po.id;
+        title = title || `Purchase order ${po.po_number || po.reference}`;
+      }
+
       await submit({
         data: {
           approval_type: form.approval_type,
-          title: form.title,
+          title,
           details: form.details,
           project_id: form.project_id || null,
           job_number_id: null,
           amount: Number(form.amount || 0),
+          ...(entity_table ? { entity_table, entity_id } : {}),
         },
       });
       toast.success("Approval request sent to management");
@@ -104,9 +157,21 @@ function ApprovalsPage() {
     }
   };
 
+  const drop = async (id: string) => {
+    try {
+      await remove({ data: { id } });
+      toast.success("Record deleted");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete record");
+    }
+  };
+
   const all = (approvals as any[]) ?? [];
   const pending = all.filter((a) => a.decision === "pending");
   const decided = all.filter((a) => a.decision !== "pending");
+  const needsQuotation = isSales && form.approval_type === "quotation_commercial";
+  const needsPo = isSales && form.approval_type === "customer_po";
 
   return (
     <div className="min-h-screen bg-secondary/40">
@@ -118,7 +183,9 @@ function ApprovalsPage() {
             <p className="text-sm text-muted-foreground">
               {isAdmin
                 ? "Every request raised by the departments lands here for your decision."
-                : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
+                : isSales
+                  ? "Send quotations, purchase orders and commercial reviews to management for approval."
+                  : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
           {/* Management decides on requests — it never raises them. */}
@@ -135,13 +202,50 @@ function ApprovalsPage() {
                   <select
                     className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
                     value={form.approval_type}
-                    onChange={(e) => setForm({ ...form, approval_type: e.target.value })}
+                    onChange={(e) => setForm({ ...form, approval_type: e.target.value, quotation_id: "", customer_po_id: "" })}
                   >
-                    {Object.entries(APPROVAL_TYPE_LABELS).map(([value, label]) => (
+                    {Object.entries(gates).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
                 </div>
+
+                {needsQuotation && (
+                  <div>
+                    <Label className="text-xs">Quotation number</Label>
+                    <select
+                      className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                      value={form.quotation_id}
+                      onChange={(e) => setForm({ ...form, quotation_id: e.target.value })}
+                    >
+                      <option value="">— select quotation —</option>
+                      {((quotations as any[]) ?? []).map((q) => (
+                        <option key={q.id} value={q.id}>
+                          {q.reference} — {q.customers?.name ?? "—"} ({money(q.total_amount)} {q.currency})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {needsPo && (
+                  <div>
+                    <Label className="text-xs">Purchase order number</Label>
+                    <select
+                      className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                      value={form.customer_po_id}
+                      onChange={(e) => setForm({ ...form, customer_po_id: e.target.value })}
+                    >
+                      <option value="">— select purchase order —</option>
+                      {((pos as any[]) ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.po_number || p.reference} — {p.customers?.name ?? "—"} ({money(p.po_value)} {p.currency})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-xs">Project (optional)</Label>
                   <select
@@ -169,7 +273,16 @@ function ApprovalsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={send} disabled={!form.title.trim()}>Send request</Button>
+                <Button
+                  onClick={send}
+                  disabled={
+                    (needsQuotation && !form.quotation_id) ||
+                    (needsPo && !form.customer_po_id) ||
+                    (!form.title.trim() && !needsQuotation && !needsPo)
+                  }
+                >
+                  Send request
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -181,7 +294,7 @@ function ApprovalsPage() {
           onChange={setTab}
           tabs={[
             { value: "pending", label: `Pending (${pending.length})` },
-            { value: "decided", label: `Decided (${decided.length})` },
+            { value: "decided", label: `Record (${decided.length})` },
             { value: "activity", label: "Activity log" },
           ]}
         />
@@ -205,12 +318,31 @@ function ApprovalsPage() {
                     {Number(a.amount) > 0 ? ` · ${a.amount}` : ""}
                   </p>
                   {a.details && <p className="text-sm">{a.details}</p>}
-                  {a.decision_notes && (
-                    <p className="text-xs text-muted-foreground">Decision note: {a.decision_notes}</p>
+                  {a.decision_comments && (
+                    <p className="text-xs text-muted-foreground">Decision note: {a.decision_comments}</p>
                   )}
                   <p className="text-[11px] text-muted-foreground">
                     Submitted {new Date(a.submitted_at).toLocaleString()}
                   </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {(a.entity_table === "quotations" || a.entity_table === "customer_pos") && (
+                      <Button size="sm" variant="outline" onClick={() => setDetailId(a.id)}>
+                        <FileSearch className="mr-1 h-4 w-4" />
+                        {a.entity_table === "quotations" ? "Open quotation" : "Open purchase order"}
+                      </Button>
+                    )}
+                    {a.decision !== "pending" && !isAdmin && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Lock className="h-3 w-3" /> Locked record — only Management can remove it
+                      </span>
+                    )}
+                    {a.decision !== "pending" && isAdmin && (
+                      <Button size="sm" variant="destructive" onClick={() => drop(a.id)}>
+                        <Trash2 className="mr-1 h-4 w-4" /> Delete record
+                      </Button>
+                    )}
+                  </div>
 
                   {isAdmin && a.decision === "pending" && (
                     <div className="space-y-2 pt-1">
@@ -260,6 +392,60 @@ function ApprovalsPage() {
           )}
         </div>
       </main>
+
+      <Dialog open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Request details</DialogTitle></DialogHeader>
+          {(detail as any)?.kind === "quotation" && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <p><span className="text-muted-foreground">Quotation</span><br />{(detail as any).quotation?.reference}</p>
+                <p><span className="text-muted-foreground">Customer</span><br />{(detail as any).quotation?.customers?.name ?? "—"}</p>
+                <p><span className="text-muted-foreground">Title</span><br />{(detail as any).quotation?.title || "—"}</p>
+                <p><span className="text-muted-foreground">Site</span><br />{(detail as any).quotation?.site_location || "—"}</p>
+              </div>
+              <div className="rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50 text-left">
+                    <tr><th className="p-2">Description</th><th className="p-2">Qty</th><th className="p-2">Unit</th><th className="p-2 text-right">Amount</th></tr>
+                  </thead>
+                  <tbody>
+                    {((detail as any).items ?? []).map((i: any) => (
+                      <tr key={i.id} className="border-t">
+                        <td className="p-2">{i.description}</td>
+                        <td className="p-2">{i.quantity}</td>
+                        <td className="p-2">{i.unit}</td>
+                        <td className="p-2 text-right">{money(i.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="space-y-1 text-right">
+                <p className="text-muted-foreground">Subtotal: {money((detail as any).quotation?.subtotal)}</p>
+                <p className="text-muted-foreground">VAT: {(detail as any).quotation?.vat_percent}%</p>
+                <p className="font-medium">Total: {money((detail as any).quotation?.total_amount)} {(detail as any).quotation?.currency}</p>
+              </div>
+            </div>
+          )}
+          {(detail as any)?.kind === "customer_po" && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <p><span className="text-muted-foreground">PO number</span><br />{(detail as any).po?.po_number || "—"}</p>
+              <p><span className="text-muted-foreground">PO date</span><br />{(detail as any).po?.po_date || "—"}</p>
+              <p><span className="text-muted-foreground">Customer</span><br />{(detail as any).po?.customers?.name ?? "—"}</p>
+              <p><span className="text-muted-foreground">Value</span><br />{money((detail as any).po?.po_value)} {(detail as any).po?.currency}</p>
+              <p><span className="text-muted-foreground">Against quotation</span><br />{(detail as any).po?.quotations?.reference ?? "—"}</p>
+              <p><span className="text-muted-foreground">Verification</span><br />{humanize((detail as any).po?.verification_status ?? "")}</p>
+              <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{(detail as any).po?.notes || "—"}</p>
+            </div>
+          )}
+          {(detail as any)?.kind === "none" && (
+            <p className="text-sm text-muted-foreground">
+              {(detail as any)?.approval?.details || "No linked record — see the request details above."}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
