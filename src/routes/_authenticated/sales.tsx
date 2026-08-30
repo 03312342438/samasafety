@@ -269,8 +269,11 @@ function SalesPage() {
     (i) => !q || [i.reference, i.customers?.name, i.site_location, i.scope_type].join(" ").toLowerCase().includes(q),
   );
   const quotationList = ((quotations as any[]) ?? []).filter(
-    (x) => !q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q),
+    (x) =>
+      (!q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q)) &&
+      (stageFilter === "all" || x.stage === stageFilter),
   );
+
   const poList = ((pos as any[]) ?? []).filter(
     (p) => !q || [p.reference, p.po_number, p.customers?.name, p.quotations?.reference].join(" ").toLowerCase().includes(q),
   );
