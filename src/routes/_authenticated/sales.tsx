@@ -458,7 +458,9 @@ function SalesPage() {
                           currency: q?.currency ?? poForm.currency,
                         });
                       }}
-                      options={((quotations as any[]) ?? []).map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))}
+                      options={((quotations as any[]) ?? [])
+                        .filter((x) => ["approved", "accepted", "won"].includes(x.status))
+                        .map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))}
                     />
                     <Field label="Document link" value={poForm.document_url} onChange={(v) => setPoForm({ ...poForm, document_url: v })} />
                     <div className="sm:col-span-2">
@@ -695,7 +697,7 @@ function SalesPage() {
                   {!p.project_id && (
                     <Button size="sm" className="h-7 text-xs"
                       onClick={async () => {
-                        const name = window.prompt("Project name", p.quotations?.reference ?? p.po_number ?? "") ?? "";
+                        const name = window.prompt("Project name", p.quotations?.boms?.title ?? p.quotations?.title ?? p.quotations?.reference ?? p.po_number ?? "") ?? "";
                         if (!name.trim()) return;
                         try {
                           const res: any = await convertPo({ data: { id: p.id, name } });
