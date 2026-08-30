@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CURRENCY } from "@/lib/workflow";
 import { TrendingUp } from "lucide-react";
 
-const COLORS = ["hsl(var(--chart-1, 217 91% 45%))", "hsl(var(--chart-3, 152 60% 40%))"];
+const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-4)", "var(--chart-5)"];
 
 const fmt = (n: number) => Number(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const money = (n: number) => `${CURRENCY} ${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

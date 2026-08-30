@@ -8,13 +8,42 @@ import { assertCan, assertMutable } from "@/lib/permissions";
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("projects")
-      .select("*, customers(name, customer_number), job_numbers(id, job_number, status)")
-      .order("created_at", { ascending: false });
+    const { supabase } = context;
+    const [{ data, error }, { data: quotations }, { data: boms }, { data: pos }] = await Promise.all([
+      supabase
+        .from("projects")
+        .select("*, customers(name, customer_number), job_numbers(id, job_number, status)")
+        .order("created_at", { ascending: false }),
+      supabase.from("quotations").select("id, bom_id, total_amount, estimated_cost"),
+      supabase.from("boms").select("id, project_id"),
+      supabase.from("customer_pos").select("quotation_id, project_id"),
+    ]);
     if (error) throw new Error(error.message);
-    return data ?? [];
+
+    // Price and cost of a project are derived from the quotations raised
+    // against it (linked either through its BOM/BOS or through the customer PO).
+    const bomProject = new Map((boms ?? []).map((b: any) => [b.id, b.project_id]));
+    const poProject = new Map(
+      (pos ?? []).filter((p: any) => p.quotation_id).map((p: any) => [p.quotation_id, p.project_id]),
+    );
+    const totals = new Map<string, { price: number; cost: number }>();
+    for (const q of (quotations ?? []) as any[]) {
+      const projectId = poProject.get(q.id) ?? (q.bom_id ? bomProject.get(q.bom_id) : null);
+      if (!projectId) continue;
+      const acc = totals.get(projectId) ?? { price: 0, cost: 0 };
+      acc.price += Number(q.total_amount ?? 0);
+      acc.cost += Number(q.estimated_cost ?? 0);
+      totals.set(projectId, acc);
+    }
+
+    return (data ?? []).map((p: any) => {
+      const t = totals.get(p.id);
+      return t
+        ? { ...p, contract_value: t.price, estimated_cost: t.cost, values_from_quotation: true }
+        : { ...p, values_from_quotation: false };
+    });
   });
+
 
 export const getProject = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
