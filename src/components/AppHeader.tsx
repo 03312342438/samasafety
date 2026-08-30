@@ -74,6 +74,10 @@ export function AppHeader({
       to: "/execution", label: "Site", icon: HardHat,
       show: !!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager"),
     },
+    {
+      to: "/progress", label: "Progress", icon: TrendingUp,
+      show: hasDept(roles, "sales"),
+    },
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },

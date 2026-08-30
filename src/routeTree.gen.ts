@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedExecutionRouteImport } from './routes/_authenticated/execution'
 import { Route as AuthenticatedEngineeringRouteImport } from './routes/_authenticated/engineering'
@@ -46,6 +47,11 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/engineering': typeof AuthenticatedEngineeringRoute
   '/execution': typeof AuthenticatedExecutionRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/engineering': typeof AuthenticatedEngineeringRoute
   '/execution': typeof AuthenticatedExecutionRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/engineering': typeof AuthenticatedEngineeringRoute
   '/_authenticated/execution': typeof AuthenticatedExecutionRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/engineering'
     | '/execution'
     | '/inventory'
+    | '/progress'
     | '/projects'
     | '/sales'
     | '/api/public/hooks/maintenance-reminders'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/engineering'
     | '/execution'
     | '/inventory'
+    | '/progress'
     | '/projects'
     | '/sales'
     | '/api/public/hooks/maintenance-reminders'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/engineering'
     | '/_authenticated/execution'
     | '/_authenticated/inventory'
+    | '/_authenticated/progress'
     | '/_authenticated/projects'
     | '/_authenticated/sales'
     | '/api/public/hooks/maintenance-reminders'
@@ -234,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/progress': {
+      id: '/_authenticated/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AuthenticatedProgressRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inventory': {
@@ -311,6 +330,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEngineeringRoute: typeof AuthenticatedEngineeringRoute
   AuthenticatedExecutionRoute: typeof AuthenticatedExecutionRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
 }
@@ -324,6 +344,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEngineeringRoute: AuthenticatedEngineeringRoute,
   AuthenticatedExecutionRoute: AuthenticatedExecutionRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
 }
