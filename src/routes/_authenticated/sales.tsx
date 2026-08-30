@@ -491,6 +491,7 @@ function SalesPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <QuotationPdfButton quotation={x} customerName={x.customers?.name} />
                     <Button variant="outline" size="sm" onClick={() => askApproval(
                       "quotation_commercial",
                       `A1 — ${x.reference}`,
