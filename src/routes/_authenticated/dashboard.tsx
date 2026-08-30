@@ -28,7 +28,8 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can } from "@/lib/workflow";
+import { can, hasDept } from "@/lib/workflow";
+import { SalesDashboard } from "@/components/SalesDashboard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -53,6 +54,7 @@ function Dashboard() {
   });
   // Only Installation & Maintenance / Technician staff may fill service reports.
   const canFillReport = can(profile?.roles, "report.fill");
+  const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales");
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
   const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
@@ -90,6 +92,24 @@ function Dashboard() {
             to sign in normally once it's approved.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // Sales staff get a pure sales dashboard — no maintenance reports at all.
+  if (isSalesOnly) {
+    return (
+      <div className="min-h-screen bg-secondary/40">
+        <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
+        <main className="mx-auto max-w-6xl px-4 py-6">
+          <div className="mb-5">
+            <h1 className="text-2xl font-bold">Sales Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Quotations sent versus customer POs received, and the business still on the table.
+            </p>
+          </div>
+          <SalesDashboard />
+        </main>
       </div>
     );
   }
