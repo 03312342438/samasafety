@@ -508,6 +508,10 @@ function SalesPage() {
                         customer_id: x.customer_id ?? "", inquiry_id: x.inquiry_id ?? "",
                         discount_amount: String(x.discount_amount ?? 0), vat_percent: String(x.vat_percent ?? 15),
                         estimated_cost: String(x.estimated_cost ?? 0), validity_days: String(x.validity_days ?? 30),
+                        bom_id: x.bom_id ?? "",
+                        material_cost: String(x.material_cost ?? 0), labour_cost: String(x.labour_cost ?? 0),
+                        inland_percent: String(x.inland_percent ?? 0), transport_cost: String(x.transport_cost ?? 0),
+                        margin_percent: String(x.margin_percent ?? 0),
                       });
                       setItems(((x.quotation_items ?? []) as any[])
                         .sort((a, b) => a.sequence - b.sequence)
