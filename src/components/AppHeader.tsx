@@ -55,7 +55,7 @@ export function AppHeader({
     hasDept(roles, "accounts");
 
   const items: NavItem[] = [
-    { to: "/dashboard", label: "Reports", icon: FileText, show: true },
+    { to: "/dashboard", label: "Dashboard", icon: FileText, show: true },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
     {
       to: "/sales", label: "Sales", icon: Handshake,
