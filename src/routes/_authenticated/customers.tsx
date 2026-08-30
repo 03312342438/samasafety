@@ -141,12 +141,26 @@ function CustomersPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Customer name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
                     <Field label="Contact person" value={form.contact_person} onChange={(v) => setForm({ ...form, contact_person: v })} />
+                    <Field label="CR / CPR number" value={form.cr_cpr_number} onChange={(v) => setForm({ ...form, cr_cpr_number: v })} />
                     <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
                     <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-                    <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+                    <div>
+                      <Label className="text-xs">City</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={form.city}
+                        onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      >
+                        <option value="">— select city —</option>
+                        {BAHRAIN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        {form.city && !BAHRAIN_CITIES.includes(form.city) && (
+                          <option value={form.city}>{form.city}</option>
+                        )}
+                      </select>
+                    </div>
                     <Field label="Payment terms" value={form.payment_terms} onChange={(v) => setForm({ ...form, payment_terms: v })} />
                     <div className="sm:col-span-2">
-                      <Label className="text-xs">Address</Label>
+                      <Label className="text-xs">Complete address</Label>
                       <Textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                     </div>
                     <div className="sm:col-span-2">
