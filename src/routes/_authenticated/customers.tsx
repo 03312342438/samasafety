@@ -34,9 +34,15 @@ export const Route = createFileRoute("/_authenticated/customers")({
 });
 
 const emptyCustomer = {
-  name: "", contact_person: "", email: "", phone: "", address: "", city: "",
+  name: "", contact_person: "", cr_cpr_number: "", email: "", phone: "", address: "", city: "",
   payment_terms: "", credit_terms: "", notes: "", status: "active" as const,
 };
+
+/** Bahrain cities served by SAMA. */
+export const BAHRAIN_CITIES = [
+  "Manama", "Muharraq", "Riffa", "Hamad Town", "A'ali",
+  "Sitra", "Isa Town", "Jidhafs", "Budaiya", "Diraz",
+];
 
 const emptyAsset = {
   asset_tag: "", customer_id: "", site_location: "", system_type: "", manufacturer: "",
