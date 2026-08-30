@@ -21,14 +21,10 @@ function lastTwelveMonths() {
   return out;
 }
 
-const SENT_STAGES = [
-  "quotation_sent",
-  "follow_up",
-  "negotiation",
-  "customer_accepted",
-  "po_received",
-  "po_verification",
-];
+// A quotation counts as "submitted" unless it was dropped. Draft-stage quotes
+// are included so potential business is never understated.
+const DEAD_STAGES = ["cancelled", "rejected", "lost", "declined"];
+
 
 /**
  * Sales-desk analytics: quotations sent vs customer POs received, by count and
