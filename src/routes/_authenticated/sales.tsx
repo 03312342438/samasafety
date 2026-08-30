@@ -78,6 +78,8 @@ function SalesPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("inquiries");
   const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState("all");
+
 
   const fetchCustomers = useServerFn(listCustomers);
   const fetchInquiries = useServerFn(listInquiries);
