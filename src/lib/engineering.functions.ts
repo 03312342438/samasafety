@@ -16,7 +16,9 @@ export const listBoms = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("boms")
-      .select("*, customers(name), projects(project_number, name), job_numbers(job_number), bom_items(*)")
+      .select(
+        "*, customers(name), projects(project_number, name), job_numbers!boms_job_number_id_fkey(job_number), bom_items(*)",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
