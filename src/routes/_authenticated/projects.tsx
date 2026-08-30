@@ -25,7 +25,7 @@ import {
 import { listBoms } from "@/lib/engineering.functions";
 
 import { submitApproval } from "@/lib/approvals.functions";
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY } from "@/lib/workflow";
 import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/projects")({
@@ -417,8 +417,8 @@ function ProjectsPage() {
                 { key: "project_type", header: "Type", value: (p: any) => humanize(p.project_type ?? "") },
                 { key: "start_date", header: "Start", value: (p: any) => p.start_date ?? "" },
                 { key: "target_date", header: "Target", value: (p: any) => p.target_date ?? "" },
-                { key: "estimated_cost", header: `Cost (${CURRENCY})`, value: (p: any) => Number(p.estimated_cost ?? 0), align: "right" },
-                { key: "contract_value", header: `Price (${CURRENCY})`, value: (p: any) => Number(p.contract_value ?? 0), align: "right" },
+                { key: "estimated_cost", header: `Cost (${CURRENCY})`, value: (p: any) => Number(p.estimated_cost ?? 0), className: "text-right" },
+                { key: "contract_value", header: `Price (${CURRENCY})`, value: (p: any) => Number(p.contract_value ?? 0), className: "text-right" },
                 {
                   key: "stage", header: "Stage", value: (p: any) => humanize(p.stage),
                   cell: (p: any) => (
@@ -447,7 +447,7 @@ function ProjectsPage() {
           )}
 
 
-          {tab === "jobs" &&
+          {activeTab === "jobs" &&
             jobList.map((j) => (
               <Card key={j.id}>
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
@@ -518,7 +518,7 @@ function ProjectsPage() {
               </Card>
             ))}
 
-          {((tab === "projects" && projectList.length === 0) || (tab === "jobs" && jobList.length === 0)) && (
+          {activeTab === "jobs" && jobList.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
