@@ -311,6 +311,46 @@ function SalesPage() {
                     <Field label="Delivery terms" value={qtnForm.delivery_terms} onChange={(v) => setQtnForm({ ...qtnForm, delivery_terms: v })} />
                   </div>
 
+                  <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                    <Label className="text-xs font-semibold">Cost build-up</Label>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                      <Select
+                        label="Preliminary BOM/BOS"
+                        value={qtnForm.bom_id}
+                        onChange={(v) => {
+                          const bom = bomList.find((b: any) => b.id === v);
+                          setQtnForm({
+                            ...qtnForm,
+                            bom_id: v,
+                            material_cost: bom ? String(bom.estimated_cost ?? 0) : qtnForm.material_cost,
+                          });
+                        }}
+                        options={bomList.map((b: any) => ({
+                          value: b.id,
+                          label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
+                        }))}
+                      />
+                      <Field label={`Total material cost (${CURRENCY})`} value={qtnForm.material_cost} onChange={(v) => setQtnForm({ ...qtnForm, material_cost: v })} />
+                      <Field label={`Total labour cost (${CURRENCY})`} value={qtnForm.labour_cost} onChange={(v) => setQtnForm({ ...qtnForm, labour_cost: v })} />
+                      <Field label="Inland %" value={qtnForm.inland_percent} onChange={(v) => setQtnForm({ ...qtnForm, inland_percent: v })} />
+                      <div>
+                        <Label className="text-xs">Inland cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={preview.inlandCost.toFixed(2)} />
+                      </div>
+                      <Field label={`Transport cost (${CURRENCY})`} value={qtnForm.transport_cost} onChange={(v) => setQtnForm({ ...qtnForm, transport_cost: v })} />
+                      <Field label="G-Margin %" value={qtnForm.margin_percent} onChange={(v) => setQtnForm({ ...qtnForm, margin_percent: v })} />
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs">Total price ({CURRENCY})</Label>
+                        <Input className="mt-1 font-semibold" readOnly value={preview.subtotal.toFixed(2)} />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Leave the build-up at zero to price the quotation from the line items instead.
+                    </p>
+                  </div>
+
+
+
                   <div className="mt-3">
                     <div className="mb-2 flex items-center justify-between">
                       <Label className="text-xs">Line items</Label>
