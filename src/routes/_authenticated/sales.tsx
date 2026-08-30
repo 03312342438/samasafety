@@ -311,7 +311,7 @@ function SalesPage() {
                     <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
                     <Field label="VAT %" value={qtnForm.vat_percent} onChange={(v) => setQtnForm({ ...qtnForm, vat_percent: v })} />
-                    <Field label="Estimated cost" value={qtnForm.estimated_cost} onChange={(v) => setQtnForm({ ...qtnForm, estimated_cost: v })} />
+                    
                     <Field label="Validity (days)" value={qtnForm.validity_days} onChange={(v) => setQtnForm({ ...qtnForm, validity_days: v })} />
                     <Field label="Payment terms" value={qtnForm.payment_terms} onChange={(v) => setQtnForm({ ...qtnForm, payment_terms: v })} />
                     <Field label="Delivery terms" value={qtnForm.delivery_terms} onChange={(v) => setQtnForm({ ...qtnForm, delivery_terms: v })} />
