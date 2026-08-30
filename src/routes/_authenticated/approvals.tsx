@@ -396,38 +396,98 @@ function ApprovalsPage() {
       <Dialog open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Request details</DialogTitle></DialogHeader>
-          {(detail as any)?.kind === "quotation" && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <p><span className="text-muted-foreground">Quotation</span><br />{(detail as any).quotation?.reference}</p>
-                <p><span className="text-muted-foreground">Customer</span><br />{(detail as any).quotation?.customers?.name ?? "—"}</p>
-                <p><span className="text-muted-foreground">Title</span><br />{(detail as any).quotation?.title || "—"}</p>
-                <p><span className="text-muted-foreground">Site</span><br />{(detail as any).quotation?.site_location || "—"}</p>
+          {(detail as any)?.kind === "quotation" && (() => {
+            const q = (detail as any).quotation ?? {};
+            const bomItems = (detail as any).bomItems ?? [];
+            const miscItems = (detail as any).items ?? [];
+            const project = (detail as any).project;
+            const bom = (detail as any).bom;
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <p><span className="text-muted-foreground">Quotation</span><br />{q.reference}</p>
+                  <p><span className="text-muted-foreground">Customer</span><br />{q.customers?.name ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Project</span><br />{project ? `${project.project_number} — ${project.name}` : "—"}</p>
+                  <p><span className="text-muted-foreground">Site</span><br />{q.site_location || project?.site_location || "—"}</p>
+                  <p><span className="text-muted-foreground">Title</span><br />{q.title || "—"}</p>
+                  <p><span className="text-muted-foreground">Preliminary BOM/BOS</span><br />{bom ? `${bom.reference}${bom.title ? ` — ${bom.title}` : ""}` : "—"}</p>
+                </div>
+
+                {bomItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">Preliminary BOM/BOS items</p>
+                    <div className="rounded-md border">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/50 text-left">
+                          <tr>
+                            <th className="whitespace-nowrap p-2">Item code</th>
+                            <th className="p-2">Description</th>
+                            <th className="p-2">Qty</th>
+                            <th className="p-2">UOM</th>
+                            <th className="whitespace-nowrap p-2 text-right">Unit cost</th>
+                            <th className="p-2 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bomItems.map((i: any) => (
+                            <tr key={i.id} className="border-t">
+                              <td className="whitespace-nowrap p-2">{i.stock_items?.item_code ?? "—"}</td>
+                              <td className="p-2">{i.description}</td>
+                              <td className="p-2">{i.quantity}</td>
+                              <td className="p-2">{i.unit}</td>
+                              <td className="p-2 text-right">{money(i.unit_cost)}</td>
+                              <td className="p-2 text-right">{money(i.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/40 p-3 sm:grid-cols-3">
+                  <p><span className="text-muted-foreground">Material cost</span><br />{money(q.material_cost)}</p>
+                  <p><span className="text-muted-foreground">Labour cost</span><br />{money(q.labour_cost)}</p>
+                  <p><span className="text-muted-foreground">Inland ({q.inland_percent}%)</span><br />{money(q.inland_cost)}</p>
+                  <p><span className="text-muted-foreground">Transport cost</span><br />{money(q.transport_cost)}</p>
+                  <p><span className="text-muted-foreground">G-Margin</span><br />{q.margin_percent}%</p>
+                  <p><span className="text-muted-foreground">Estimated cost</span><br />{money(q.estimated_cost)}</p>
+                </div>
+
+                {miscItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">Miscellaneous items</p>
+                    <div className="rounded-md border">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/50 text-left">
+                          <tr><th className="p-2">Description</th><th className="p-2">Qty</th><th className="p-2">Unit</th><th className="p-2 text-right">Amount</th></tr>
+                        </thead>
+                        <tbody>
+                          {miscItems.map((i: any) => (
+                            <tr key={i.id} className="border-t">
+                              <td className="p-2">{i.description}</td>
+                              <td className="p-2">{i.quantity}</td>
+                              <td className="p-2">{i.unit}</td>
+                              <td className="p-2 text-right">{money(i.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1 text-right">
+                  <p className="text-muted-foreground">Subtotal: {money(q.subtotal)}</p>
+                  {Number(q.discount_amount) > 0 && (
+                    <p className="text-muted-foreground">Discount: {money(q.discount_amount)}</p>
+                  )}
+                  <p className="text-muted-foreground">VAT: {q.vat_percent}%</p>
+                  <p className="font-medium">Total price: {money(q.total_amount)} {q.currency}</p>
+                </div>
               </div>
-              <div className="rounded-md border">
-                <table className="w-full text-xs">
-                  <thead className="bg-muted/50 text-left">
-                    <tr><th className="p-2">Description</th><th className="p-2">Qty</th><th className="p-2">Unit</th><th className="p-2 text-right">Amount</th></tr>
-                  </thead>
-                  <tbody>
-                    {((detail as any).items ?? []).map((i: any) => (
-                      <tr key={i.id} className="border-t">
-                        <td className="p-2">{i.description}</td>
-                        <td className="p-2">{i.quantity}</td>
-                        <td className="p-2">{i.unit}</td>
-                        <td className="p-2 text-right">{money(i.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="space-y-1 text-right">
-                <p className="text-muted-foreground">Subtotal: {money((detail as any).quotation?.subtotal)}</p>
-                <p className="text-muted-foreground">VAT: {(detail as any).quotation?.vat_percent}%</p>
-                <p className="font-medium">Total: {money((detail as any).quotation?.total_amount)} {(detail as any).quotation?.currency}</p>
-              </div>
-            </div>
-          )}
+            );
+          })()}
           {(detail as any)?.kind === "customer_po" && (
             <div className="grid grid-cols-2 gap-3 text-sm">
               <p><span className="text-muted-foreground">PO number</span><br />{(detail as any).po?.po_number || "—"}</p>
