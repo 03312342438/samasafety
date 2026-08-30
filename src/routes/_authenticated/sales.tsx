@@ -24,7 +24,10 @@ import {
   listQuotations, saveQuotation, setQuotationStage, deleteQuotation,
   listCustomerPos, saveCustomerPo, verifyCustomerPo, convertPoToProject,
 } from "@/lib/sales.functions";
-import { humanize, statusBadgeClass } from "@/lib/workflow";
+import { humanize, statusBadgeClass, CURRENCY } from "@/lib/workflow";
+import { listBoms } from "@/lib/engineering.functions";
+import { QuotationPdfButton } from "@/components/QuotationPdfButton";
+import { PreliminaryBomPanel } from "@/components/PreliminaryBomPanel";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   component: SalesPage,
@@ -53,6 +56,9 @@ const emptyQuotation = {
   inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
   payment_terms: "", delivery_terms: "", scope_notes: "",
+  // Sales cost build-up: material comes from the preliminary BOM, the rest is typed in.
+  bom_id: "", material_cost: "0", labour_cost: "0", inland_percent: "0",
+  transport_cost: "0", margin_percent: "0",
 };
 
 const emptyItem: ItemRow = { description: "", unit: "nos", quantity: "1", unit_price: "0" };
@@ -91,6 +97,9 @@ function SalesPage() {
   const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: () => fetchInquiries() });
   const { data: quotations } = useQuery({ queryKey: ["quotations"], queryFn: () => fetchQuotations() });
   const { data: pos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchPos() });
+  const fetchBoms = useServerFn(listBoms);
+  const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
+  const bomList = (boms as any[]) ?? [];
 
   const [inqOpen, setInqOpen] = useState(false);
   const [inqForm, setInqForm] = useState<any>(emptyInquiry);
@@ -111,11 +120,19 @@ function SalesPage() {
   const customerList = (customers as any[]) ?? [];
 
   const preview = useMemo(() => {
-    const subtotal = items.reduce((s, i) => s + num(i.quantity) * num(i.unit_price), 0);
+    const material = num(qtnForm.material_cost);
+    const inlandCost = (material * num(qtnForm.inland_percent)) / 100;
+    const costBase = material + num(qtnForm.labour_cost) + inlandCost + num(qtnForm.transport_cost);
+    const buildUp = costBase > 0;
+    const lineSubtotal = items.reduce((s, i) => s + num(i.quantity) * num(i.unit_price), 0);
+    const subtotal = buildUp ? costBase * (1 + num(qtnForm.margin_percent) / 100) : lineSubtotal;
     const net = Math.max(subtotal - num(qtnForm.discount_amount), 0);
     const total = net + (net * num(qtnForm.vat_percent)) / 100;
-    return { subtotal, total };
-  }, [items, qtnForm.discount_amount, qtnForm.vat_percent]);
+    return { subtotal, total, inlandCost, costBase };
+  }, [
+    items, qtnForm.discount_amount, qtnForm.vat_percent, qtnForm.material_cost,
+    qtnForm.labour_cost, qtnForm.inland_percent, qtnForm.transport_cost, qtnForm.margin_percent,
+  ]);
 
   const submitInquiry = async () => {
     try {
@@ -144,6 +161,12 @@ function SalesPage() {
           id: qtnForm.id || undefined,
           inquiry_id: qtnForm.inquiry_id || null,
           customer_id: qtnForm.customer_id || null,
+          bom_id: qtnForm.bom_id || null,
+          material_cost: num(qtnForm.material_cost),
+          labour_cost: num(qtnForm.labour_cost),
+          inland_percent: num(qtnForm.inland_percent),
+          transport_cost: num(qtnForm.transport_cost),
+          margin_percent: num(qtnForm.margin_percent),
           discount_amount: num(qtnForm.discount_amount),
           vat_percent: num(qtnForm.vat_percent),
           estimated_cost: num(qtnForm.estimated_cost),
@@ -294,6 +317,46 @@ function SalesPage() {
                     <Field label="Delivery terms" value={qtnForm.delivery_terms} onChange={(v) => setQtnForm({ ...qtnForm, delivery_terms: v })} />
                   </div>
 
+                  <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                    <Label className="text-xs font-semibold">Cost build-up</Label>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                      <Select
+                        label="Preliminary BOM/BOS"
+                        value={qtnForm.bom_id}
+                        onChange={(v) => {
+                          const bom = bomList.find((b: any) => b.id === v);
+                          setQtnForm({
+                            ...qtnForm,
+                            bom_id: v,
+                            material_cost: bom ? String(bom.estimated_cost ?? 0) : qtnForm.material_cost,
+                          });
+                        }}
+                        options={bomList.map((b: any) => ({
+                          value: b.id,
+                          label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
+                        }))}
+                      />
+                      <Field label={`Total material cost (${CURRENCY})`} value={qtnForm.material_cost} onChange={(v) => setQtnForm({ ...qtnForm, material_cost: v })} />
+                      <Field label={`Total labour cost (${CURRENCY})`} value={qtnForm.labour_cost} onChange={(v) => setQtnForm({ ...qtnForm, labour_cost: v })} />
+                      <Field label="Inland %" value={qtnForm.inland_percent} onChange={(v) => setQtnForm({ ...qtnForm, inland_percent: v })} />
+                      <div>
+                        <Label className="text-xs">Inland cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={preview.inlandCost.toFixed(2)} />
+                      </div>
+                      <Field label={`Transport cost (${CURRENCY})`} value={qtnForm.transport_cost} onChange={(v) => setQtnForm({ ...qtnForm, transport_cost: v })} />
+                      <Field label="G-Margin %" value={qtnForm.margin_percent} onChange={(v) => setQtnForm({ ...qtnForm, margin_percent: v })} />
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs">Total price ({CURRENCY})</Label>
+                        <Input className="mt-1 font-semibold" readOnly value={preview.subtotal.toFixed(2)} />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Leave the build-up at zero to price the quotation from the line items instead.
+                    </p>
+                  </div>
+
+
+
                   <div className="mt-3">
                     <div className="mb-2 flex items-center justify-between">
                       <Label className="text-xs">Line items</Label>
@@ -365,6 +428,7 @@ function SalesPage() {
           onChange={setTab}
           tabs={[
             { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
+            { value: "bom", label: `Preliminary BOM/BOS (${bomList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
             { value: "analytics", label: "Analytics" },
@@ -373,6 +437,7 @@ function SalesPage() {
 
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
+          {tab === "bom" && <PreliminaryBomPanel />}
           {tab === "inquiries" && inquiryList.map((i) => (
             <Card key={i.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
@@ -429,6 +494,7 @@ function SalesPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <QuotationPdfButton quotation={x} customerName={x.customers?.name} />
                     <Button variant="outline" size="sm" onClick={() => askApproval(
                       "quotation_commercial",
                       `A1 — ${x.reference}`,
@@ -445,6 +511,10 @@ function SalesPage() {
                         customer_id: x.customer_id ?? "", inquiry_id: x.inquiry_id ?? "",
                         discount_amount: String(x.discount_amount ?? 0), vat_percent: String(x.vat_percent ?? 15),
                         estimated_cost: String(x.estimated_cost ?? 0), validity_days: String(x.validity_days ?? 30),
+                        bom_id: x.bom_id ?? "",
+                        material_cost: String(x.material_cost ?? 0), labour_cost: String(x.labour_cost ?? 0),
+                        inland_percent: String(x.inland_percent ?? 0), transport_cost: String(x.transport_cost ?? 0),
+                        margin_percent: String(x.margin_percent ?? 0),
                       });
                       setItems(((x.quotation_items ?? []) as any[])
                         .sort((a, b) => a.sequence - b.sequence)

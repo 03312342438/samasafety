@@ -25,7 +25,8 @@ import {
 import { listBoms } from "@/lib/engineering.functions";
 
 import { submitApproval } from "@/lib/approvals.functions";
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY } from "@/lib/workflow";
+import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   component: ProjectsPage,
@@ -61,6 +62,14 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("projects");
   const [query, setQuery] = useState("");
+  // Sales staff never see job numbers — that is a PM / site responsibility.
+  const salesOnly =
+    !profile?.isAdmin &&
+    hasDept(profile?.roles, "sales") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !hasDept(profile?.roles, "technician");
+  const activeTab = salesOnly ? "projects" : tab;
+
 
   const fetchProjects = useServerFn(listProjects);
   const fetchJobs = useServerFn(listJobNumbers);
@@ -174,18 +183,19 @@ function ProjectsPage() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">Projects & Job Numbers</h1>
+            <h1 className="text-xl font-semibold">{salesOnly ? "Projects" : "Projects & Job Numbers"}</h1>
             <p className="text-sm text-muted-foreground">
-              Every job number is unique, approved by management, and the only key materials and
-              costs can be booked against.
+              {salesOnly
+                ? "Every project is linked to a customer number and carries its own cost and price."
+                : "Every job number is unique, approved by management, and the only key materials and costs can be booked against."}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "projects" ? (
+            {activeTab === "projects" ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New project</Button>
+                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[85vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>{form.id ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
@@ -243,8 +253,8 @@ function ProjectsPage() {
                         <option value="closed">Closed</option>
                       </select>
                     </div>
-                    <Field label="Contract value" value={form.contract_value} onChange={(v) => setForm({ ...form, contract_value: v })} />
-                    <Field label="Estimated cost" value={form.estimated_cost} onChange={(v) => setForm({ ...form, estimated_cost: v })} />
+                    <Field label={`Price (${CURRENCY})`} value={form.contract_value} onChange={(v) => setForm({ ...form, contract_value: v })} />
+                    <Field label={`Cost (${CURRENCY})`} value={form.estimated_cost} onChange={(v) => setForm({ ...form, estimated_cost: v })} />
                     <Field label="Start date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
                     <Field label="Target date" type="date" value={form.target_date} onChange={(v) => setForm({ ...form, target_date: v })} />
                     <Field label="Progress %" value={form.progress_percent} onChange={(v) => setForm({ ...form, progress_percent: v })} />
@@ -382,55 +392,62 @@ function ProjectsPage() {
           </div>
         </div>
 
-        <SegmentedTabs
-          value={tab}
-          onChange={setTab}
-          tabs={[
-            { value: "projects", label: `Projects (${projectList.length})` },
-            { value: "jobs", label: `Job numbers (${jobList.length})` },
-          ]}
-        />
+        {!salesOnly && (
+          <SegmentedTabs
+            value={activeTab}
+            onChange={setTab}
+            tabs={[
+              { value: "projects", label: `Projects (${projectList.length})` },
+              { value: "jobs", label: `Job numbers (${jobList.length})` },
+            ]}
+          />
+        )}
 
         <div className="mt-4 space-y-3">
-          {tab === "projects" &&
-            projectList.map((p) => (
-              <Card key={p.id}>
-                <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{p.project_number}</span>
-                      <span className="text-sm">{p.name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.stage)}`}>{humanize(p.stage)}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.status)}`}>{humanize(p.status)}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {[p.customers?.name, p.site_location].filter(Boolean).join(" · ") || "—"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(p.job_numbers ?? []).length} job number(s) · progress {p.progress_percent ?? 0}%
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
-                        catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {activeTab === "projects" && (
+            <FilterTable
+              rows={projectList}
+              empty="No projects yet."
+              columns={[
+                { key: "project_number", header: "Project no.", value: (p: any) => p.project_number },
+                { key: "name", header: "Project name", value: (p: any) => p.name },
+                { key: "customer_number", header: "Customer no.", value: (p: any) => p.customers?.customer_number ?? "" },
+                { key: "customer", header: "Customer", value: (p: any) => p.customers?.name ?? "" },
+                { key: "site_location", header: "Site location", value: (p: any) => p.site_location },
+                { key: "project_type", header: "Type", value: (p: any) => humanize(p.project_type ?? "") },
+                { key: "start_date", header: "Start", value: (p: any) => p.start_date ?? "" },
+                { key: "target_date", header: "Target", value: (p: any) => p.target_date ?? "" },
+                { key: "estimated_cost", header: `Cost (${CURRENCY})`, value: (p: any) => Number(p.estimated_cost ?? 0), className: "text-right" },
+                { key: "contract_value", header: `Price (${CURRENCY})`, value: (p: any) => Number(p.contract_value ?? 0), className: "text-right" },
+                {
+                  key: "stage", header: "Stage", value: (p: any) => humanize(p.stage),
+                  cell: (p: any) => (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.stage)}`}>{humanize(p.stage)}</span>
+                  ),
+                },
+              ]}
+              actions={(p: any) => (
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
+                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            />
+          )}
 
-          {tab === "jobs" &&
+
+          {activeTab === "jobs" &&
             jobList.map((j) => (
               <Card key={j.id}>
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
@@ -501,7 +518,7 @@ function ProjectsPage() {
               </Card>
             ))}
 
-          {((tab === "projects" && projectList.length === 0) || (tab === "jobs" && jobList.length === 0)) && (
+          {activeTab === "jobs" && jobList.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>

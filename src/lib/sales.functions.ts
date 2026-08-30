@@ -154,14 +154,36 @@ export const saveQuotation = createServerFn({ method: "POST" })
         stage: z.string().max(60).default("quotation_draft"),
         status: z.string().max(40).default("draft"),
         items: z.array(itemSchema).default([]),
+        // Sales cost build-up (preliminary BOM driven)
+        bom_id: z.string().uuid().nullable().default(null),
+        material_cost: z.number().min(0).default(0),
+        labour_cost: z.number().min(0).default(0),
+        inland_percent: z.number().min(0).max(100).default(0),
+        transport_cost: z.number().min(0).default(0),
+        margin_percent: z.number().min(0).max(100).default(0),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { id, items, ...raw } = data;
-    const { subtotal, total } = totals(items, raw.discount_amount, raw.vat_percent);
-    const fields = { ...raw, subtotal, total_amount: total };
+
+    const inland_cost = round2((raw.material_cost * raw.inland_percent) / 100);
+    const costBase = raw.material_cost + raw.labour_cost + inland_cost + raw.transport_cost;
+    const buildUp = costBase > 0;
+
+    const lineTotals = totals(items, raw.discount_amount, raw.vat_percent);
+    const subtotal = buildUp ? round2(costBase * (1 + raw.margin_percent / 100)) : lineTotals.subtotal;
+    const net = Math.max(subtotal - raw.discount_amount, 0);
+    const total = buildUp ? round2(net + (net * raw.vat_percent) / 100) : lineTotals.total;
+
+    const fields = {
+      ...raw,
+      inland_cost,
+      estimated_cost: buildUp ? round2(costBase) : raw.estimated_cost,
+      subtotal,
+      total_amount: total,
+    };
 
     let quotationId = id;
     let reference: string;

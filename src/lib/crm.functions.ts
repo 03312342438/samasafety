@@ -39,6 +39,7 @@ export const saveCustomer = createServerFn({ method: "POST" })
         name: z.string().trim().min(1).max(300),
         customer_number: z.string().trim().max(60).default(""),
         contact_person: z.string().max(200).default(""),
+        cr_cpr_number: z.string().max(60).default(""),
         email: z.string().max(320).default(""),
         phone: z.string().max(60).default(""),
         address: z.string().max(500).default(""),

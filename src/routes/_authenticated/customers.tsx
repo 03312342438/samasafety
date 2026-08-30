@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { listCustomers, saveCustomer, deleteCustomer, listAssets, saveAsset, deleteAsset } from "@/lib/crm.functions";
 import { statusBadgeClass } from "@/lib/workflow";
+import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/customers")({
   component: CustomersPage,
@@ -34,9 +35,15 @@ export const Route = createFileRoute("/_authenticated/customers")({
 });
 
 const emptyCustomer = {
-  name: "", contact_person: "", email: "", phone: "", address: "", city: "",
+  name: "", contact_person: "", cr_cpr_number: "", email: "", phone: "", address: "", city: "",
   payment_terms: "", credit_terms: "", notes: "", status: "active" as const,
 };
+
+/** Bahrain cities served by SAMA. */
+export const BAHRAIN_CITIES = [
+  "Manama", "Muharraq", "Riffa", "Hamad Town", "A'ali",
+  "Sitra", "Isa Town", "Jidhafs", "Budaiya", "Diraz",
+];
 
 const emptyAsset = {
   asset_tag: "", customer_id: "", site_location: "", system_type: "", manufacturer: "",
@@ -135,12 +142,26 @@ function CustomersPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Customer name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
                     <Field label="Contact person" value={form.contact_person} onChange={(v) => setForm({ ...form, contact_person: v })} />
+                    <Field label="CR / CPR number" value={form.cr_cpr_number} onChange={(v) => setForm({ ...form, cr_cpr_number: v })} />
                     <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
                     <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-                    <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+                    <div>
+                      <Label className="text-xs">City</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={form.city}
+                        onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      >
+                        <option value="">— select city —</option>
+                        {BAHRAIN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        {form.city && !BAHRAIN_CITIES.includes(form.city) && (
+                          <option value={form.city}>{form.city}</option>
+                        )}
+                      </select>
+                    </div>
                     <Field label="Payment terms" value={form.payment_terms} onChange={(v) => setForm({ ...form, payment_terms: v })} />
                     <div className="sm:col-span-2">
-                      <Label className="text-xs">Address</Label>
+                      <Label className="text-xs">Complete address</Label>
                       <Textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                     </div>
                     <div className="sm:col-span-2">
@@ -205,38 +226,45 @@ function CustomersPage() {
         />
 
         <div className="mt-4 space-y-3">
-          {tab === "customers" &&
-            customerList.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{c.name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(c.status)}`}>{c.status}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {[c.contact_person, c.phone, c.email, c.city].filter(Boolean).join(" · ") || "No contact details"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyCustomer, ...c }); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try { await remove({ data: { id: c.id } }); refresh(); toast.success("Customer deleted"); }
-                        catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {tab === "customers" && (
+            <FilterTable
+              rows={customerList}
+              empty="No customers yet."
+              columns={[
+                { key: "customer_number", header: "Customer no.", value: (c: any) => c.customer_number },
+                { key: "name", header: "Customer name", value: (c: any) => c.name },
+                { key: "contact_person", header: "Contact person", value: (c: any) => c.contact_person },
+                { key: "cr_cpr_number", header: "CR / CPR", value: (c: any) => c.cr_cpr_number },
+                { key: "email", header: "Email", value: (c: any) => c.email },
+                { key: "phone", header: "Phone", value: (c: any) => c.phone },
+                { key: "city", header: "City", value: (c: any) => c.city },
+                { key: "address", header: "Address", value: (c: any) => c.address },
+                {
+                  key: "status", header: "Status", value: (c: any) => c.status,
+                  cell: (c: any) => (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(c.status)}`}>{c.status}</span>
+                  ),
+                },
+              ]}
+              actions={(c: any) => (
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyCustomer, ...c }); setOpen(true); }}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try { await remove({ data: { id: c.id } }); refresh(); toast.success("Customer deleted"); }
+                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            />
+          )}
 
           {tab === "assets" &&
             assetList.map((a) => (
@@ -274,7 +302,7 @@ function CustomersPage() {
               </Card>
             ))}
 
-          {((tab === "customers" && customerList.length === 0) || (tab === "assets" && assetList.length === 0)) && (
+          {tab === "assets" && assetList.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
