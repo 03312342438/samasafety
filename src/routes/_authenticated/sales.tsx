@@ -27,6 +27,7 @@ import {
 import { humanize, statusBadgeClass, CURRENCY } from "@/lib/workflow";
 import { listBoms } from "@/lib/engineering.functions";
 import { QuotationPdfButton } from "@/components/QuotationPdfButton";
+import { PreliminaryBomPanel } from "@/components/PreliminaryBomPanel";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   component: SalesPage,
