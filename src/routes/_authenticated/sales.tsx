@@ -359,7 +359,7 @@ function SalesPage() {
 
                   <div className="mt-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <Label className="text-xs">Line items</Label>
+                      <Label className="text-xs">Miscellaneous Items</Label>
                       <Button variant="outline" size="sm" onClick={() => setItems([...items, { ...emptyItem }])}>
                         <Plus className="mr-1 h-3.5 w-3.5" /> Add line
                       </Button>
