@@ -21,7 +21,20 @@ export const listBoms = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const rows = data ?? [];
+    const ids = rows.map((r: any) => r.id);
+    let usedMap = new Map<string, string>();
+    if (ids.length) {
+      const { data: qtnLinks } = await context.supabase
+        .from("quotations")
+        .select("bom_id, reference")
+        .in("bom_id", ids);
+      usedMap = new Map((qtnLinks ?? []).map((q: any) => [q.bom_id as string, q.reference as string]));
+    }
+    return rows.map((r: any) => ({
+      ...r,
+      used_in_quotation: usedMap.get(r.id) ?? null,
+    }));
   });
 
 const bomItemSchema = z.object({
