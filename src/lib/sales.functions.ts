@@ -401,8 +401,16 @@ export const saveCustomerPo = createServerFn({ method: "POST" })
         .select("po_number, verification_status")
         .eq("id", id)
         .maybeSingle();
+      const { data: approvedReq } = await supabase
+        .from("approvals")
+        .select("id")
+        .eq("entity_table", "customer_pos")
+        .eq("entity_id", id)
+        .eq("decision", "approved")
+        .limit(1)
+        .maybeSingle();
       await assertMutable(supabase, userId, {
-        approved: prevPo?.verification_status === "verified",
+        approved: prevPo?.verification_status === "verified" || !!approvedReq,
         label: `PO ${prevPo?.po_number ?? ""}`.trim(),
       });
       const { error } = await supabase.from("customer_pos").update(fields).eq("id", id);
