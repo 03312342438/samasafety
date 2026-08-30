@@ -183,18 +183,19 @@ function ProjectsPage() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">Projects & Job Numbers</h1>
+            <h1 className="text-xl font-semibold">{salesOnly ? "Projects" : "Projects & Job Numbers"}</h1>
             <p className="text-sm text-muted-foreground">
-              Every job number is unique, approved by management, and the only key materials and
-              costs can be booked against.
+              {salesOnly
+                ? "Every project is linked to a customer number and carries its own cost and price."
+                : "Every job number is unique, approved by management, and the only key materials and costs can be booked against."}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "projects" ? (
+            {activeTab === "projects" ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New project</Button>
+                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[85vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>{form.id ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
