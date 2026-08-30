@@ -125,14 +125,17 @@ function SalesPage() {
     const costBase = material + num(qtnForm.labour_cost) + inlandCost + num(qtnForm.transport_cost);
     const buildUp = costBase > 0;
     const lineSubtotal = items.reduce((s, i) => s + num(i.quantity) * num(i.unit_price), 0);
-    const subtotal = buildUp ? costBase * (1 + num(qtnForm.margin_percent) / 100) : lineSubtotal;
+    const subtotal = buildUp
+      ? costBase * (1 + num(qtnForm.margin_percent) / 100) + lineSubtotal
+      : lineSubtotal;
     const net = Math.max(subtotal - num(qtnForm.discount_amount), 0);
     const total = net + (net * num(qtnForm.vat_percent)) / 100;
-    return { subtotal, total, inlandCost, costBase };
+    return { subtotal, total, inlandCost, costBase, estimatedCost: costBase + lineSubtotal };
   }, [
     items, qtnForm.discount_amount, qtnForm.vat_percent, qtnForm.material_cost,
     qtnForm.labour_cost, qtnForm.inland_percent, qtnForm.transport_cost, qtnForm.margin_percent,
   ]);
+
 
   const submitInquiry = async () => {
     try {
@@ -311,7 +314,7 @@ function SalesPage() {
                     <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
                     <Field label="VAT %" value={qtnForm.vat_percent} onChange={(v) => setQtnForm({ ...qtnForm, vat_percent: v })} />
-                    <Field label="Estimated cost" value={qtnForm.estimated_cost} onChange={(v) => setQtnForm({ ...qtnForm, estimated_cost: v })} />
+                    
                     <Field label="Validity (days)" value={qtnForm.validity_days} onChange={(v) => setQtnForm({ ...qtnForm, validity_days: v })} />
                     <Field label="Payment terms" value={qtnForm.payment_terms} onChange={(v) => setQtnForm({ ...qtnForm, payment_terms: v })} />
                     <Field label="Delivery terms" value={qtnForm.delivery_terms} onChange={(v) => setQtnForm({ ...qtnForm, delivery_terms: v })} />
@@ -336,7 +339,10 @@ function SalesPage() {
                           label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
                         }))}
                       />
-                      <Field label={`Total material cost (${CURRENCY})`} value={qtnForm.material_cost} onChange={(v) => setQtnForm({ ...qtnForm, material_cost: v })} />
+                      <div>
+                        <Label className="text-xs">Total material cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={num(qtnForm.material_cost).toFixed(2)} />
+                      </div>
                       <Field label={`Total labour cost (${CURRENCY})`} value={qtnForm.labour_cost} onChange={(v) => setQtnForm({ ...qtnForm, labour_cost: v })} />
                       <Field label="Inland %" value={qtnForm.inland_percent} onChange={(v) => setQtnForm({ ...qtnForm, inland_percent: v })} />
                       <div>
@@ -345,21 +351,27 @@ function SalesPage() {
                       </div>
                       <Field label={`Transport cost (${CURRENCY})`} value={qtnForm.transport_cost} onChange={(v) => setQtnForm({ ...qtnForm, transport_cost: v })} />
                       <Field label="G-Margin %" value={qtnForm.margin_percent} onChange={(v) => setQtnForm({ ...qtnForm, margin_percent: v })} />
+                      <div>
+                        <Label className="text-xs">Estimated cost ({CURRENCY})</Label>
+                        <Input className="mt-1" readOnly value={preview.estimatedCost.toFixed(2)} />
+                      </div>
                       <div className="sm:col-span-2">
                         <Label className="text-xs">Total price ({CURRENCY})</Label>
                         <Input className="mt-1 font-semibold" readOnly value={preview.subtotal.toFixed(2)} />
                       </div>
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Leave the build-up at zero to price the quotation from the line items instead.
+                      Material cost comes from the selected preliminary BOM/BOS; inland cost, estimated cost
+                      and total price are calculated automatically.
                     </p>
                   </div>
 
 
 
+
                   <div className="mt-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <Label className="text-xs">Line items</Label>
+                      <Label className="text-xs">Miscellaneous Items</Label>
                       <Button variant="outline" size="sm" onClick={() => setItems([...items, { ...emptyItem }])}>
                         <Plus className="mr-1 h-3.5 w-3.5" /> Add line
                       </Button>
