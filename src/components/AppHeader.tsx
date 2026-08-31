@@ -9,8 +9,9 @@ import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
-  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp,
+  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
 } from "lucide-react";
+
 import { hasDept } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,14 @@ export function AppHeader({
     hasDept(roles, "inventory") ||
     hasDept(roles, "technician") ||
     hasDept(roles, "accounts");
+  // Store staff work only in Store, Projects, Stock and Approvals.
+  const inventoryOnly =
+    !isAdmin &&
+    hasDept(roles, "inventory") &&
+    !hasDept(roles, "project_manager") &&
+    !hasDept(roles, "technician") &&
+    !hasDept(roles, "sales") &&
+    !hasDept(roles, "accounts");
 
   const items: NavItem[] = [
     { to: "/dashboard", label: "Dashboard", icon: FileText, show: true },
@@ -64,15 +73,17 @@ export function AppHeader({
     { to: "/projects", label: "Projects", icon: FolderKanban, show: !!isAdmin || canSeeProjects },
     {
       to: "/engineering", label: "Planning", icon: ClipboardList,
-      show: !!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory"),
+      show: !inventoryOnly && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
     },
     {
       to: "/inventory", label: "Store", icon: Boxes,
       show: !!isAdmin || hasDept(roles, "inventory") || hasDept(roles, "project_manager"),
     },
+    { to: "/stock", label: "Stock", icon: PackageSearch, show: true },
     {
       to: "/execution", label: "Site", icon: HardHat,
       show:
+        !inventoryOnly &&
         (!!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager")) &&
         !(hasDept(roles, "sales") && !hasDept(roles, "technician") && !hasDept(roles, "project_manager")),
     },
@@ -85,6 +96,7 @@ export function AppHeader({
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
   ];
+
 
   const rail = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">

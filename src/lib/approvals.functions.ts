@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments, notifyUsers } from "@/lib/activity";
+import { applyStockLotDecision } from "@/lib/lots.functions";
+
 
 export const listApprovals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -79,8 +81,17 @@ export const getApprovalEntity = createServerFn({ method: "GET" })
         .maybeSingle();
       return { kind: "customer_po" as const, approval, po };
     }
+    if (approval.entity_table === "stock_lots") {
+      const { data: lot } = await supabase
+        .from("stock_lots")
+        .select("*, stock_lot_items(*, stock_items(item_code, description, quantity_on_hand, unit))")
+        .eq("id", approval.entity_id)
+        .maybeSingle();
+      return { kind: "stock_lot" as const, approval, lot };
+    }
     return { kind: "none" as const, approval };
   });
+
 
 /** Management may clear a decided request out of the record. */
 export const deleteApproval = createServerFn({ method: "POST" })
@@ -121,6 +132,8 @@ export const submitApproval = createServerFn({ method: "POST" })
           "customer_po",
           "commercial_review",
           "item_code",
+          "stock_lot",
+
         ]),
         title: z.string().trim().min(1).max(300),
         details: z.string().max(4000).default(""),
@@ -215,7 +228,11 @@ export const decideApproval = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Propagate the decision to the gated record.
+    if (approval.entity_table === "stock_lots" && approval.entity_id) {
+      await applyStockLotDecision(supabase, userId, approval.entity_id, data.decision);
+    }
     if (approval.entity_table === "stock_items" && approval.entity_id) {
+
       await supabase
         .from("stock_items")
         .update({

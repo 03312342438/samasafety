@@ -949,6 +949,75 @@ export type Database = {
           },
         ]
       }
+      job_item_remarks: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          bom_item_id: string | null
+          created_at: string
+          description: string
+          id: string
+          job_number_id: string
+          quantity: number
+          remarks: string
+          sequence: number
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bom_item_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          job_number_id: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bom_item_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          job_number_id?: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_item_remarks_bom_item_id_fkey"
+            columns: ["bom_item_id"]
+            isOneToOne: false
+            referencedRelation: "bom_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_item_remarks_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_numbers: {
         Row: {
           approved_at: string | null
@@ -1989,6 +2058,7 @@ export type Database = {
           created_by: string
           description: string
           id: string
+          image_url: string
           item_code: string
           notes: string
           quantity_on_hand: number
@@ -2010,6 +2080,7 @@ export type Database = {
           created_by: string
           description?: string
           id?: string
+          image_url?: string
           item_code?: string
           notes?: string
           quantity_on_hand?: number
@@ -2031,6 +2102,7 @@ export type Database = {
           created_by?: string
           description?: string
           id?: string
+          image_url?: string
           item_code?: string
           notes?: string
           quantity_on_hand?: number
@@ -2041,6 +2113,120 @@ export type Database = {
           supplier?: string
           unit?: string
           unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_lot_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          lot_id: string
+          quantity: number
+          remarks: string
+          sequence: number
+          stock_item_id: string | null
+          store_location: string
+          supplier: string
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          lot_id: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          stock_item_id?: string | null
+          store_location?: string
+          supplier?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          lot_id?: string
+          quantity?: number
+          remarks?: string
+          sequence?: number
+          stock_item_id?: string | null
+          store_location?: string
+          supplier?: string
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lot_items_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lot_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_lots: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          lot_number: string
+          notes: string
+          received_date: string | null
+          reference: string
+          status: string
+          submitted_at: string | null
+          supplier: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          lot_number?: string
+          notes?: string
+          received_date?: string | null
+          reference?: string
+          status?: string
+          submitted_at?: string | null
+          supplier?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          lot_number?: string
+          notes?: string
+          received_date?: string | null
+          reference?: string
+          status?: string
+          submitted_at?: string | null
+          supplier?: string
+          total_value?: number
           updated_at?: string
         }
         Relationships: []

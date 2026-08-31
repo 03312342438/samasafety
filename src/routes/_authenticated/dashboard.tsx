@@ -30,6 +30,8 @@ import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/se
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
 import { can, hasDept } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
+import { InventoryDashboard } from "@/components/InventoryDashboard";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -55,6 +57,14 @@ function Dashboard() {
   // Only Installation & Maintenance / Technician staff may fill service reports.
   const canFillReport = can(profile?.roles, "report.fill");
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales");
+  const isInventoryOnly =
+    !isAdmin &&
+    hasDept(profile?.roles, "inventory") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !hasDept(profile?.roles, "technician") &&
+    !hasDept(profile?.roles, "sales") &&
+    !hasDept(profile?.roles, "accounts");
+
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
   const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
@@ -113,6 +123,25 @@ function Dashboard() {
       </div>
     );
   }
+
+  // Store staff get store analytics only — no reports, history or maintenance.
+  if (isInventoryOnly) {
+    return (
+      <div className="min-h-screen bg-secondary/40">
+        <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
+        <main className="mx-auto max-w-[1400px] px-4 py-6">
+          <div className="mb-5">
+            <h1 className="text-2xl font-bold">Store Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Stock value, reorder alerts and material moving in and out of the store.
+            </p>
+          </div>
+          <InventoryDashboard />
+        </main>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-secondary/40">

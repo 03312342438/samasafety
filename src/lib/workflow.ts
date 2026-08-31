@@ -157,7 +157,25 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
   customer_po: "Purchase Order approval",
   commercial_review: "Commercial review",
   item_code: "Item code approval",
+  stock_lot: "Restock lot approval",
 };
+
+/** Fixed store categories — the only categories an item may be filed under. */
+export const STOCK_CATEGORIES = [
+  "Consumables",
+  "Mechanical",
+  "Electrical",
+  "Electronics",
+  "PPE & Safety",
+  "Fire Fighting Equipment",
+  "Fire Alarm & Detection",
+  "Tools & Equipment",
+  "Installation Materials",
+  "Spare Parts",
+  "Chemicals",
+  "Others",
+] as const;
+
 
 export type ApprovalDecision = "pending" | "approved" | "rejected" | "revision_requested";
 
