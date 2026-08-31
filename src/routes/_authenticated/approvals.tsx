@@ -338,12 +338,19 @@ function ApprovalsPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {(a.entity_table === "quotations" || a.entity_table === "customer_pos") && (
+                    {(a.entity_table === "quotations" ||
+                      a.entity_table === "customer_pos" ||
+                      a.entity_table === "stock_lots") && (
                       <Button size="sm" variant="outline" onClick={() => setDetailId(a.id)}>
                         <FileSearch className="mr-1 h-4 w-4" />
-                        {a.entity_table === "quotations" ? "Open quotation" : "Open purchase order"}
+                        {a.entity_table === "quotations"
+                          ? "Open quotation"
+                          : a.entity_table === "stock_lots"
+                            ? "Open lot"
+                            : "Open purchase order"}
                       </Button>
                     )}
+
                     {a.decision !== "pending" && !isAdmin && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Lock className="h-3 w-3" /> Locked record — only Management can remove it
