@@ -167,11 +167,21 @@ function ApprovalsPage() {
     }
   };
 
-  const all = (approvals as any[]) ?? [];
+  // The Store only ever deals with restock lot approvals.
+  const isStoreOnly =
+    !isAdmin &&
+    hasDept(profile?.roles, "inventory") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !isSales &&
+    !hasDept(profile?.roles, "accounts");
+  const all = ((approvals as any[]) ?? []).filter((a) =>
+    isStoreOnly ? a.entity_table === "stock_lots" : true,
+  );
   const pending = all.filter((a) => a.decision === "pending");
   const decided = all.filter((a) => a.decision !== "pending");
   const needsQuotation = isSales && form.approval_type === "quotation_commercial";
   const needsPo = isSales && form.approval_type === "customer_po";
+
 
   return (
     <div className="min-h-screen bg-secondary/40">
