@@ -167,7 +167,7 @@ function ApprovalsPage() {
     }
   };
 
-  // The Store only ever deals with restock lot approvals.
+  // The Store only ever deals with restock lot and release approvals.
   const isStoreOnly =
     !isAdmin &&
     hasDept(profile?.roles, "inventory") &&
@@ -175,7 +175,7 @@ function ApprovalsPage() {
     !isSales &&
     !hasDept(profile?.roles, "accounts");
   const all = ((approvals as any[]) ?? []).filter((a) =>
-    isStoreOnly ? a.entity_table === "stock_lots" : true,
+    isStoreOnly ? a.entity_table === "stock_lots" || a.entity_table === "stock_releases" : true,
   );
   const pending = all.filter((a) => a.decision === "pending");
   const decided = all.filter((a) => a.decision !== "pending");
@@ -340,14 +340,17 @@ function ApprovalsPage() {
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     {(a.entity_table === "quotations" ||
                       a.entity_table === "customer_pos" ||
-                      a.entity_table === "stock_lots") && (
+                      a.entity_table === "stock_lots" ||
+                      a.entity_table === "stock_releases") && (
                       <Button size="sm" variant="outline" onClick={() => setDetailId(a.id)}>
                         <FileSearch className="mr-1 h-4 w-4" />
                         {a.entity_table === "quotations"
                           ? "Open quotation"
                           : a.entity_table === "stock_lots"
                             ? "Open lot"
-                            : "Open purchase order"}
+                            : a.entity_table === "stock_releases"
+                              ? "Open release"
+                              : "Open purchase order"}
                       </Button>
                     )}
 
@@ -568,6 +571,60 @@ function ApprovalsPage() {
                   </table>
                 </div>
                 <p className="text-right font-medium">Total lot value: {money(total)} {lot?.currency || "BHD"}</p>
+              </div>
+            );
+          })()}
+
+          {(detail as any)?.kind === "stock_release" && (() => {
+            const rel = (detail as any).release;
+            const lines = rel?.stock_release_items ?? [];
+            const total = lines.reduce(
+              (s: number, l: any) => s + Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0),
+              0,
+            );
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <p><span className="text-muted-foreground">Release no.</span><br />{rel?.reference || "—"}</p>
+                  <p><span className="text-muted-foreground">Job number</span><br />No job number</p>
+                  <p><span className="text-muted-foreground">Released to</span><br />{rel?.released_to || "—"}</p>
+                  <p><span className="text-muted-foreground">Status</span><br />{humanize(rel?.status ?? "")}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Purpose</span><br />{rel?.purpose || "—"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{rel?.notes || "—"}</p>
+                </div>
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-left">
+                      <tr>
+                        <th className="whitespace-nowrap p-2">Item code</th>
+                        <th className="whitespace-nowrap p-2">Description</th>
+                        <th className="whitespace-nowrap p-2 text-right">Release qty</th>
+                        <th className="whitespace-nowrap p-2 text-right">Unit cost</th>
+                        <th className="whitespace-nowrap p-2 text-right">Amount</th>
+                        <th className="whitespace-nowrap p-2 text-right">On hand now</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((l: any) => (
+                        <tr key={l.id} className="border-t">
+                          <td className="p-2">{l.stock_items?.item_code ?? "—"}</td>
+                          <td className="p-2">{l.stock_items?.description ?? l.description}</td>
+                          <td className="p-2 text-right">{l.quantity} {l.unit}</td>
+                          <td className="p-2 text-right">{money(l.unit_cost)}</td>
+                          <td className="p-2 text-right">{money(Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0))}</td>
+                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "—"}</td>
+                        </tr>
+                      ))}
+                      {lines.length === 0 && (
+                        <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">No items in this release.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-right font-medium">Total value: {money(total)} BHD</p>
+                <p className="text-xs text-muted-foreground">
+                  Approving this request deducts these quantities from live stock.
+                </p>
               </div>
             );
           })()}
