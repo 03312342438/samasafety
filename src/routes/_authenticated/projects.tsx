@@ -342,27 +342,29 @@ function ProjectsPage() {
                     {j.job_kind !== "maintenance" && <JobSteps jobId={j.id} onChanged={refresh} />}
 
                   </div>
-                  <div className="flex gap-2">
-                    {j.status === "draft" && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setOpenJobId(j.id)}>
+                      <FileSearch className="mr-1 h-4 w-4" /> Open
+                    </Button>
+                    {j.status === "draft" && !storeOnly && (
                       <Button variant="secondary" size="sm" onClick={() => sendForApproval(j)}>
                         <ShieldCheck className="mr-1 h-4 w-4" /> Send for approval
                       </Button>
                     )}
-                    {j.status !== "approved" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            try { await removeJob({ data: { id: j.id } }); refresh(); toast.success("Job number deleted"); }
-                            catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                    {!storeOnly && (j.status !== "approved" || profile?.isAdmin) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try { await removeJob({ data: { id: j.id } }); refresh(); toast.success("Job number deleted"); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
+
                 </CardContent>
               </Card>
             ))}
