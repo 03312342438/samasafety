@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FolderKanban, Plus, Pencil, Trash2, Hash, ShieldCheck } from "lucide-react";
+import { FolderKanban, Plus, Pencil, Trash2, Hash, ShieldCheck, FileSearch } from "lucide-react";
+import { JobItemsDialog } from "@/components/JobItemsDialog";
+
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -373,7 +375,16 @@ function ProjectsPage() {
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
+
+        <JobItemsDialog
+          jobId={openJobId}
+          open={!!openJobId}
+          onClose={() => setOpenJobId(null)}
+          canEdit={hasDept(profile?.roles, "inventory") || !!profile?.isAdmin}
+          canApprove={hasDept(profile?.roles, "project_manager") || !!profile?.isAdmin}
+        />
       </main>
+
     </div>
   );
 }
