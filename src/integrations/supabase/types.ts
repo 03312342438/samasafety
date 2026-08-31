@@ -2361,6 +2361,148 @@ export type Database = {
           },
         ]
       }
+      stock_release_items: {
+        Row: {
+          bom_item_id: string | null
+          created_at: string
+          description: string
+          id: string
+          quantity: number
+          release_id: string
+          remarks: string
+          sequence: number
+          stock_item_id: string | null
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          bom_item_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          release_id: string
+          remarks?: string
+          sequence?: number
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          bom_item_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          release_id?: string
+          remarks?: string
+          sequence?: number
+          stock_item_id?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_release_items_bom_item_id_fkey"
+            columns: ["bom_item_id"]
+            isOneToOne: false
+            referencedRelation: "bom_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_release_items_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "stock_releases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_release_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_releases: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          job_number_id: string | null
+          notes: string
+          project_id: string | null
+          purpose: string
+          reference: string
+          release_kind: string
+          released_at: string | null
+          released_to: string
+          status: string
+          submitted_at: string | null
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          project_id?: string | null
+          purpose?: string
+          reference?: string
+          release_kind?: string
+          released_at?: string | null
+          released_to?: string
+          status?: string
+          submitted_at?: string | null
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          job_number_id?: string | null
+          notes?: string
+          project_id?: string | null
+          purpose?: string
+          reference?: string
+          release_kind?: string
+          released_at?: string | null
+          released_to?: string
+          status?: string
+          submitted_at?: string | null
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_releases_job_number_id_fkey"
+            columns: ["job_number_id"]
+            isOneToOne: false
+            referencedRelation: "job_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_releases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_invoices: {
         Row: {
           amount: number

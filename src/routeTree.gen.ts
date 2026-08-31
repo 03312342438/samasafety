@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthenticatedReleasesRouteImport } from './routes/_authenticated/releases'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
@@ -48,6 +49,11 @@ const AuthenticatedStockRoute = AuthenticatedStockRouteImport.update({
 const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReleasesRoute = AuthenticatedReleasesRouteImport.update({
+  id: '/releases',
+  path: '/releases',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/releases': typeof AuthenticatedReleasesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/stock': typeof AuthenticatedStockRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/releases': typeof AuthenticatedReleasesRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/stock': typeof AuthenticatedStockRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/releases': typeof AuthenticatedReleasesRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/progress'
     | '/projects'
+    | '/releases'
     | '/sales'
     | '/stock'
     | '/api/public/hooks/maintenance-reminders'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/progress'
     | '/projects'
+    | '/releases'
     | '/sales'
     | '/stock'
     | '/api/public/hooks/maintenance-reminders'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory'
     | '/_authenticated/progress'
     | '/_authenticated/projects'
+    | '/_authenticated/releases'
     | '/_authenticated/sales'
     | '/_authenticated/stock'
     | '/api/public/hooks/maintenance-reminders'
@@ -258,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof AuthenticatedSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/releases': {
+      id: '/_authenticated/releases'
+      path: '/releases'
+      fullPath: '/releases'
+      preLoaderRoute: typeof AuthenticatedReleasesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/projects': {
@@ -351,6 +370,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedReleasesRoute: typeof AuthenticatedReleasesRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
 }
@@ -366,6 +386,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedReleasesRoute: AuthenticatedReleasesRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
 }

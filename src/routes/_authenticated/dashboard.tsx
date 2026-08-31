@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,7 +30,6 @@ import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/se
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
 import { can, hasDept } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
-import { InventoryDashboard } from "@/components/InventoryDashboard";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -124,23 +123,11 @@ function Dashboard() {
     );
   }
 
-  // Store staff get store analytics only — no reports, history or maintenance.
+  // Store staff have no dashboard section — send them straight to the Store.
   if (isInventoryOnly) {
-    return (
-      <div className="min-h-screen bg-secondary/40">
-        <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
-        <main className="mx-auto max-w-[1400px] px-4 py-6">
-          <div className="mb-5">
-            <h1 className="text-2xl font-bold">Store Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Stock value, reorder alerts and material moving in and out of the store.
-            </p>
-          </div>
-          <InventoryDashboard />
-        </main>
-      </div>
-    );
+    return <Navigate to="/inventory" replace />;
   }
+
 
 
   return (
