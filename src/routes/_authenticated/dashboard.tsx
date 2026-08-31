@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,7 +30,6 @@ import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/se
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
 import { can, hasDept } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
-import { InventoryDashboard } from "@/components/InventoryDashboard";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
