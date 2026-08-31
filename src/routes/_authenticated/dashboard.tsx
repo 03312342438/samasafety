@@ -28,7 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can, hasDept } from "@/lib/workflow";
+import { can, hasDept, isStoreOnly } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
 
 
@@ -56,12 +56,7 @@ function Dashboard() {
   // Only Installation & Maintenance / Technician staff may fill service reports.
   const canFillReport = can(profile?.roles, "report.fill");
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales");
-  const isInventoryOnly =
-    !isAdmin &&
-    hasDept(profile?.roles, "inventory") &&
-    !hasDept(profile?.roles, "project_manager") &&
-    !hasDept(profile?.roles, "technician") &&
-    !hasDept(profile?.roles, "sales") &&
+  const isInventoryOnly = isStoreOnly(profile?.roles, isAdmin);
     !hasDept(profile?.roles, "accounts");
 
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
@@ -125,7 +120,7 @@ function Dashboard() {
 
   // Store staff have no dashboard section — send them straight to the Store.
   if (isInventoryOnly) {
-    return <Navigate to="/inventory" replace />;
+    return <Navigate to="/stock" replace />;
   }
 
 

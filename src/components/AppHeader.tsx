@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept } from "@/lib/workflow";
+import { hasDept, isStoreOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean };
@@ -56,16 +56,11 @@ export function AppHeader({
     hasDept(roles, "inventory") ||
     hasDept(roles, "technician") ||
     hasDept(roles, "accounts");
-  // Store staff work only in Store, Projects, Stock and Approvals.
-  const inventoryOnly =
-    !isAdmin &&
-    hasDept(roles, "inventory") &&
-    !hasDept(roles, "project_manager") &&
-    !hasDept(roles, "technician") &&
-    !hasDept(roles, "sales") &&
-    !hasDept(roles, "accounts");
+  // Store staff work only in Stock, Store, Release Items, Projects and Approvals.
+  const inventoryOnly = isStoreOnly(roles, isAdmin);
 
   const items: NavItem[] = [
+    ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
     { to: "/dashboard", label: "Dashboard", icon: FileText, show: !inventoryOnly },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
     {
@@ -85,7 +80,6 @@ export function AppHeader({
       to: "/releases", label: "Release Items", icon: PackageMinus,
       show: !!isAdmin || hasDept(roles, "inventory"),
     },
-    { to: "/stock", label: "Stock", icon: PackageSearch, show: true },
     {
       to: "/execution", label: "Site", icon: HardHat,
       show:
@@ -98,6 +92,7 @@ export function AppHeader({
       to: "/progress", label: "Progress", icon: TrendingUp,
       show: hasDept(roles, "sales"),
     },
+    ...(inventoryOnly ? [] : [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem]),
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },

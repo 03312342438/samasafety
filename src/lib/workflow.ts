@@ -64,6 +64,16 @@ export function hasDept(roles: string[] | undefined, dept: Department): boolean 
   return normalizeRoles(roles).includes(dept);
 }
 
+/**
+ * Store-only account: has the inventory department and no other real department.
+ * The legacy "employee" role is ignored here — it is granted to every sign-up
+ * and would otherwise make a store keeper look like a technician.
+ */
+export function isStoreOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
+  const real = (roles ?? []).filter((r) => r !== "employee");
+  return !isAdmin && real.includes("inventory") && real.every((r) => r === "inventory");
+}
+
 // --------------------------------------------------------------------------
 // Master lifecycle — the single controlled status list (section 22).
 // --------------------------------------------------------------------------
