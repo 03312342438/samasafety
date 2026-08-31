@@ -198,8 +198,10 @@ function ApprovalsPage() {
                   : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
-          {/* Management decides on requests — it never raises them. */}
-          {!isAdmin && (
+          {/* Management decides on requests — it never raises them.
+              Store lots are submitted from the Store screen, not here. */}
+          {!isAdmin && !isStoreOnly && (
+
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyRequest); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Request approval</Button>
