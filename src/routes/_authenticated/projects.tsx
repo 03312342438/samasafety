@@ -176,7 +176,7 @@ function ProjectsPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {activeTab === "projects" ? (
+            {activeTab === "projects" && !storeOnly ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
@@ -294,21 +294,28 @@ function ProjectsPage() {
               ]}
               actions={(p: any) => (
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
-                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {storeOnly ? (
+                    <span className="text-xs text-muted-foreground">View only</span>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
+
             />
           )}
 
