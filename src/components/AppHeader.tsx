@@ -10,7 +10,9 @@ import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
   Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
+  PackageMinus,
 } from "lucide-react";
+
 
 import { hasDept } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
