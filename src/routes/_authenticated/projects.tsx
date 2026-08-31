@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FolderKanban, Plus, Pencil, Trash2, Hash, ShieldCheck } from "lucide-react";
+import { FolderKanban, Plus, Pencil, Trash2, Hash, ShieldCheck, FileSearch } from "lucide-react";
+import { JobItemsDialog } from "@/components/JobItemsDialog";
+
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -176,7 +178,7 @@ function ProjectsPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {activeTab === "projects" ? (
+            {activeTab === "projects" && !storeOnly ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
@@ -294,21 +296,28 @@ function ProjectsPage() {
               ]}
               actions={(p: any) => (
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
-                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {storeOnly ? (
+                    <span className="text-xs text-muted-foreground">View only</span>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptyProject, ...p, customer_id: p.customer_id ?? "", contract_value: p.contract_value ?? "", estimated_cost: p.estimated_cost ?? "", start_date: p.start_date ?? "", target_date: p.target_date ?? "", progress_percent: String(p.progress_percent ?? 0) }); setOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try { await remove({ data: { id: p.id } }); refresh(); toast.success("Project deleted"); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
+
             />
           )}
 
@@ -335,27 +344,29 @@ function ProjectsPage() {
                     {j.job_kind !== "maintenance" && <JobSteps jobId={j.id} onChanged={refresh} />}
 
                   </div>
-                  <div className="flex gap-2">
-                    {j.status === "draft" && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setOpenJobId(j.id)}>
+                      <FileSearch className="mr-1 h-4 w-4" /> Open
+                    </Button>
+                    {j.status === "draft" && !storeOnly && (
                       <Button variant="secondary" size="sm" onClick={() => sendForApproval(j)}>
                         <ShieldCheck className="mr-1 h-4 w-4" /> Send for approval
                       </Button>
                     )}
-                    {j.status !== "approved" && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            try { await removeJob({ data: { id: j.id } }); refresh(); toast.success("Job number deleted"); }
-                            catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                    {!storeOnly && (j.status !== "approved" || profile?.isAdmin) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try { await removeJob({ data: { id: j.id } }); refresh(); toast.success("Job number deleted"); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
+
                 </CardContent>
               </Card>
             ))}
@@ -364,7 +375,16 @@ function ProjectsPage() {
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
         </div>
+
+        <JobItemsDialog
+          jobId={openJobId}
+          open={!!openJobId}
+          onClose={() => setOpenJobId(null)}
+          canEdit={hasDept(profile?.roles, "inventory") || !!profile?.isAdmin}
+          canApprove={hasDept(profile?.roles, "project_manager") || !!profile?.isAdmin}
+        />
       </main>
+
     </div>
   );
 }

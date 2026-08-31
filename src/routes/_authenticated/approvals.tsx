@@ -167,11 +167,21 @@ function ApprovalsPage() {
     }
   };
 
-  const all = (approvals as any[]) ?? [];
+  // The Store only ever deals with restock lot approvals.
+  const isStoreOnly =
+    !isAdmin &&
+    hasDept(profile?.roles, "inventory") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !isSales &&
+    !hasDept(profile?.roles, "accounts");
+  const all = ((approvals as any[]) ?? []).filter((a) =>
+    isStoreOnly ? a.entity_table === "stock_lots" : true,
+  );
   const pending = all.filter((a) => a.decision === "pending");
   const decided = all.filter((a) => a.decision !== "pending");
   const needsQuotation = isSales && form.approval_type === "quotation_commercial";
   const needsPo = isSales && form.approval_type === "customer_po";
+
 
   return (
     <div className="min-h-screen bg-secondary/40">
@@ -188,8 +198,10 @@ function ApprovalsPage() {
                   : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
-          {/* Management decides on requests — it never raises them. */}
-          {!isAdmin && (
+          {/* Management decides on requests — it never raises them.
+              Store lots are submitted from the Store screen, not here. */}
+          {!isAdmin && !isStoreOnly && (
+
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyRequest); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Request approval</Button>
@@ -326,12 +338,19 @@ function ApprovalsPage() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {(a.entity_table === "quotations" || a.entity_table === "customer_pos") && (
+                    {(a.entity_table === "quotations" ||
+                      a.entity_table === "customer_pos" ||
+                      a.entity_table === "stock_lots") && (
                       <Button size="sm" variant="outline" onClick={() => setDetailId(a.id)}>
                         <FileSearch className="mr-1 h-4 w-4" />
-                        {a.entity_table === "quotations" ? "Open quotation" : "Open purchase order"}
+                        {a.entity_table === "quotations"
+                          ? "Open quotation"
+                          : a.entity_table === "stock_lots"
+                            ? "Open lot"
+                            : "Open purchase order"}
                       </Button>
                     )}
+
                     {a.decision !== "pending" && !isAdmin && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Lock className="h-3 w-3" /> Locked record — only Management can remove it
@@ -499,6 +518,60 @@ function ApprovalsPage() {
               <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{(detail as any).po?.notes || "—"}</p>
             </div>
           )}
+          {(detail as any)?.kind === "stock_lot" && (() => {
+            const lot = (detail as any).lot;
+            const lines = lot?.stock_lot_items ?? [];
+            const total = lines.reduce(
+              (s: number, l: any) => s + Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0),
+              0,
+            );
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <p><span className="text-muted-foreground">Lot number</span><br />{lot?.lot_number || "—"}</p>
+                  <p><span className="text-muted-foreground">Received</span><br />{lot?.received_at || "—"}</p>
+                  <p><span className="text-muted-foreground">Status</span><br />{humanize(lot?.status ?? "")}</p>
+                  <p><span className="text-muted-foreground">Lot value</span><br />{money(total)} {lot?.currency || "BHD"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{lot?.notes || "—"}</p>
+                </div>
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-left">
+                      <tr>
+                        <th className="whitespace-nowrap p-2">Item code</th>
+                        <th className="whitespace-nowrap p-2">Description</th>
+                        <th className="whitespace-nowrap p-2">Supplier</th>
+                        <th className="whitespace-nowrap p-2">Store location</th>
+                        <th className="whitespace-nowrap p-2 text-right">Restock qty</th>
+                        <th className="whitespace-nowrap p-2 text-right">Unit price</th>
+                        <th className="whitespace-nowrap p-2 text-right">Amount</th>
+                        <th className="whitespace-nowrap p-2 text-right">On hand now</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((l: any) => (
+                        <tr key={l.id} className="border-t">
+                          <td className="p-2">{l.stock_items?.item_code ?? "—"}</td>
+                          <td className="p-2">{l.stock_items?.description ?? l.description}</td>
+                          <td className="p-2">{l.supplier || "—"}</td>
+                          <td className="p-2">{l.store_location || "—"}</td>
+                          <td className="p-2 text-right">{l.quantity} {l.stock_items?.unit ?? ""}</td>
+                          <td className="p-2 text-right">{money(l.unit_cost)}</td>
+                          <td className="p-2 text-right">{money(Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0))}</td>
+                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "—"}</td>
+                        </tr>
+                      ))}
+                      {lines.length === 0 && (
+                        <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">No items in this lot.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-right font-medium">Total lot value: {money(total)} {lot?.currency || "BHD"}</p>
+              </div>
+            );
+          })()}
+
           {(detail as any)?.kind === "none" && (
             <p className="text-sm text-muted-foreground">
               {(detail as any)?.approval?.details || "No linked record — see the request details above."}
