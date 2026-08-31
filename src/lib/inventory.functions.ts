@@ -39,6 +39,8 @@ export const saveStockItem = createServerFn({ method: "POST" })
         supplier: z.string().max(200).default(""),
         status: z.enum(["active", "inactive"]).default("active"),
         notes: z.string().max(2000).default(""),
+        image_url: z.string().max(500).default(""),
+
       })
       .parse(input),
   )
@@ -113,7 +115,7 @@ export const deleteStockItem = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: prev } = await supabase
       .from("stock_items")
-      .select("item_code, approval_status")
+      .select("item_code, approval_status, created_at")
       .eq("id", data.id)
       .maybeSingle();
     await assertMutable(supabase, userId, {
@@ -121,8 +123,18 @@ export const deleteStockItem = createServerFn({ method: "POST" })
       label: `Item ${prev?.item_code ?? ""}`.trim(),
       action: "delete",
     });
+    // An item is frozen 24 hours after it was added — only Management may remove it then.
+    const ageHours = prev?.created_at
+      ? (Date.now() - new Date(prev.created_at).getTime()) / 3_600_000
+      : 0;
+    if (ageHours > 24 && !(await isManagement(supabase, userId))) {
+      throw new Error(
+        `Item ${prev?.item_code ?? ""} was created more than 24 hours ago — only Management can delete it now.`.trim(),
+      );
+    }
     const { error } = await supabase.from("stock_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+
     await logActivity(supabase, userId, {
       action: "delete",
       entity_table: "stock_items",

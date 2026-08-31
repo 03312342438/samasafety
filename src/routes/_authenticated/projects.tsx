@@ -62,13 +62,23 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("projects");
   const [query, setQuery] = useState("");
+  const [openJobId, setOpenJobId] = useState<string | null>(null);
   // Sales staff never see job numbers — that is a PM / site responsibility.
   const salesOnly =
     !profile?.isAdmin &&
     hasDept(profile?.roles, "sales") &&
     !hasDept(profile?.roles, "project_manager") &&
     !hasDept(profile?.roles, "technician");
+  // Store staff may read the project list, but never change it.
+  const storeOnly =
+    !profile?.isAdmin &&
+    hasDept(profile?.roles, "inventory") &&
+    !hasDept(profile?.roles, "project_manager") &&
+    !hasDept(profile?.roles, "technician") &&
+    !hasDept(profile?.roles, "sales") &&
+    !hasDept(profile?.roles, "accounts");
   const activeTab = salesOnly ? "projects" : tab;
+
 
 
   const fetchProjects = useServerFn(listProjects);

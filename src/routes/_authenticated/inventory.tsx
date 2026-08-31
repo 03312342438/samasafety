@@ -3,11 +3,15 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Boxes, Plus, Pencil, Trash2, PackageCheck, Truck, ArrowDownUp, ShieldAlert } from "lucide-react";
+import {
+  Boxes, Plus, Pencil, Trash2, PackageCheck, Truck, ArrowDownUp, ShieldAlert,
+  Layers, Send, Upload,
+} from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
+import { ItemImage, uploadItemImage } from "@/components/ItemImage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,17 +29,18 @@ import {
   allocateMaterialRequest, issueMaterialRequest,
   listStockMovements, recordStockMovement, setStockItemApproval,
 } from "@/lib/inventory.functions";
+import { listStockLots, saveStockLot, deleteStockLot, submitStockLot } from "@/lib/lots.functions";
 import { UomSelect } from "@/components/UomSelect";
-import { can, humanize, statusBadgeClass } from "@/lib/workflow";
+import { can, hasDept, humanize, statusBadgeClass, STOCK_CATEGORIES, CURRENCY } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   component: InventoryPage,
   head: () => ({
     meta: [
       { title: "Store & Material Control | SAMA Fire & Safety" },
-      { name: "description", content: "Track stock on hand, allocate and issue material against job numbers, and record every store receipt, return and adjustment." },
+      { name: "description", content: "Track stock on hand, restock by lot with management approval, and issue material against job numbers." },
       { property: "og:title", content: "Store & Material Control | SAMA Fire & Safety" },
-      { property: "og:description", content: "Track stock on hand, allocate and issue material against job numbers, and record every store receipt, return and adjustment." },
+      { property: "og:description", content: "Track stock on hand, restock by lot with management approval, and issue material against job numbers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -47,13 +52,20 @@ type LineRow = {
   quantity_requested: string; unit_cost: string; remarks: string;
 };
 
+type LotRow = {
+  stock_item_id: string; supplier: string; quantity: string;
+  unit_cost: string; store_location: string; remarks: string;
+};
+
 const emptyLine: LineRow = { stock_item_id: "", description: "", unit: "", quantity_requested: "1", unit_cost: "0", remarks: "" };
+const emptyLotLine: LotRow = { stock_item_id: "", supplier: "", quantity: "1", unit_cost: "0", store_location: "", remarks: "" };
 
 const emptyStock = {
-  item_code: "", description: "", category: "", unit: "pcs",
-  quantity_on_hand: "0", reorder_level: "0", unit_cost: "0",
-  store_location: "", supplier: "", status: "active", notes: "",
+  item_code: "", description: "", category: STOCK_CATEGORIES[0], unit: "pcs",
+  status: "active", notes: "", image_url: "",
 };
+
+const emptyLot = { supplier: "", reference: "", received_date: "", notes: "" };
 
 const emptyRequest = {
   project_id: "", job_number_id: "", bom_id: "", title: "",
@@ -67,19 +79,31 @@ const emptyMovement = {
 
 function InventoryPage() {
   const { data: profile } = useProfile();
+  const isAdmin = !!profile?.isAdmin;
+  const isStore = hasDept(profile?.roles, "inventory");
+  const isPm = hasDept(profile?.roles, "project_manager");
+  /** Only the Project Manager may create or change an item code. */
+  const canManageItems = can(profile?.roles, "stock.item.create");
+  const canApproveItems = can(profile?.roles, "stock.item.approve");
+  const canManageLots = isStore || isAdmin;
+
   const qc = useQueryClient();
-  const [tab, setTab] = useState("stock");
+  const [tab, setTab] = useState(isStore && !isPm ? "lots" : "stock");
   const [query, setQuery] = useState("");
 
   const fetchStock = useServerFn(listStockItems);
   const approveItem = useServerFn(setStockItemApproval);
   const fetchRequests = useServerFn(listMaterialRequests);
   const fetchMovements = useServerFn(listStockMovements);
+  const fetchLots = useServerFn(listStockLots);
   const fetchProjects = useServerFn(listProjects);
   const fetchJobs = useServerFn(listJobNumbers);
   const fetchBoms = useServerFn(listBoms);
   const persistStock = useServerFn(saveStockItem);
   const removeStock = useServerFn(deleteStockItem);
+  const persistLot = useServerFn(saveStockLot);
+  const removeLot = useServerFn(deleteStockLot);
+  const sendLot = useServerFn(submitStockLot);
   const persistRequest = useServerFn(saveMaterialRequest);
   const removeRequest = useServerFn(deleteMaterialRequest);
   const allocate = useServerFn(allocateMaterialRequest);
@@ -90,12 +114,17 @@ function InventoryPage() {
   const { data: stock } = useQuery({ queryKey: ["stock-items"], queryFn: () => fetchStock() });
   const { data: requests } = useQuery({ queryKey: ["material-requests"], queryFn: () => fetchRequests() });
   const { data: movements } = useQuery({ queryKey: ["stock-movements"], queryFn: () => fetchMovements() });
+  const { data: lots } = useQuery({ queryKey: ["stock-lots"], queryFn: () => fetchLots() });
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
   const { data: jobs } = useQuery({ queryKey: ["job-numbers"], queryFn: () => fetchJobs() });
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
 
   const [stockOpen, setStockOpen] = useState(false);
   const [stockForm, setStockForm] = useState<any>(emptyStock);
+  const [uploading, setUploading] = useState(false);
+  const [lotOpen, setLotOpen] = useState(false);
+  const [lotForm, setLotForm] = useState<any>(emptyLot);
+  const [lotLines, setLotLines] = useState<LotRow[]>([{ ...emptyLotLine }]);
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestForm, setRequestForm] = useState<any>(emptyRequest);
   const [lines, setLines] = useState<LineRow[]>([{ ...emptyLine }]);
@@ -107,14 +136,13 @@ function InventoryPage() {
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["stock-items"] });
+    qc.invalidateQueries({ queryKey: ["stock-lots"] });
     qc.invalidateQueries({ queryKey: ["material-requests"] });
     qc.invalidateQueries({ queryKey: ["stock-movements"] });
     qc.invalidateQueries({ queryKey: ["approvals"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
   };
 
-  /** Only Management clears a new item code for use in BOMs and requests. */
-  const canApproveItems = can(profile?.roles, "stock.item.approve");
   const decideItem = async (id: string, approval_status: "approved" | "rejected") => {
     try {
       await approveItem({ data: { id, approval_status } });
@@ -133,6 +161,16 @@ function InventoryPage() {
     [stock],
   );
 
+  const lotItemOptions = useMemo(
+    () =>
+      [["", "— select item —"] as [string, string]].concat(
+        ((stock as any[]) ?? [])
+          .filter((s) => (s.approval_status ?? "pending") === "approved")
+          .map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string]),
+      ),
+    [stock],
+  );
+
   const filter = (rows: any[], keys: (r: any) => (string | undefined)[]) => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
@@ -140,6 +178,7 @@ function InventoryPage() {
   };
 
   const stockList = filter((stock as any[]) ?? [], (s) => [s.item_code, s.description, s.category, s.store_location]);
+  const lotList = filter((lots as any[]) ?? [], (l) => [l.lot_number, l.supplier, l.reference, l.status]);
   const requestList = filter((requests as any[]) ?? [], (r) => [r.reference, r.title, r.projects?.project_number, r.job_numbers?.job_number]);
   const movementList = filter((movements as any[]) ?? [], (m) => [m.reference, m.description, m.movement_type]);
 
@@ -147,15 +186,32 @@ function InventoryPage() {
     (s) => Number(s.quantity_on_hand ?? 0) <= Number(s.reorder_level ?? 0),
   );
 
+  const pickImage = async (file?: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const path = await uploadItemImage(file);
+      setStockForm((f: any) => ({ ...f, image_url: path }));
+      toast.success("Picture attached");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not upload the picture");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const submitStock = async () => {
     try {
       const res: any = await persistStock({
         data: {
-          ...stockForm,
+          item_code: stockForm.item_code ?? "",
+          description: stockForm.description,
+          category: stockForm.category,
+          unit: stockForm.unit,
+          status: stockForm.status,
+          notes: stockForm.notes ?? "",
+          image_url: stockForm.image_url ?? "",
           id: stockForm.id || undefined,
-          quantity_on_hand: Number(stockForm.quantity_on_hand || 0),
-          reorder_level: Number(stockForm.reorder_level || 0),
-          unit_cost: Number(stockForm.unit_cost || 0),
         },
       });
       const isNew = !stockForm.id;
@@ -193,6 +249,56 @@ function InventoryPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not request approval");
     }
+  };
+
+  // ----------------------------------------------------------------- lots ---
+  const submitLot = async () => {
+    try {
+      const res: any = await persistLot({
+        data: {
+          id: lotForm.id || undefined,
+          supplier: lotForm.supplier,
+          reference: lotForm.reference,
+          received_date: lotForm.received_date || null,
+          notes: lotForm.notes,
+          items: lotLines
+            .filter((l) => l.stock_item_id)
+            .map((l) => ({
+              stock_item_id: l.stock_item_id,
+              supplier: l.supplier || lotForm.supplier,
+              quantity: Number(l.quantity || 0),
+              unit_cost: Number(l.unit_cost || 0),
+              store_location: l.store_location,
+              remarks: l.remarks,
+            })),
+        },
+      });
+      toast.success(lotForm.id ? "Lot updated" : `Lot ${res?.lot_number ?? ""} created`);
+      setLotOpen(false);
+      setLotForm(emptyLot);
+      setLotLines([{ ...emptyLotLine }]);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the lot");
+    }
+  };
+
+  const editLot = (l: any) => {
+    setLotForm({ ...emptyLot, ...l, received_date: l.received_date ?? "" });
+    const rows = [...(l.stock_lot_items ?? [])].sort((a: any, c: any) => a.sequence - c.sequence);
+    setLotLines(
+      rows.length
+        ? rows.map((r: any) => ({
+            stock_item_id: r.stock_item_id ?? "",
+            supplier: r.supplier ?? "",
+            quantity: String(r.quantity ?? 0),
+            unit_cost: String(r.unit_cost ?? 0),
+            store_location: r.store_location ?? "",
+            remarks: r.remarks ?? "",
+          }))
+        : [{ ...emptyLotLine }],
+    );
+    setLotOpen(true);
   };
 
   const submitRequest = async () => {
@@ -294,6 +400,8 @@ function InventoryPage() {
     }
   };
 
+  const lotTotal = lotLines.reduce((s, l) => s + Number(l.quantity || 0) * Number(l.unit_cost || 0), 0);
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
@@ -302,13 +410,14 @@ function InventoryPage() {
           <div>
             <h1 className="text-xl font-semibold">Store & Material Control</h1>
             <p className="text-sm text-muted-foreground">
-              Stock is reserved against an approved job, issued to site with a signature trail, and
-              every receipt, return and adjustment stays on record.
+              Item codes are opened by the Project Manager, stock is restocked by lot with management
+              approval, and every issue to site stays on record.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "stock" && (
+
+            {tab === "stock" && canManageItems && (
               <Dialog open={stockOpen} onOpenChange={(o) => { setStockOpen(o); if (!o) setStockForm(emptyStock); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New item</Button>
@@ -318,26 +427,104 @@ function InventoryPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Item code (auto if blank)" value={stockForm.item_code} onChange={(v) => setStockForm({ ...stockForm, item_code: v })} />
                     <Field label="Description" value={stockForm.description} onChange={(v) => setStockForm({ ...stockForm, description: v })} />
-                    <Field label="Category" value={stockForm.category} onChange={(v) => setStockForm({ ...stockForm, category: v })} />
+                    <Select label="Category" value={stockForm.category} onChange={(v) => setStockForm({ ...stockForm, category: v })}
+                      options={STOCK_CATEGORIES.map((c) => [c, c] as [string, string])} />
                     <UomSelect label="Unit" value={stockForm.unit} onChange={(v) => setStockForm({ ...stockForm, unit: v })} />
-                    <Field label="Quantity on hand" value={stockForm.quantity_on_hand} onChange={(v) => setStockForm({ ...stockForm, quantity_on_hand: v })} />
-                    <Field label="Reorder level" value={stockForm.reorder_level} onChange={(v) => setStockForm({ ...stockForm, reorder_level: v })} />
-                    <Field label="Unit cost" value={stockForm.unit_cost} onChange={(v) => setStockForm({ ...stockForm, unit_cost: v })} />
-                    <Field label="Store location" value={stockForm.store_location} onChange={(v) => setStockForm({ ...stockForm, store_location: v })} />
-                    <Field label="Supplier" value={stockForm.supplier} onChange={(v) => setStockForm({ ...stockForm, supplier: v })} />
                     <Select label="Status" value={stockForm.status} onChange={(v) => setStockForm({ ...stockForm, status: v })}
                       options={[["active", "Active"], ["inactive", "Inactive"]]} />
+                    <div>
+                      <Label className="text-xs">Picture</Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <ItemImage path={stockForm.image_url} alt={stockForm.description || "Item"} className="h-12 w-12" />
+                        <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
+                          <Upload className="h-3.5 w-3.5" />
+                          {uploading ? "Uploading…" : "Upload"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => pickImage(e.target.files?.[0])}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+                      Quantity, unit price, store location and supplier are captured by the Store when a
+                      restock lot is approved — they are not entered here.
+                    </div>
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={stockForm.notes} onChange={(e) => setStockForm({ ...stockForm, notes: e.target.value })} />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={submitStock} disabled={!stockForm.description.trim()}>Save</Button>
+                    <Button onClick={submitStock} disabled={!stockForm.description.trim() || uploading}>Save</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             )}
+
+            {tab === "lots" && canManageLots && (
+              <Dialog open={lotOpen} onOpenChange={(o) => { setLotOpen(o); if (!o) { setLotForm(emptyLot); setLotLines([{ ...emptyLotLine }]); } }}>
+                <DialogTrigger asChild>
+                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New lot</Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
+                  <DialogHeader><DialogTitle>{lotForm.id ? `Edit lot ${lotForm.lot_number ?? ""}` : "New restock lot"}</DialogTitle></DialogHeader>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Supplier" value={lotForm.supplier} onChange={(v) => setLotForm({ ...lotForm, supplier: v })} />
+                    <Field label="Reference (DN / invoice)" value={lotForm.reference} onChange={(v) => setLotForm({ ...lotForm, reference: v })} />
+                    <Field label="Received date" type="date" value={lotForm.received_date} onChange={(v) => setLotForm({ ...lotForm, received_date: v })} />
+                    <div className="sm:col-span-2">
+                      <Label className="text-xs">Notes</Label>
+                      <Textarea rows={2} value={lotForm.notes} onChange={(e) => setLotForm({ ...lotForm, notes: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="mt-2">
+                    <div className="mb-2 flex items-center justify-between">
+                      <Label className="text-xs">Items restocked in this lot</Label>
+                      <Button variant="outline" size="sm" onClick={() => setLotLines([...lotLines, { ...emptyLotLine }])}>
+                        <Plus className="mr-1 h-3.5 w-3.5" /> Add item
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {lotLines.map((l, idx) => (
+                        <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
+                          <select
+                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-4"
+                            value={l.stock_item_id}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: e.target.value } : r)))}
+                          >
+                            {lotItemOptions.map(([v, lb]) => <option key={v} value={v}>{lb}</option>)}
+                          </select>
+                          <Input className="sm:col-span-2" placeholder="Supplier" value={l.supplier}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, supplier: e.target.value } : r)))} />
+                          <Input className="sm:col-span-1" placeholder="Qty" value={l.quantity}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
+                          <Input className="sm:col-span-2" placeholder="Unit price" value={l.unit_cost}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, unit_cost: e.target.value } : r)))} />
+                          <Input className="sm:col-span-2" placeholder="Store location" value={l.store_location}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, store_location: e.target.value } : r)))} />
+                          <Button variant="ghost" size="sm" className="sm:col-span-1"
+                            onClick={() => setLotLines(lotLines.length > 1 ? lotLines.filter((_, i) => i !== idx) : lotLines)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-right text-sm">
+                      Lot value: <span className="font-semibold">{CURRENCY} {lotTotal.toFixed(3)}</span>
+                    </p>
+                  </div>
+
+                  <DialogFooter>
+                    <Button onClick={submitLot} disabled={!lotLines.some((l) => l.stock_item_id)}>Save lot</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+
             {tab === "requests" && (
               <Dialog open={requestOpen} onOpenChange={(o) => { setRequestOpen(o); if (!o) { setRequestForm(emptyRequest); setLines([{ ...emptyLine }]); } }}>
                 <DialogTrigger asChild>
@@ -408,7 +595,8 @@ function InventoryPage() {
                 </DialogContent>
               </Dialog>
             )}
-            {tab === "movements" && (
+
+            {tab === "movements" && isAdmin && (
               <Dialog open={moveOpen} onOpenChange={(o) => { setMoveOpen(o); if (!o) setMoveForm(emptyMovement); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Record movement</Button>
@@ -457,6 +645,7 @@ function InventoryPage() {
           onChange={setTab}
           tabs={[
             { value: "stock", label: "Stock" },
+            ...(canManageLots ? [{ value: "lots", label: `Restock lots (${lotList.length})` }] : []),
             { value: "requests", label: "Material requests" },
             { value: "movements", label: "Movements" },
           ]}
@@ -467,22 +656,25 @@ function InventoryPage() {
             stockList.map((s: any) => (
               <Card key={s.id}>
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Boxes className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{s.item_code}</span>
-                      <span className="text-sm text-muted-foreground">{s.description}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.status)}`}>{humanize(s.status)}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.approval_status ?? "pending")}`}>
-                        {humanize(s.approval_status ?? "pending")}
-                      </span>
+                  <div className="flex min-w-0 gap-3">
+                    <ItemImage path={s.image_url} alt={s.description} />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Boxes className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{s.item_code}</span>
+                        <span className="text-sm text-muted-foreground">{s.description}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.status)}`}>{humanize(s.status)}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(s.approval_status ?? "pending")}`}>
+                          {humanize(s.approval_status ?? "pending")}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm">
+                        On hand <span className="font-medium">{s.quantity_on_hand} {s.unit}</span> · reserved {s.quantity_reserved} · reorder at {s.reorder_level}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "—"}
+                      </p>
                     </div>
-                    <p className="mt-1 text-sm">
-                      On hand <span className="font-medium">{s.quantity_on_hand} {s.unit}</span> · reserved {s.quantity_reserved} · reorder at {s.reorder_level}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "—"}
-                    </p>
                   </div>
                   <div className="flex gap-2">
                     {canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
@@ -491,20 +683,95 @@ function InventoryPage() {
                     {canApproveItems && (s.approval_status ?? "pending") === "pending" && (
                       <Button variant="outline" size="sm" onClick={() => decideItem(s.id, "rejected")}>Reject</Button>
                     )}
-                    {!canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
+                    {canManageItems && !canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
                       <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
                         Send for approval
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s, quantity_on_hand: String(s.quantity_on_hand ?? 0), reorder_level: String(s.reorder_level ?? 0), unit_cost: String(s.unit_cost ?? 0) }); setStockOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={async () => {
-                      try { await removeStock({ data: { id: s.id } }); toast.success("Item deleted"); refresh(); }
-                      catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
-                    }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canManageItems && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={async () => {
+                          try { await removeStock({ data: { id: s.id } }); toast.success("Item deleted"); refresh(); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+          {tab === "lots" &&
+            lotList.map((l: any) => (
+              <Card key={l.id}>
+                <CardContent className="space-y-2 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Layers className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{l.lot_number}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(l.status)}`}>
+                          {l.status === "pending" ? "Under approval" : humanize(l.status)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {[l.supplier, l.reference, l.received_date].filter(Boolean).join(" · ") || "—"} ·{" "}
+                        {(l.stock_lot_items ?? []).length} item(s) · {CURRENCY} {Number(l.total_value ?? 0).toFixed(3)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {l.status === "draft" && canManageLots && (
+                        <>
+                          <Button size="sm" onClick={async () => {
+                            try { await sendLot({ data: { id: l.id } }); toast.success("Lot sent to Management"); refresh(); }
+                            catch (e) { toast.error(e instanceof Error ? e.message : "Could not submit the lot"); }
+                          }}>
+                            <Send className="mr-1 h-4 w-4" /> Send for approval
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => editLot(l)}><Pencil className="h-4 w-4" /></Button>
+                        </>
+                      )}
+                      {(l.status === "draft" || isAdmin) && (
+                        <Button variant="outline" size="sm" onClick={async () => {
+                          try { await removeLot({ data: { id: l.id } }); toast.success("Lot deleted"); refresh(); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Could not delete"); }
+                        }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-md border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50 text-xs">
+                        <tr>
+                          <th className="whitespace-nowrap px-2 py-1.5 text-left">Item</th>
+                          <th className="whitespace-nowrap px-2 py-1.5 text-left">Supplier</th>
+                          <th className="whitespace-nowrap px-2 py-1.5 text-right">Restock qty</th>
+                          <th className="whitespace-nowrap px-2 py-1.5 text-right">Unit price</th>
+                          <th className="whitespace-nowrap px-2 py-1.5 text-left">Store location</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(l.stock_lot_items ?? []).map((i: any) => (
+                          <tr key={i.id} className="border-t">
+                            <td className="whitespace-nowrap px-2 py-1.5">
+                              {i.stock_items?.item_code ?? "—"} — {i.description}
+                            </td>
+                            <td className="px-2 py-1.5">{i.supplier || "—"}</td>
+                            <td className="px-2 py-1.5 text-right">{i.quantity} {i.unit}</td>
+                            <td className="px-2 py-1.5 text-right">{Number(i.unit_cost ?? 0).toFixed(3)}</td>
+                            <td className="px-2 py-1.5">{i.store_location || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
@@ -579,6 +846,7 @@ function InventoryPage() {
             ))}
 
           {((tab === "stock" && stockList.length === 0) ||
+            (tab === "lots" && lotList.length === 0) ||
             (tab === "requests" && requestList.length === 0) ||
             (tab === "movements" && movementList.length === 0)) && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
