@@ -518,6 +518,60 @@ function ApprovalsPage() {
               <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{(detail as any).po?.notes || "—"}</p>
             </div>
           )}
+          {(detail as any)?.kind === "stock_lot" && (() => {
+            const lot = (detail as any).lot;
+            const lines = lot?.stock_lot_items ?? [];
+            const total = lines.reduce(
+              (s: number, l: any) => s + Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0),
+              0,
+            );
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <p><span className="text-muted-foreground">Lot number</span><br />{lot?.lot_number || "—"}</p>
+                  <p><span className="text-muted-foreground">Received</span><br />{lot?.received_at || "—"}</p>
+                  <p><span className="text-muted-foreground">Status</span><br />{humanize(lot?.status ?? "")}</p>
+                  <p><span className="text-muted-foreground">Lot value</span><br />{money(total)} {lot?.currency || "BHD"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{lot?.notes || "—"}</p>
+                </div>
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-left">
+                      <tr>
+                        <th className="whitespace-nowrap p-2">Item code</th>
+                        <th className="whitespace-nowrap p-2">Description</th>
+                        <th className="whitespace-nowrap p-2">Supplier</th>
+                        <th className="whitespace-nowrap p-2">Store location</th>
+                        <th className="whitespace-nowrap p-2 text-right">Restock qty</th>
+                        <th className="whitespace-nowrap p-2 text-right">Unit price</th>
+                        <th className="whitespace-nowrap p-2 text-right">Amount</th>
+                        <th className="whitespace-nowrap p-2 text-right">On hand now</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((l: any) => (
+                        <tr key={l.id} className="border-t">
+                          <td className="p-2">{l.stock_items?.item_code ?? "—"}</td>
+                          <td className="p-2">{l.stock_items?.description ?? l.description}</td>
+                          <td className="p-2">{l.supplier || "—"}</td>
+                          <td className="p-2">{l.store_location || "—"}</td>
+                          <td className="p-2 text-right">{l.quantity} {l.stock_items?.unit ?? ""}</td>
+                          <td className="p-2 text-right">{money(l.unit_cost)}</td>
+                          <td className="p-2 text-right">{money(Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0))}</td>
+                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "—"}</td>
+                        </tr>
+                      ))}
+                      {lines.length === 0 && (
+                        <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">No items in this lot.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-right font-medium">Total lot value: {money(total)} {lot?.currency || "BHD"}</p>
+              </div>
+            );
+          })()}
+
           {(detail as any)?.kind === "none" && (
             <p className="text-sm text-muted-foreground">
               {(detail as any)?.approval?.details || "No linked record — see the request details above."}
