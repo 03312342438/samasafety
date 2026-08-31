@@ -124,23 +124,11 @@ function Dashboard() {
     );
   }
 
-  // Store staff get store analytics only — no reports, history or maintenance.
+  // Store staff have no dashboard section — send them straight to the Store.
   if (isInventoryOnly) {
-    return (
-      <div className="min-h-screen bg-secondary/40">
-        <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
-        <main className="mx-auto max-w-[1400px] px-4 py-6">
-          <div className="mb-5">
-            <h1 className="text-2xl font-bold">Store Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Stock value, reorder alerts and material moving in and out of the store.
-            </p>
-          </div>
-          <InventoryDashboard />
-        </main>
-      </div>
-    );
+    return <Navigate to="/inventory" replace />;
   }
+
 
 
   return (
