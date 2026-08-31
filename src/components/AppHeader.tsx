@@ -56,14 +56,8 @@ export function AppHeader({
     hasDept(roles, "inventory") ||
     hasDept(roles, "technician") ||
     hasDept(roles, "accounts");
-  // Store staff work only in Store, Projects, Stock and Approvals.
-  const inventoryOnly =
-    !isAdmin &&
-    hasDept(roles, "inventory") &&
-    !hasDept(roles, "project_manager") &&
-    !hasDept(roles, "technician") &&
-    !hasDept(roles, "sales") &&
-    !hasDept(roles, "accounts");
+  // Store staff work only in Stock, Store, Release Items, Projects and Approvals.
+  const inventoryOnly = isStoreOnly(roles, isAdmin);
 
   const items: NavItem[] = [
     { to: "/dashboard", label: "Dashboard", icon: FileText, show: !inventoryOnly },
