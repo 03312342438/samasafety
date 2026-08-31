@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments, notifyUsers } from "@/lib/activity";
 import { applyStockLotDecision } from "@/lib/lots.functions";
+import { applyStockReleaseDecision } from "@/lib/releases.functions";
 
 
 export const listApprovals = createServerFn({ method: "GET" })
@@ -89,6 +90,14 @@ export const getApprovalEntity = createServerFn({ method: "GET" })
         .maybeSingle();
       return { kind: "stock_lot" as const, approval, lot };
     }
+    if (approval.entity_table === "stock_releases") {
+      const { data: release } = await supabase
+        .from("stock_releases")
+        .select("*, stock_release_items(*, stock_items(item_code, description, quantity_on_hand, unit))")
+        .eq("id", approval.entity_id)
+        .maybeSingle();
+      return { kind: "stock_release" as const, approval, release };
+    }
     return { kind: "none" as const, approval };
   });
 
@@ -133,6 +142,7 @@ export const submitApproval = createServerFn({ method: "POST" })
           "commercial_review",
           "item_code",
           "stock_lot",
+          "stock_release",
 
         ]),
         title: z.string().trim().min(1).max(300),
@@ -230,6 +240,9 @@ export const decideApproval = createServerFn({ method: "POST" })
     // Propagate the decision to the gated record.
     if (approval.entity_table === "stock_lots" && approval.entity_id) {
       await applyStockLotDecision(supabase, userId, approval.entity_id, data.decision);
+    }
+    if (approval.entity_table === "stock_releases" && approval.entity_id) {
+      await applyStockReleaseDecision(supabase, userId, approval.entity_id, data.decision);
     }
     if (approval.entity_table === "stock_items" && approval.entity_id) {
 
