@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { listStockItems } from "@/lib/inventory.functions";
 import {
   listStockReleases, listReleasableJobs, getJobReleasableItems,
@@ -358,10 +357,6 @@ function ReleasesPage() {
                 <Button onClick={releaseFree} disabled={!canRelease || saving}>
                   <Send className="mr-1 h-4 w-4" /> Send for approval
                 </Button>
-              </div>
-
-              <div className="sr-only">
-                <Textarea value="" readOnly />
               </div>
             </CardContent>
           </Card>
