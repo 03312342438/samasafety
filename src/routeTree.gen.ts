@@ -17,6 +17,7 @@ import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedReleasesRouteImport } from './routes/_authenticated/releases'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
+import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedExecutionRouteImport } from './routes/_authenticated/execution'
 import { Route as AuthenticatedEngineeringRouteImport } from './routes/_authenticated/engineering'
@@ -64,6 +65,11 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
 const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/engineering': typeof AuthenticatedEngineeringRoute
   '/execution': typeof AuthenticatedExecutionRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/overview': typeof AuthenticatedOverviewRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/releases': typeof AuthenticatedReleasesRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/engineering': typeof AuthenticatedEngineeringRoute
   '/execution': typeof AuthenticatedExecutionRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/overview': typeof AuthenticatedOverviewRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/releases': typeof AuthenticatedReleasesRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/engineering': typeof AuthenticatedEngineeringRoute
   '/_authenticated/execution': typeof AuthenticatedExecutionRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/releases': typeof AuthenticatedReleasesRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/engineering'
     | '/execution'
     | '/inventory'
+    | '/overview'
     | '/progress'
     | '/projects'
     | '/releases'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/engineering'
     | '/execution'
     | '/inventory'
+    | '/overview'
     | '/progress'
     | '/projects'
     | '/releases'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/_authenticated/engineering'
     | '/_authenticated/execution'
     | '/_authenticated/inventory'
+    | '/_authenticated/overview'
     | '/_authenticated/progress'
     | '/_authenticated/projects'
     | '/_authenticated/releases'
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof AuthenticatedProgressRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/overview': {
+      id: '/_authenticated/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inventory': {
@@ -368,6 +387,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEngineeringRoute: typeof AuthenticatedEngineeringRoute
   AuthenticatedExecutionRoute: typeof AuthenticatedExecutionRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReleasesRoute: typeof AuthenticatedReleasesRoute
@@ -384,6 +404,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEngineeringRoute: AuthenticatedEngineeringRoute,
   AuthenticatedExecutionRoute: AuthenticatedExecutionRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReleasesRoute: AuthenticatedReleasesRoute,
