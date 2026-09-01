@@ -33,11 +33,14 @@ import { SalesDashboard } from "@/components/SalesDashboard";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  validateSearch: (search: Record<string, unknown>): { view?: string } =>
+    typeof search.view === "string" ? { view: search.view } : {},
   component: Dashboard,
 });
 
 function Dashboard() {
   const { data: profile, error: profileError } = useProfile();
+  const { view } = Route.useSearch();
   const isAdmin = !!profile?.isAdmin;
   const fetchMyReports = useServerFn(listMyReports);
   const fetchAllReports = useServerFn(listAllReports);
@@ -122,6 +125,14 @@ function Dashboard() {
   if (isInventoryOnly) {
     return <Navigate to="/stock" replace />;
   }
+
+  // Project managers land on the delivery dashboard; this page is their
+  // "Maintenance" section, reached from the sidebar with ?view=maintenance.
+  if (!isAdmin && hasDept(profile?.roles, "project_manager") && view !== "maintenance") {
+    return <Navigate to="/overview" replace />;
+  }
+
+
 
 
 

@@ -10,14 +10,14 @@ import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
   Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
-  PackageMinus,
+  PackageMinus, LayoutDashboard,
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean };
+type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
 
 export function AppHeader({
   isAdmin,
@@ -58,10 +58,21 @@ export function AppHeader({
     hasDept(roles, "accounts");
   // Store staff work only in Stock, Store, Release Items, Projects and Approvals.
   const inventoryOnly = isStoreOnly(roles, isAdmin);
+  const salesOnly = isSalesOnly(roles, isAdmin);
+  const isPm = hasDept(roles, "project_manager");
 
   const items: NavItem[] = [
     ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
-    { to: "/dashboard", label: "Dashboard", icon: FileText, show: !inventoryOnly },
+    ...(isPm && !isAdmin
+      ? [{ to: "/overview", label: "Dashboard", icon: LayoutDashboard, show: true } as NavItem]
+      : []),
+    {
+      to: "/dashboard",
+      label: isPm && !isAdmin ? "Maintenance" : "Dashboard",
+      icon: FileText,
+      show: !inventoryOnly,
+      ...(isPm && !isAdmin ? { search: { view: "maintenance" } } : {}),
+    },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
     {
       to: "/sales", label: "Sales", icon: Handshake,
@@ -84,8 +95,8 @@ export function AppHeader({
       to: "/execution", label: "Site", icon: HardHat,
       show:
         !inventoryOnly &&
-        (!!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager")) &&
-        !(hasDept(roles, "sales") && !hasDept(roles, "technician") && !hasDept(roles, "project_manager")),
+        !salesOnly &&
+        (!!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager")),
     },
 
     {
@@ -119,6 +130,7 @@ export function AppHeader({
             <Link
               key={item.to}
               to={item.to}
+              search={item.search as never}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
