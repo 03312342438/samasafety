@@ -17,7 +17,7 @@ import {
 import { hasDept, isStoreOnly, isSalesOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean };
+type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
 
 export function AppHeader({
   isAdmin,
@@ -71,6 +71,7 @@ export function AppHeader({
       label: isPm && !isAdmin ? "Maintenance" : "Dashboard",
       icon: FileText,
       show: !inventoryOnly,
+      ...(isPm && !isAdmin ? { search: { view: "maintenance" } } : {}),
     },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
     {
@@ -129,6 +130,7 @@ export function AppHeader({
             <Link
               key={item.to}
               to={item.to}
+              search={item.search as never}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
