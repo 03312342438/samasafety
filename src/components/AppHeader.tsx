@@ -10,11 +10,11 @@ import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
   Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
-  PackageMinus,
+  PackageMinus, LayoutDashboard,
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean };
