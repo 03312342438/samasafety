@@ -126,6 +126,14 @@ function Dashboard() {
     return <Navigate to="/stock" replace />;
   }
 
+  // Project managers land on the delivery dashboard; this page is their
+  // "Maintenance" section, reached from the sidebar with ?view=maintenance.
+  if (!isAdmin && hasDept(profile?.roles, "project_manager") && view !== "maintenance") {
+    return <Navigate to="/overview" replace />;
+  }
+
+
+
 
 
   return (
