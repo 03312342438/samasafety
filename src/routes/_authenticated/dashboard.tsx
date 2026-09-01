@@ -41,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { data: profile, error: profileError } = useProfile();
+  const { view } = Route.useSearch();
   const isAdmin = !!profile?.isAdmin;
   const fetchMyReports = useServerFn(listMyReports);
   const fetchAllReports = useServerFn(listAllReports);
