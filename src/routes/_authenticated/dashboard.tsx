@@ -33,6 +33,9 @@ import { SalesDashboard } from "@/components/SalesDashboard";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: typeof search.view === "string" ? search.view : undefined,
+  }),
   component: Dashboard,
 });
 
