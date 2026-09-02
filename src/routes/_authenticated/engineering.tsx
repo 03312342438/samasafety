@@ -52,7 +52,7 @@ type ItemRow = {
 const emptyItem: ItemRow = { stock_item_id: "", description: "", category: "", unit: "pcs", quantity: "1", unit_cost: "0", remarks: "" };
 
 const emptyBom = {
-  project_id: "", job_number_id: "", customer_id: "", title: "",
+  project_id: "", customer_id: "", title: "",
   bom_type: "material", currency: "BHD", notes: "",
 };
 
@@ -141,7 +141,6 @@ function EngineeringPage() {
           ...bomForm,
           id: bomForm.id || undefined,
           project_id: bomForm.project_id || null,
-          job_number_id: bomForm.job_number_id || null,
           customer_id: bomForm.customer_id || null,
           items: items
             .filter((i) => i.description.trim())
@@ -169,7 +168,7 @@ function EngineeringPage() {
   const editBom = (b: any) => {
     setBomForm({
       ...emptyBom, ...b,
-      project_id: b.project_id ?? "", job_number_id: b.job_number_id ?? "", customer_id: b.customer_id ?? "",
+      project_id: b.project_id ?? "", customer_id: b.customer_id ?? "",
     });
     const rows = [...(b.bom_items ?? [])].sort((a: any, c: any) => a.sequence - c.sequence);
     setItems(
@@ -192,7 +191,6 @@ function EngineeringPage() {
           title: `A3 — BOM/BOS ${b.reference}`,
           details: `${b.title || "BOM"} · estimated cost ${b.estimated_cost} ${b.currency}`,
           project_id: b.project_id ?? null,
-          job_number_id: b.job_number_id ?? null,
           entity_table: "boms",
           entity_id: b.id,
           amount: Number(b.estimated_cost ?? 0),
@@ -273,11 +271,9 @@ function EngineeringPage() {
                     <Field label="Title" value={bomForm.title} onChange={(v) => setBomForm({ ...bomForm, title: v })} />
                     <Select label="Type" value={bomForm.bom_type} onChange={(v) => setBomForm({ ...bomForm, bom_type: v })}
                       options={[["material", "BOM — Material"], ["service", "BOS — Service"]]} />
-                    <Select label="Project" value={bomForm.project_id} onChange={(v) => setBomForm({ ...bomForm, project_id: v })}
-                      options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
-                    <Select label="Job number" value={bomForm.job_number_id} onChange={(v) => setBomForm({ ...bomForm, job_number_id: v })}
-                      options={[["", "— none —"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
-                    <Select label="Customer" value={bomForm.customer_id} onChange={(v) => setBomForm({ ...bomForm, customer_id: v })}
+                     <Select label="Project" value={bomForm.project_id} onChange={(v) => setBomForm({ ...bomForm, project_id: v })}
+                       options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
+                     <Select label="Customer" value={bomForm.customer_id} onChange={(v) => setBomForm({ ...bomForm, customer_id: v })}
                       options={[["", "— none —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
                     <Field label="Currency" value={bomForm.currency} onChange={(v) => setBomForm({ ...bomForm, currency: v })} />
                     <div className="sm:col-span-2">
@@ -410,20 +406,20 @@ function EngineeringPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(b.status)}`}>{humanize(b.status)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[b.bom_type === "service" ? "BOS" : "BOM", b.projects?.project_number, b.job_numbers?.job_number, b.customers?.name]
-                        .filter(Boolean)
-                        .join(" · ")}
+                       {[b.bom_type === "service" ? "BOS" : "BOM", b.projects?.project_number, b.customers?.name]
+                         .filter(Boolean)
+                         .join(" · ")}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {(b.bom_items ?? []).length} line(s) · estimated {Number(b.estimated_cost ?? 0).toFixed(2)} {b.currency}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {b.stage === "bom_bos_preparation" && (
-                      <Button variant="outline" size="sm" onClick={() => sendForApproval(b)}>
-                        <ShieldCheck className="mr-1 h-4 w-4" /> Request A3
-                      </Button>
-                    )}
+                     {b.stage === "bom_bos_preparation" && !profile?.isAdmin && (
+                       <Button variant="outline" size="sm" onClick={() => sendForApproval(b)}>
+                         <ShieldCheck className="mr-1 h-4 w-4" /> Request A3
+                       </Button>
+                     )}
                     {b.stage === "bom_bos_approval" && (
                       <Button variant="outline" size="sm" onClick={() => releaseToMaterials(b)}>
                         <Package className="mr-1 h-4 w-4" /> Release to store

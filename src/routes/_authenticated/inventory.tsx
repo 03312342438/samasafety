@@ -231,7 +231,7 @@ function InventoryPage() {
     }
   };
 
-  /** Send a pending item code to Management for approval. */
+  /** Send a pending item code to a Project Manager for approval. */
   const sendItemForApproval = async (item: { id: string; item_code?: string; description?: string }) => {
     try {
       await requestApproval({
@@ -243,7 +243,7 @@ function InventoryPage() {
           entity_id: item.id,
         },
       });
-      toast.success("Sent to Management for approval");
+      toast.success("Sent to Project Manager for approval");
       setApprovalPrompt(null);
       refresh();
     } catch (e) {
@@ -859,7 +859,7 @@ function InventoryPage() {
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{approvalPrompt?.item_code}</span>
               {approvalPrompt?.description ? ` — ${approvalPrompt.description}` : ""} is saved but not live.
-              It can only be used in BOM / BOS once Management approves it.
+              It can only be used in BOM / BOS once a Project Manager approves it.
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => setApprovalPrompt(null)}>Not now</Button>

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FolderKanban, Plus, Pencil, Trash2, Hash, ShieldCheck, FileSearch } from "lucide-react";
+import { FolderKanban, Plus, Pencil, Trash2, Hash, FileSearch } from "lucide-react";
 import { JobItemsDialog } from "@/components/JobItemsDialog";
 
 import { useProfile } from "@/hooks/use-profile";
@@ -25,8 +25,8 @@ import {
   listInstallationSteps, setInstallationStepStatus,
 } from "@/lib/projects.functions";
 import { listBoms } from "@/lib/engineering.functions";
+import { listCustomerPos } from "@/lib/sales.functions";
 
-import { submitApproval } from "@/lib/approvals.functions";
 import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY } from "@/lib/workflow";
 import { FilterTable } from "@/components/FilterTable";
 
@@ -54,7 +54,7 @@ const emptyProject = {
 const emptyJob = {
   project_id: "", job_kind: "installation", scope_type: "installation", description: "",
   site_location: "", start_date: "", target_date: "",
-  maintenance_interval_months: "", bom_id: "",
+  maintenance_interval_months: "", bom_id: "", customer_po_id: "",
   steps: [] as { title: string; expected_date: string }[],
 };
 
@@ -90,8 +90,8 @@ function ProjectsPage() {
   const remove = useServerFn(deleteProject);
   const saveJob = useServerFn(saveJobNumber);
   const removeJob = useServerFn(deleteJobNumber);
-  const requestApproval = useServerFn(submitApproval);
   const fetchBoms = useServerFn(listBoms);
+  const fetchPos = useServerFn(listCustomerPos);
   const fetchSteps = useServerFn(listInstallationSteps);
 
 
@@ -99,6 +99,7 @@ function ProjectsPage() {
   const { data: jobs } = useQuery({ queryKey: ["job-numbers"], queryFn: () => fetchJobs() });
   const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => fetchCustomers() });
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
+  const { data: customerPos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchPos() });
 
 
   const [open, setOpen] = useState(false);
@@ -136,22 +137,34 @@ function ProjectsPage() {
 
 
 
-  const sendForApproval = async (job: any) => {
+  const canCreateJob = !profile?.isAdmin && (hasDept(profile?.roles, "project_manager") || hasDept(profile?.roles, "technician"));
+
+  const submitJob = async () => {
     try {
-      await requestApproval({
+      await saveJob({
         data: {
-          approval_type: "job_number",
-          title: `Job number ${job.job_number}`,
-          details: job.description ?? "",
-          project_id: job.project_id,
-          job_number_id: job.id,
-          amount: 0,
+          ...jobForm,
+          id: jobForm.id || undefined,
+          project_id: jobForm.project_id,
+          bom_id: jobForm.bom_id,
+          customer_po_id: jobForm.customer_po_id,
+          maintenance_interval_months: jobForm.maintenance_interval_months
+            ? Number(jobForm.maintenance_interval_months)
+            : null,
+          start_date: jobForm.start_date || null,
+          target_date: jobForm.target_date || null,
+          steps: jobForm.steps.map((step: { title: string; expected_date: string }) => ({
+            title: step.title,
+            expected_date: step.expected_date || null,
+          })),
         },
       });
-      toast.success("Sent to management for approval");
+      toast.success(jobForm.id ? "Job number updated" : "Job number sent to Management for approval");
+      setJobOpen(false);
+      setJobForm(emptyJob);
       refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit for approval");
+      toast.error(e instanceof Error ? e.message : "Could not save job number");
     }
   };
 
@@ -257,6 +270,73 @@ function ProjectsPage() {
                 </DialogContent>
               </Dialog>
             ) : null}
+            {canCreateJob && (
+              <Dialog open={jobOpen} onOpenChange={(o) => { setJobOpen(o); if (!o) setJobForm(emptyJob); }}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline"><Plus className="mr-1 h-4 w-4" /> New job number</Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                  <DialogHeader><DialogTitle>{jobForm.id ? "Edit job number" : "New job number"}</DialogTitle></DialogHeader>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Label className="text-xs">Project</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.project_id}
+                        onChange={(e) => setJobForm({ ...jobForm, project_id: e.target.value, bom_id: "", customer_po_id: "" })}>
+                        <option value="">— select project —</option>
+                        {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Approved BOM / BOS</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.bom_id}
+                        onChange={(e) => setJobForm({ ...jobForm, bom_id: e.target.value })}>
+                        <option value="">— select approved BOM / BOS —</option>
+                        {((boms as any[]) ?? []).filter((b) => b.status === "approved" && (!jobForm.project_id || b.project_id === jobForm.project_id)).map((b) => (
+                          <option key={b.id} value={b.id}>{b.reference} — {b.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Verified customer PO</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.customer_po_id}
+                        onChange={(e) => setJobForm({ ...jobForm, customer_po_id: e.target.value })}>
+                        <option value="">— select verified PO —</option>
+                        {((customerPos as any[]) ?? []).filter((po) => po.verification_status === "verified" && (!jobForm.project_id || po.project_id === jobForm.project_id)).map((po) => (
+                          <option key={po.id} value={po.id}>{po.po_number || po.reference} — {po.customers?.name ?? "Customer"}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <Field label="Description" value={jobForm.description} onChange={(v) => setJobForm({ ...jobForm, description: v })} />
+                    <Field label="Site location" value={jobForm.site_location} onChange={(v) => setJobForm({ ...jobForm, site_location: v })} />
+                    <div>
+                      <Label className="text-xs">Job type</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.job_kind}
+                        onChange={(e) => setJobForm({ ...jobForm, job_kind: e.target.value, scope_type: e.target.value })}>
+                        <option value="installation">Installation</option><option value="maintenance">Maintenance</option>
+                      </select>
+                    </div>
+                    <Field label="Start date" type="date" value={jobForm.start_date} onChange={(v) => setJobForm({ ...jobForm, start_date: v })} />
+                    <Field label="Target date" type="date" value={jobForm.target_date} onChange={(v) => setJobForm({ ...jobForm, target_date: v })} />
+                    {jobForm.job_kind === "maintenance" && <Field label="Maintenance interval (months)" value={jobForm.maintenance_interval_months} onChange={(v) => setJobForm({ ...jobForm, maintenance_interval_months: v })} />}
+                  </div>
+                  {jobForm.job_kind === "installation" && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between"><Label className="text-xs">Project steps</Label><Button type="button" variant="outline" size="sm" onClick={() => setJobForm({ ...jobForm, steps: [...jobForm.steps, { title: "", expected_date: "" }] })}><Plus className="mr-1 h-3.5 w-3.5" /> Add step</Button></div>
+                      {jobForm.steps.map((step: { title: string; expected_date: string }, index: number) => (
+                        <div key={index} className="grid gap-2 sm:grid-cols-[auto_1fr_10rem_auto]">
+                          <span className="self-center text-sm text-muted-foreground">{index + 1}.</span>
+                          <Input placeholder="Step description" value={step.title} onChange={(e) => setJobForm({ ...jobForm, steps: jobForm.steps.map((item: any, i: number) => i === index ? { ...item, title: e.target.value } : item) })} />
+                          <Input type="date" value={step.expected_date} onChange={(e) => setJobForm({ ...jobForm, steps: jobForm.steps.map((item: any, i: number) => i === index ? { ...item, expected_date: e.target.value } : item) })} />
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setJobForm({ ...jobForm, steps: jobForm.steps.filter((_: any, i: number) => i !== index) })}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      {jobForm.steps.length === 0 && <p className="text-xs text-muted-foreground">Add the work steps that Installation & Maintenance or Project Management will tick off as completed.</p>}
+                    </div>
+                  )}
+                  <DialogFooter><Button onClick={submitJob} disabled={!jobForm.project_id || !jobForm.bom_id || !jobForm.customer_po_id || (jobForm.job_kind === "installation" && jobForm.steps.length === 0)}>Send to Management</Button></DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
@@ -348,11 +428,6 @@ function ProjectsPage() {
                     <Button variant="outline" size="sm" onClick={() => setOpenJobId(j.id)}>
                       <FileSearch className="mr-1 h-4 w-4" /> Open
                     </Button>
-                    {j.status === "draft" && !storeOnly && (
-                      <Button variant="secondary" size="sm" onClick={() => sendForApproval(j)}>
-                        <ShieldCheck className="mr-1 h-4 w-4" /> Send for approval
-                      </Button>
-                    )}
                     {!storeOnly && (j.status !== "approved" || profile?.isAdmin) && (
                       <Button
                         variant="outline"

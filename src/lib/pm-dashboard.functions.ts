@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { myRoles } from "@/lib/permissions";
 
 /**
  * Project delivery dashboard for Project Managers (and Management).
@@ -9,7 +10,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getProjectDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const roles = await myRoles(supabase, userId);
+    if (!roles.includes("admin") && !roles.includes("project_manager")) {
+      throw new Error("Only Management and Project Managers can view the project dashboard.");
+    }
 
     const [projectsRes, jobsRes, invoicesRes, paymentsRes, customersRes] = await Promise.all([
       supabase

@@ -16,9 +16,7 @@ export const listBoms = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("boms")
-      .select(
-        "*, customers(name), projects(project_number, name), job_numbers!boms_job_number_id_fkey(job_number), bom_items(*)",
-      )
+      .select("*, customers(name), projects(project_number, name), bom_items(*)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = data ?? [];
@@ -55,7 +53,6 @@ export const saveBom = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid().optional(),
         project_id: z.string().uuid().nullable().default(null),
-        job_number_id: z.string().uuid().nullable().default(null),
         customer_id: z.string().uuid().nullable().default(null),
         title: z.string().max(300).default(""),
         bom_type: z.enum(["material", "service"]).default("material"),
@@ -123,11 +120,12 @@ export const saveBom = createServerFn({ method: "POST" })
       });
     }
 
-    await supabase.from("bom_items").delete().eq("bom_id", bomId!);
+    if (!bomId) throw new Error("BOM could not be saved.");
+    await supabase.from("bom_items").delete().eq("bom_id", bomId);
     if (items.length > 0) {
       const { error: itemError } = await supabase.from("bom_items").insert(
         items.map((i, index) => ({
-          bom_id: bomId!,
+          bom_id: bomId,
           sequence: index + 1,
           stock_item_id: i.stock_item_id || null,
           description: i.description,
@@ -146,7 +144,7 @@ export const saveBom = createServerFn({ method: "POST" })
       await supabase.from("projects").update({ stage: "bom_bos_preparation" }).eq("id", data.project_id);
     }
 
-    return { ok: true, id: bomId!, reference, estimated_cost };
+    return { ok: true, id: bomId, reference, estimated_cost };
   });
 
 export const deleteBom = createServerFn({ method: "POST" })

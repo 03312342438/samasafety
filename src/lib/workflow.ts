@@ -243,7 +243,7 @@ export type Capability =
   | "jobnumber.approve_pm"
   | "uom.manage"           // units of measurement master list
   | "stock.item.create"    // add a brand-new item code
-  | "stock.item.approve"   // management clears an item code for use
+  | "stock.item.approve"   // Project Manager clears an item code for use
   | "stock.receive"        // feed quantity with supplier + price
   | "stock.issue"          // release against a job number
   | "material.request"
@@ -261,8 +261,8 @@ const MATRIX: Record<Capability, Department[]> = {
   "jobnumber.create": ["technician", "project_manager"],
   "jobnumber.approve_pm": ["project_manager"],
   "uom.manage": ["project_manager"],
-  "stock.item.create": ["project_manager"],
-  "stock.item.approve": ["admin"],
+  "stock.item.create": ["technician", "project_manager"],
+  "stock.item.approve": ["project_manager"],
   "stock.receive": ["inventory"],
   "stock.issue": ["inventory"],
   "material.request": ["inventory", "project_manager"],
@@ -276,7 +276,7 @@ const MATRIX: Record<Capability, Department[]> = {
  * Capabilities Management deliberately does NOT inherit — Management reviews
  * and approves this work rather than performing it.
  */
-const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create"];
+const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create", "stock.item.create", "stock.item.approve"];
 
 /** Management sees everything, but only these departments may act. */
 export function can(roles: string[] | undefined, cap: Capability): boolean {
