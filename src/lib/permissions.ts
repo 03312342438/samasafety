@@ -19,7 +19,7 @@ const MESSAGES: Partial<Record<Capability, string>> = {
   "project.create": "Only the Project Manager can create projects and project numbers.",
   "bom.create": "Only the Project Manager can create a BOM/BOS.",
   "jobnumber.create": "Only Installation & Maintenance or the Project Manager can create a job number.",
-  "jobnumber.approve_pm": "Only the Project Manager can approve an item code.",
+  "jobnumber.approve_pm": "Only the Project Manager can approve a job number.",
   "uom.manage": "Only the Project Manager can maintain the units of measurement.",
   "stock.item.create": "Only Installation & Maintenance or the Project Manager can add a new item code.",
   "stock.item.approve": "Only the Project Manager can approve an item code.",

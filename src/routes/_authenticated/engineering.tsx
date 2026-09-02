@@ -191,7 +191,6 @@ function EngineeringPage() {
           title: `A3 — BOM/BOS ${b.reference}`,
           details: `${b.title || "BOM"} · estimated cost ${b.estimated_cost} ${b.currency}`,
           project_id: b.project_id ?? null,
-          job_number_id: b.job_number_id ?? null,
           entity_table: "boms",
           entity_id: b.id,
           amount: Number(b.estimated_cost ?? 0),
@@ -416,11 +415,11 @@ function EngineeringPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {b.stage === "bom_bos_preparation" && (
-                      <Button variant="outline" size="sm" onClick={() => sendForApproval(b)}>
-                        <ShieldCheck className="mr-1 h-4 w-4" /> Request A3
-                      </Button>
-                    )}
+                     {b.stage === "bom_bos_preparation" && !profile?.isAdmin && (
+                       <Button variant="outline" size="sm" onClick={() => sendForApproval(b)}>
+                         <ShieldCheck className="mr-1 h-4 w-4" /> Request A3
+                       </Button>
+                     )}
                     {b.stage === "bom_bos_approval" && (
                       <Button variant="outline" size="sm" onClick={() => releaseToMaterials(b)}>
                         <Package className="mr-1 h-4 w-4" /> Release to store
