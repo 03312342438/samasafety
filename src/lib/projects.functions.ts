@@ -186,7 +186,7 @@ export const listJobNumbers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("job_numbers")
-      .select("*, projects(project_number, name), customers(name)")
+      .select("*, projects(project_number, name), customers(name, customer_number), boms(reference, title, status), customer_pos(po_number, po_value, verification_status)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -202,7 +202,8 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         job_kind: z.enum(["installation", "maintenance"]).default("installation"),
         scope_type: z.enum(["installation", "maintenance", "service", "repair"]).default("installation"),
         maintenance_interval_months: z.number().int().min(1).max(120).nullable().default(null),
-        bom_id: z.string().uuid().nullable().default(null),
+        bom_id: z.string().uuid(),
+        customer_po_id: z.string().uuid(),
         description: z.string().max(2000).default(""),
         site_location: z.string().max(500).default(""),
         start_date: z.string().max(40).nullable().default(null),
@@ -226,23 +227,35 @@ export const saveJobNumber = createServerFn({ method: "POST" })
       scope_type: raw.job_kind === "maintenance" ? "maintenance" : raw.scope_type,
       maintenance_interval_months:
         raw.job_kind === "maintenance" ? raw.maintenance_interval_months : null,
-      bom_id: raw.bom_id || null,
       start_date: raw.start_date || null,
       target_date: raw.target_date || null,
     };
 
-    if (!fields.bom_id) throw new Error("A linked BOM/BOS reference is required for a job number.");
     if (fields.job_kind === "maintenance" && !fields.maintenance_interval_months) {
       throw new Error("Select the maintenance interval (in months).");
     }
     if (fields.job_kind === "installation" && steps.length === 0) {
-      throw new Error("Add at least one installation step with an expected completion date.");
+      throw new Error("Add at least one project step with a description and expected completion date.");
     }
 
+    const [{ data: project }, { data: bom }, { data: po }] = await Promise.all([
+      supabase.from("projects").select("id, customer_id, project_number, name, site_location").eq("id", fields.project_id).maybeSingle(),
+      supabase.from("boms").select("id, project_id, customer_id, status, reference").eq("id", fields.bom_id).maybeSingle(),
+      supabase.from("customer_pos").select("id, project_id, customer_id, verification_status, po_number").eq("id", fields.customer_po_id).maybeSingle(),
+    ]);
+    if (!project) throw new Error("Project not found");
+    if (!bom || bom.status !== "approved") throw new Error("Only a BOM/BOS approved by Management can be attached to a job number.");
+    if (bom.project_id && bom.project_id !== project.id) throw new Error("The selected BOM/BOS belongs to a different project.");
+    if (!po || po.verification_status !== "verified") throw new Error("Only a verified customer PO can be attached to a job number.");
+    if (po.project_id && po.project_id !== project.id) throw new Error("The selected customer PO belongs to a different project.");
+    if (po.customer_id && po.customer_id !== project.customer_id) throw new Error("The selected customer PO belongs to a different customer.");
+    if (bom.customer_id && bom.customer_id !== project.customer_id) throw new Error("The selected BOM/BOS belongs to a different customer.");
+
     const writeSteps = async (jobId: string) => {
-      await supabase.from("job_installation_steps").delete().eq("job_number_id", jobId);
+      const { error: clearError } = await supabase.from("job_installation_steps").delete().eq("job_number_id", jobId);
+      if (clearError) throw new Error(clearError.message);
       if (steps.length === 0) return;
-      await supabase.from("job_installation_steps").insert(
+      const { error } = await supabase.from("job_installation_steps").insert(
         steps.map((s, i) => ({
           job_number_id: jobId,
           sequence: i + 1,
@@ -251,6 +264,7 @@ export const saveJobNumber = createServerFn({ method: "POST" })
           status: "pending",
         })),
       );
+      if (error) throw new Error(error.message);
     };
 
     if (id) {
@@ -263,7 +277,7 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         approved: existing?.status === "approved",
         label: `Job number ${existing?.job_number ?? ""}`.trim(),
       });
-      const { error } = await supabase.from("job_numbers").update(fields).eq("id", id);
+      const { error } = await supabase.from("job_numbers").update({ ...fields, customer_id: project.customer_id }).eq("id", id);
       if (error) throw new Error(error.message);
       await writeSteps(id);
       await logActivity(supabase, userId, {
@@ -277,16 +291,6 @@ export const saveJobNumber = createServerFn({ method: "POST" })
     }
 
     await assertCan(supabase, userId, "jobnumber.create");
-
-    // A job number may only be created once the project itself is initiated
-    // (management approval A2 sets the project stage).
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id, customer_id, stage, project_number")
-      .eq("id", fields.project_id)
-      .maybeSingle();
-    if (!project) throw new Error("Project not found");
-
     const jobNumber = await nextSequence(supabase, "job_numbers", "job_number", "SAMA");
     const { data: created, error } = await supabase
       .from("job_numbers")
@@ -294,13 +298,29 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         ...fields,
         job_number: jobNumber,
         customer_id: project.customer_id,
-        status: "draft",
+        site_location: fields.site_location || project.site_location,
+        status: "pending_approval",
         created_by: userId,
       })
       .select("id, job_number")
       .single();
     if (error) throw new Error(error.message);
     await writeSteps(created.id);
+
+    const { error: approvalError } = await supabase.from("approvals").insert({
+      approval_type: "job_number",
+      entity_table: "job_numbers",
+      entity_id: created.id,
+      reference: created.job_number,
+      project_id: project.id,
+      job_number_id: created.id,
+      title: `Job number ${created.job_number}`,
+      details: `${project.name} · ${bom.reference} · PO ${po.po_number || fields.customer_po_id}`,
+      amount: 0,
+      decision: "pending",
+      submitted_by: userId,
+    });
+    if (approvalError) throw new Error(approvalError.message);
 
     await logActivity(supabase, userId, {
       action: "create",
@@ -309,11 +329,11 @@ export const saveJobNumber = createServerFn({ method: "POST" })
       entity_label: created.job_number,
       new_value: fields,
     });
-    await notifyDepartments(supabase, ["admin", "project_manager"], {
-      title: `Job number ${created.job_number} created`,
-      message: `Project ${project.project_number} — awaiting Project Manager approval`,
+    await notifyDepartments(supabase, ["admin"], {
+      title: `Job number ${created.job_number} awaiting approval`,
+      message: `${project.project_number} · ${bom.reference} · PO ${po.po_number || "attached"}`,
       category: "job_number",
-      link: "/projects",
+      link: "/approvals",
       entity_table: "job_numbers",
       entity_id: created.id,
     });
