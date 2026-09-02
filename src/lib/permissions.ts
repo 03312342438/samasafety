@@ -22,7 +22,7 @@ const MESSAGES: Partial<Record<Capability, string>> = {
   "jobnumber.approve_pm": "Only the Project Manager can approve an item code.",
   "uom.manage": "Only the Project Manager can maintain the units of measurement.",
   "stock.item.create": "Only Installation & Maintenance or the Project Manager can add a new item code.",
-  "stock.item.approve": "Only the Project Manager can approve an item code."
+  "stock.item.approve": "Only the Project Manager can approve an item code.",
   "stock.receive": "Only the Store can receive stock.",
   "stock.issue": "Only the Store can release material.",
   "accounts.manage": "Only the Accounts department can handle invoices and payments.",
