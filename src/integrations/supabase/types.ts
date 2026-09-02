@@ -1027,6 +1027,7 @@ export type Database = {
           created_at: string
           created_by: string
           customer_id: string | null
+          customer_po_id: string | null
           description: string
           id: string
           job_kind: string
@@ -1051,6 +1052,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           customer_id?: string | null
+          customer_po_id?: string | null
           description?: string
           id?: string
           job_kind?: string
@@ -1075,6 +1077,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           customer_id?: string | null
+          customer_po_id?: string | null
           description?: string
           id?: string
           job_kind?: string
@@ -1104,6 +1107,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_numbers_customer_po_id_fkey"
+            columns: ["customer_po_id"]
+            isOneToOne: false
+            referencedRelation: "customer_pos"
             referencedColumns: ["id"]
           },
           {
