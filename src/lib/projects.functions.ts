@@ -368,6 +368,18 @@ export const setInstallationStepStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const roles = await assertCan(supabase, userId, "jobnumber.create");
+    if (!roles.includes("project_manager") && !roles.includes("technician")) {
+      throw new Error("Only Installation & Maintenance or Project Managers can update job steps.");
+    }
+    const { data: stepRecord } = await supabase
+      .from("job_installation_steps")
+      .select("job_number_id, job_numbers(status)")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!stepRecord) throw new Error("Installation step not found");
+    const jobStatus = Array.isArray(stepRecord.job_numbers) ? stepRecord.job_numbers[0]?.status : stepRecord.job_numbers?.status;
+    if (jobStatus !== "approved") throw new Error("Job steps can only be updated after Management approves the job number.");
     const completed =
       data.status === "completed"
         ? data.completed_date || new Date().toISOString().slice(0, 10)

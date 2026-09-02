@@ -168,7 +168,7 @@ function EngineeringPage() {
   const editBom = (b: any) => {
     setBomForm({
       ...emptyBom, ...b,
-      project_id: b.project_id ?? "", customer_id: b.customer_id ??",
+      project_id: b.project_id ?? "", customer_id: b.customer_id ?? "",
     });
     const rows = [...(b.bom_items ?? [])].sort((a: any, c: any) => a.sequence - c.sequence);
     setItems(

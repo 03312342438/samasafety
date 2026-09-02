@@ -143,7 +143,7 @@ export const deleteStockItem = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Management clears (or rejects) a new item code before it can be used. */
+/** Project Managers clear (or reject) a new item code before it can be used. */
 export const setStockItemApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -156,7 +156,10 @@ export const setStockItemApproval = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertCan(supabase, userId, "stock.item.approve");
+    const roles = await assertCan(supabase, userId, "stock.item.approve");
+    if (!roles.includes("project_manager") || roles.includes("admin")) {
+      throw new Error("Only a Project Manager can approve an item code.");
+    }
     const { data: item } = await supabase
       .from("stock_items")
       .select("item_code, description")
@@ -179,7 +182,7 @@ export const setStockItemApproval = createServerFn({ method: "POST" })
       entity_label: `${item?.item_code ?? ""} — ${item?.description ?? ""}`,
       new_value: { approval_status: data.approval_status },
     });
-    await notifyDepartments(supabase, ["project_manager", "inventory"], {
+    await notifyDepartments(supabase, ["project_manager", "technician", "inventory"], {
       title: `Item ${item?.item_code ?? ""} ${data.approval_status}`,
       message: item?.description ?? "",
       category: "inventory",
