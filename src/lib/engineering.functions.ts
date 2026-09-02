@@ -120,11 +120,12 @@ export const saveBom = createServerFn({ method: "POST" })
       });
     }
 
-    await supabase.from("bom_items").delete().eq("bom_id", bomId!);
+    if (!bomId) throw new Error("BOM could not be saved.");
+    await supabase.from("bom_items").delete().eq("bom_id", bomId);
     if (items.length > 0) {
       const { error: itemError } = await supabase.from("bom_items").insert(
         items.map((i, index) => ({
-          bom_id: bomId!,
+          bom_id: bomId,
           sequence: index + 1,
           stock_item_id: i.stock_item_id || null,
           description: i.description,
@@ -143,7 +144,7 @@ export const saveBom = createServerFn({ method: "POST" })
       await supabase.from("projects").update({ stage: "bom_bos_preparation" }).eq("id", data.project_id);
     }
 
-    return { ok: true, id: bomId!, reference, estimated_cost };
+    return { ok: true, id: bomId, reference, estimated_cost };
   });
 
 export const deleteBom = createServerFn({ method: "POST" })
