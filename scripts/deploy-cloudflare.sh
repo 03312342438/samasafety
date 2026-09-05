@@ -35,14 +35,29 @@ load_env() {
 load_env ".env"
 load_env ".env.cloudflare"
 
-# Accept the APP_SUPABASE_* names previously used by the secure input form, then
-# map them to the exact names expected by the browser bundle and Worker runtime.
-: "${SUPABASE_URL:=${APP_SUPABASE_URL:-${VITE_SUPABASE_URL:-}}}"
-: "${SUPABASE_PUBLISHABLE_KEY:=${APP_SUPABASE_PUBLISHABLE_KEY:-${APP_SUPABASE_API_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:-}}}}"
-: "${SUPABASE_SERVICE_ROLE_KEY:=${APP_SUPABASE_SERVICE_ROLE_KEY:-}}"
-# And vice-versa, so the build always has the VITE_* it needs.
-: "${VITE_SUPABASE_URL:=${SUPABASE_URL:-}}"
-: "${VITE_SUPABASE_PUBLISHABLE_KEY:=${SUPABASE_PUBLISHABLE_KEY:-}}"
+# Accept the APP_SUPABASE_* names previously used by the secure input form. If
+# present, they deliberately override Lovable's defaults loaded from .env so
+# both the browser bundle and Worker point to the user's own project.
+if [[ -n "${APP_SUPABASE_URL:-}" ]]; then
+  SUPABASE_URL="$APP_SUPABASE_URL"
+  VITE_SUPABASE_URL="$APP_SUPABASE_URL"
+else
+  : "${SUPABASE_URL:=${VITE_SUPABASE_URL:-}}"
+  : "${VITE_SUPABASE_URL:=${SUPABASE_URL:-}}"
+fi
+
+APP_PUBLISHABLE_KEY="${APP_SUPABASE_PUBLISHABLE_KEY:-${APP_SUPABASE_API_KEY:-}}"
+if [[ -n "$APP_PUBLISHABLE_KEY" ]]; then
+  SUPABASE_PUBLISHABLE_KEY="$APP_PUBLISHABLE_KEY"
+  VITE_SUPABASE_PUBLISHABLE_KEY="$APP_PUBLISHABLE_KEY"
+else
+  : "${SUPABASE_PUBLISHABLE_KEY:=${VITE_SUPABASE_PUBLISHABLE_KEY:-}}"
+  : "${VITE_SUPABASE_PUBLISHABLE_KEY:=${SUPABASE_PUBLISHABLE_KEY:-}}"
+fi
+
+if [[ -n "${APP_SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+  SUPABASE_SERVICE_ROLE_KEY="$APP_SUPABASE_SERVICE_ROLE_KEY"
+fi
 
 if [[ -z "${VITE_SUPABASE_URL:-}" || -z "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" ]]; then
   echo "ERROR: VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY are missing."
