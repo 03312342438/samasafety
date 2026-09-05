@@ -804,7 +804,7 @@ function InventoryPage() {
                         Send for approval
                       </Button>
                     )}
-                    {canManageItems && (
+                    {isAdmin && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}>
                           <Pencil className="h-4 w-4" />
