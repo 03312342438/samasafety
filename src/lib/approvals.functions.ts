@@ -159,30 +159,54 @@ export const submitApproval = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { entity_table, entity_id, ...fields } = data;
+
+    const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isManagement = (myRoles ?? []).some((r) => r.role === "admin");
+    const now = new Date().toISOString();
+
     const { data: created, error } = await supabase
       .from("approvals")
       .insert({
         ...fields,
-        decision: "pending",
+        decision: isManagement ? "approved" : "pending",
+        decision_comments: isManagement ? "Auto-approved: raised by Management." : "",
+        approver_id: isManagement ? userId : null,
+        decided_at: isManagement ? now : null,
         submitted_by: userId,
         entity_table: entity_table ?? (data.job_number_id ? "job_numbers" : "projects"),
         entity_id: entity_id ?? data.job_number_id ?? data.project_id,
       })
-      .select("id")
+      .select("*")
       .single();
     if (error) throw new Error(error.message);
 
-    if (data.job_number_id) {
+    if (data.job_number_id && !isManagement) {
       await supabase.from("job_numbers").update({ status: "pending_approval" }).eq("id", data.job_number_id);
     }
 
     await logActivity(supabase, userId, {
-      action: "approval_requested",
+      action: isManagement ? "approval_auto_approved" : "approval_requested",
       entity_table: "approvals",
       entity_id: created.id,
       entity_label: data.title,
       new_value: data,
     });
+
+    if (isManagement) {
+      // Management does not wait on anyone — the action goes through immediately
+      // and they simply get a confirmation.
+      await applyDecisionEffects(supabase, userId, created, "approved");
+      await notifyUsers(supabase, [userId], {
+        title: "Approved automatically",
+        message: `${data.title} — raised by Management, no approval needed.`,
+        category: "approval",
+        link: "/approvals",
+        entity_table: "approvals",
+        entity_id: created.id,
+      });
+      return { ok: true, id: created.id, auto_approved: true };
+    }
+
     await notifyDepartments(supabase, ["admin"], {
       title: "Approval required",
       message: data.title,
@@ -191,8 +215,68 @@ export const submitApproval = createServerFn({ method: "POST" })
       entity_table: "approvals",
       entity_id: created.id,
     });
-    return { ok: true, id: created.id };
+    return { ok: true, id: created.id, auto_approved: false };
   });
+
+/** Push an approval decision through to the record it gates. */
+async function applyDecisionEffects(
+  supabase: any,
+  userId: string,
+  approval: any,
+  decision: "approved" | "rejected" | "revision_requested",
+) {
+  const approved = decision === "approved";
+  const now = new Date().toISOString();
+  const status = approved ? "approved" : decision === "rejected" ? "rejected" : "pending";
+
+  if (approval.entity_table === "stock_lots" && approval.entity_id) {
+    await applyStockLotDecision(supabase, userId, approval.entity_id, decision);
+  }
+  if (approval.entity_table === "stock_releases" && approval.entity_id) {
+    await applyStockReleaseDecision(supabase, userId, approval.entity_id, decision);
+  }
+  if (approval.entity_table === "suppliers" && approval.entity_id) {
+    await supabase
+      .from("suppliers")
+      .update({
+        approval_status: status,
+        approved_by: approved ? userId : null,
+        approved_at: approved ? now : null,
+      } as any)
+      .eq("id", approval.entity_id);
+  }
+  if (approval.entity_table === "stock_items" && approval.entity_id) {
+    await supabase
+      .from("stock_items")
+      .update({
+        approval_status: status,
+        approved_by: approved ? userId : null,
+        approved_at: approved ? now : null,
+      })
+      .eq("id", approval.entity_id);
+  }
+  if (approval.job_number_id) {
+    await supabase
+      .from("job_numbers")
+      .update({
+        status: approved ? "approved" : decision === "rejected" ? "rejected" : "draft",
+        approved_by: approved ? userId : null,
+        approved_at: approved ? now : null,
+      })
+      .eq("id", approval.job_number_id);
+  }
+  if (approval.project_id && approved) {
+    const stageByType: Record<string, string> = {
+      project_initiation: "project_initiated",
+      bom_bos: "job_number_created",
+      job_number: "material_planning",
+      final_review: "closed",
+    };
+    const stage = stageByType[approval.approval_type];
+    if (stage) await supabase.from("projects").update({ stage }).eq("id", approval.project_id);
+  }
+}
+
 
 /** Management decision. Nothing downstream may proceed until this is approved. */
 export const decideApproval = createServerFn({ method: "POST" })
