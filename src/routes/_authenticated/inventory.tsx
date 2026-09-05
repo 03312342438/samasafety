@@ -174,7 +174,7 @@ function InventoryPage() {
           }
           if (!bytes.length) return null;
           const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
-          return new File([bytes], `import-${crypto.randomUUID()}.${ext}`, { type: mime });
+          return new File([new Uint8Array(bytes)], `import-${crypto.randomUUID()}.${ext}`, { type: mime });
         } catch {
           return null;
         }
