@@ -27,7 +27,7 @@ import {
   listStockItems, saveStockItem, deleteStockItem,
   listMaterialRequests, saveMaterialRequest, deleteMaterialRequest,
   allocateMaterialRequest, issueMaterialRequest,
-  listStockMovements, recordStockMovement, setStockItemApproval,
+  listStockMovements, recordStockMovement, setStockItemApproval, importStockItems,
 } from "@/lib/inventory.functions";
 import { listStockLots, saveStockLot, deleteStockLot, submitStockLot } from "@/lib/lots.functions";
 import { UomSelect } from "@/components/UomSelect";
@@ -85,7 +85,7 @@ function InventoryPage() {
   /** Only the Project Manager may create or change an item code. */
   const canManageItems = can(profile?.roles, "stock.item.create");
   const canApproveItems = can(profile?.roles, "stock.item.approve");
-  const canManageLots = isStore || isAdmin;
+  const canManageLots = isStore;
 
   const qc = useQueryClient();
   const [tab, setTab] = useState(isStore && !isPm ? "lots" : "stock");
@@ -122,6 +122,56 @@ function InventoryPage() {
   const [stockOpen, setStockOpen] = useState(false);
   const [stockForm, setStockForm] = useState<any>(emptyStock);
   const [uploading, setUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const runImport = useServerFn(importStockItems);
+
+  const importExcel = async (file?: File) => {
+    if (!file) return;
+    setImporting(true);
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await file.arrayBuffer());
+      const ws = wb.worksheets[0];
+      if (!ws) throw new Error("The file has no sheet.");
+      const header: Record<string, number> = {};
+      (ws.getRow(1).values as any[]).forEach((v, i) => {
+        const key = String(v ?? "").trim().toLowerCase();
+        if (key) header[key] = i;
+      });
+      const cell = (row: any, name: string) => {
+        const idx = header[name];
+        if (!idx) return "";
+        const v = row.getCell(idx).value as any;
+        if (v == null) return "";
+        if (typeof v === "object") return String(v.text ?? v.result ?? v.hyperlink ?? "");
+        return String(v);
+      };
+      const rows: any[] = [];
+      ws.eachRow((row, n) => {
+        if (n === 1) return;
+        const description = cell(row, "description").trim();
+        if (!description) return;
+        rows.push({
+          item_code: cell(row, "item code").trim(),
+          description,
+          category: cell(row, "catagory").trim() || cell(row, "category").trim(),
+          unit: cell(row, "unit").trim() || "pcs",
+          status: cell(row, "status").trim() || "active",
+          image_url: cell(row, "picture").trim(),
+          notes: cell(row, "note").trim() || cell(row, "notes").trim(),
+        });
+      });
+      if (rows.length === 0) throw new Error("No item rows found — check the column headings.");
+      const res: any = await runImport({ data: { rows } });
+      toast.success(`${res.created} item(s) imported — waiting for Management approval.` + (res.skipped ? ` ${res.skipped} skipped (code already exists).` : ""));
+      qc.invalidateQueries({ queryKey: ["stock-items"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not read that file.");
+    } finally {
+      setImporting(false);
+    }
+  };
   const [lotOpen, setLotOpen] = useState(false);
   const [lotForm, setLotForm] = useState<any>(emptyLot);
   const [lotLines, setLotLines] = useState<LotRow[]>([{ ...emptyLotLine }]);
@@ -416,6 +466,20 @@ function InventoryPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
+
+            {tab === "stock" && canManageItems && (
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
+                <Upload className="h-4 w-4" />
+                {importing ? "Importing…" : "Upload Excel"}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  disabled={importing}
+                  onChange={(e) => { importExcel(e.target.files?.[0]); e.target.value = ""; }}
+                />
+              </label>
+            )}
 
             {tab === "stock" && canManageItems && (
               <Dialog open={stockOpen} onOpenChange={(o) => { setStockOpen(o); if (!o) setStockForm(emptyStock); }}>

@@ -143,7 +143,7 @@ export const deleteStockItem = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Project Managers clear (or reject) a new item code before it can be used. */
+/** Management clears (or rejects) a new item code before it can be used. */
 export const setStockItemApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -157,8 +157,8 @@ export const setStockItemApproval = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const roles = await assertCan(supabase, userId, "stock.item.approve");
-    if (!roles.includes("project_manager") || roles.includes("admin")) {
-      throw new Error("Only a Project Manager can approve an item code.");
+    if (!roles.includes("admin")) {
+      throw new Error("Only Management can approve an item code.");
     }
     const { data: item } = await supabase
       .from("stock_items")
@@ -542,4 +542,83 @@ export const issueMaterialRequest = createServerFn({ method: "POST" })
       entity_id: data.id,
     });
     return { ok: true };
+  });
+
+// ==================================================== bulk excel import =====
+
+/**
+ * Project Manager uploads a spreadsheet of item codes. Every row lands in the
+ * store as a pending item and only goes live once Management approves it.
+ */
+export const importStockItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        rows: z
+          .array(
+            z.object({
+              item_code: z.string().max(60).default(""),
+              description: z.string().trim().min(1).max(500),
+              category: z.string().max(120).default(""),
+              unit: z.string().max(40).default("pcs"),
+              status: z.string().max(40).default("active"),
+              image_url: z.string().max(500).default(""),
+              notes: z.string().max(2000).default(""),
+            }),
+          )
+          .min(1)
+          .max(1000),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCan(supabase, userId, "stock.item.create");
+
+    const { data: existing } = await supabase.from("stock_items").select("item_code");
+    const taken = new Set(((existing ?? []) as any[]).map((r) => String(r.item_code ?? "").toLowerCase()));
+
+    let created = 0;
+    let skipped = 0;
+    for (const row of data.rows) {
+      let code = row.item_code.trim();
+      if (code && taken.has(code.toLowerCase())) {
+        skipped += 1;
+        continue;
+      }
+      if (!code) code = await nextSequence(supabase, "stock_items", "item_code", "ITM");
+      const status = row.status.trim().toLowerCase() === "inactive" ? "inactive" : "active";
+      const { error } = await supabase.from("stock_items").insert({
+        item_code: code,
+        description: row.description.trim(),
+        category: row.category.trim(),
+        unit: row.unit.trim() || "pcs",
+        status,
+        image_url: row.image_url.trim(),
+        notes: row.notes.trim(),
+        created_by: userId,
+        approval_status: "pending",
+      });
+      if (error) throw new Error(error.message);
+      taken.add(code.toLowerCase());
+      created += 1;
+    }
+
+    await logActivity(supabase, userId, {
+      action: "import",
+      entity_table: "stock_items",
+      entity_label: `${created} item(s) imported from Excel`,
+      new_value: { created, skipped },
+    });
+    if (created > 0) {
+      await notifyDepartments(supabase, ["admin"], {
+        title: "Imported item codes need approval",
+        message: `${created} item(s) uploaded by the Project Manager are waiting to go live.`,
+        category: "inventory",
+        link: "/inventory",
+        entity_table: "stock_items",
+      });
+    }
+    return { ok: true, created, skipped };
   });

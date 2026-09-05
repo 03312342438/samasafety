@@ -137,7 +137,7 @@ function ProjectsPage() {
 
 
 
-  const canCreateJob = !profile?.isAdmin && (hasDept(profile?.roles, "project_manager") || hasDept(profile?.roles, "technician"));
+  const canCreateJob = !profile?.isAdmin && hasDept(profile?.roles, "project_manager");
 
   const submitJob = async () => {
     try {
