@@ -27,6 +27,7 @@ import { Route as AuthenticatedCustomersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as ApiPublicCheckOwnSupabaseRouteImport } from './routes/api/public/check-own-supabase'
 import { Route as ApiPublicHooksMaintenanceRemindersRouteImport } from './routes/api/public/hooks/maintenance-reminders'
 
 const AuthRoute = AuthRouteImport.update({
@@ -119,6 +120,12 @@ const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicCheckOwnSupabaseRoute =
+  ApiPublicCheckOwnSupabaseRouteImport.update({
+    id: '/api/public/check-own-supabase',
+    path: '/api/public/check-own-supabase',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMaintenanceRemindersRoute =
   ApiPublicHooksMaintenanceRemindersRouteImport.update({
     id: '/api/public/hooks/maintenance-reminders',
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof AuthenticatedSalesRoute
   '/stock': typeof AuthenticatedStockRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/api/public/check-own-supabase': typeof ApiPublicCheckOwnSupabaseRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
 }
 export interface FileRoutesByTo {
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/sales': typeof AuthenticatedSalesRoute
   '/stock': typeof AuthenticatedStockRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/api/public/check-own-supabase': typeof ApiPublicCheckOwnSupabaseRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
 }
 export interface FileRoutesById {
@@ -186,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
+  '/api/public/check-own-supabase': typeof ApiPublicCheckOwnSupabaseRoute
   '/api/public/hooks/maintenance-reminders': typeof ApiPublicHooksMaintenanceRemindersRoute
 }
 export interface FileRouteTypes {
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/stock'
     | '/suppliers'
+    | '/api/public/check-own-supabase'
     | '/api/public/hooks/maintenance-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/stock'
     | '/suppliers'
+    | '/api/public/check-own-supabase'
     | '/api/public/hooks/maintenance-reminders'
   id:
     | '__root__'
@@ -249,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sales'
     | '/_authenticated/stock'
     | '/_authenticated/suppliers'
+    | '/api/public/check-own-supabase'
     | '/api/public/hooks/maintenance-reminders'
   fileRoutesById: FileRoutesById
 }
@@ -256,6 +269,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCheckOwnSupabaseRoute: typeof ApiPublicCheckOwnSupabaseRoute
   ApiPublicHooksMaintenanceRemindersRoute: typeof ApiPublicHooksMaintenanceRemindersRoute
 }
 
@@ -387,6 +401,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/check-own-supabase': {
+      id: '/api/public/check-own-supabase'
+      path: '/api/public/check-own-supabase'
+      fullPath: '/api/public/check-own-supabase'
+      preLoaderRoute: typeof ApiPublicCheckOwnSupabaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/maintenance-reminders': {
       id: '/api/public/hooks/maintenance-reminders'
       path: '/api/public/hooks/maintenance-reminders'
@@ -440,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCheckOwnSupabaseRoute: ApiPublicCheckOwnSupabaseRoute,
   ApiPublicHooksMaintenanceRemindersRoute:
     ApiPublicHooksMaintenanceRemindersRoute,
 }
