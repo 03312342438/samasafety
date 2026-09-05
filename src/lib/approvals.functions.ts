@@ -238,57 +238,8 @@ export const decideApproval = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
 
-    // Propagate the decision to the gated record.
-    if (approval.entity_table === "stock_lots" && approval.entity_id) {
-      await applyStockLotDecision(supabase, userId, approval.entity_id, data.decision);
-    }
-    if (approval.entity_table === "stock_releases" && approval.entity_id) {
-      await applyStockReleaseDecision(supabase, userId, approval.entity_id, data.decision);
-    }
-    if (approval.entity_table === "suppliers" && approval.entity_id) {
-      await supabase
-        .from("suppliers")
-        .update({
-          approval_status:
-            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "pending",
-          approved_by: data.decision === "approved" ? userId : null,
-          approved_at: data.decision === "approved" ? new Date().toISOString() : null,
-        } as any)
-        .eq("id", approval.entity_id);
-    }
-    if (approval.entity_table === "stock_items" && approval.entity_id) {
+    await applyDecisionEffects(supabase, userId, approval, data.decision);
 
-      await supabase
-        .from("stock_items")
-        .update({
-          approval_status:
-            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "pending",
-          approved_by: data.decision === "approved" ? userId : null,
-          approved_at: data.decision === "approved" ? new Date().toISOString() : null,
-        })
-        .eq("id", approval.entity_id);
-    }
-    if (approval.job_number_id) {
-      await supabase
-        .from("job_numbers")
-        .update({
-          status:
-            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "draft",
-          approved_by: data.decision === "approved" ? userId : null,
-          approved_at: data.decision === "approved" ? new Date().toISOString() : null,
-        })
-        .eq("id", approval.job_number_id);
-    }
-    if (approval.project_id && data.decision === "approved") {
-      const stageByType: Record<string, string> = {
-        project_initiation: "project_initiated",
-        bom_bos: "job_number_created",
-        job_number: "material_planning",
-        final_review: "closed",
-      };
-      const stage = stageByType[approval.approval_type];
-      if (stage) await supabase.from("projects").update({ stage }).eq("id", approval.project_id);
-    }
 
     await logActivity(supabase, userId, {
       action: `approval_${data.decision}`,
