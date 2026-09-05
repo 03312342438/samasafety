@@ -30,6 +30,7 @@ import {
   listStockMovements, recordStockMovement, setStockItemApproval, importStockItems,
 } from "@/lib/inventory.functions";
 import { listStockLots, saveStockLot, deleteStockLot, submitStockLot } from "@/lib/lots.functions";
+import { listSuppliers } from "@/lib/finance.functions";
 import { UomSelect } from "@/components/UomSelect";
 import { can, hasDept, humanize, statusBadgeClass, STOCK_CATEGORIES, CURRENCY } from "@/lib/workflow";
 
@@ -53,19 +54,19 @@ type LineRow = {
 };
 
 type LotRow = {
-  stock_item_id: string; supplier: string; quantity: string;
+  stock_item_id: string; supplier: string; reference: string; quantity: string;
   unit_cost: string; store_location: string; remarks: string;
 };
 
 const emptyLine: LineRow = { stock_item_id: "", description: "", unit: "", quantity_requested: "1", unit_cost: "0", remarks: "" };
-const emptyLotLine: LotRow = { stock_item_id: "", supplier: "", quantity: "1", unit_cost: "0", store_location: "", remarks: "" };
+const emptyLotLine: LotRow = { stock_item_id: "", supplier: "", reference: "", quantity: "1", unit_cost: "0", store_location: "", remarks: "" };
 
 const emptyStock = {
   item_code: "", description: "", category: STOCK_CATEGORIES[0], unit: "pcs",
   status: "active", notes: "", image_url: "",
 };
 
-const emptyLot = { supplier: "", reference: "", received_date: "", notes: "" };
+const emptyLot = { received_date: "", notes: "" };
 
 const emptyRequest = {
   project_id: "", job_number_id: "", bom_id: "", title: "",
@@ -359,15 +360,14 @@ function InventoryPage() {
       const res: any = await persistLot({
         data: {
           id: lotForm.id || undefined,
-          supplier: lotForm.supplier,
-          reference: lotForm.reference,
           received_date: lotForm.received_date || null,
           notes: lotForm.notes,
           items: lotLines
             .filter((l) => l.stock_item_id)
             .map((l) => ({
               stock_item_id: l.stock_item_id,
-              supplier: l.supplier || lotForm.supplier,
+              supplier: l.supplier,
+              reference: l.reference,
               quantity: Number(l.quantity || 0),
               unit_cost: Number(l.unit_cost || 0),
               store_location: l.store_location,
@@ -393,6 +393,7 @@ function InventoryPage() {
         ? rows.map((r: any) => ({
             stock_item_id: r.stock_item_id ?? "",
             supplier: r.supplier ?? "",
+            reference: r.reference ?? "",
             quantity: String(r.quantity ?? 0),
             unit_cost: String(r.unit_cost ?? 0),
             store_location: r.store_location ?? "",
@@ -588,8 +589,6 @@ function InventoryPage() {
                 <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
                   <DialogHeader><DialogTitle>{lotForm.id ? `Edit lot ${lotForm.lot_number ?? ""}` : "New restock lot"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Supplier" value={lotForm.supplier} onChange={(v) => setLotForm({ ...lotForm, supplier: v })} />
-                    <Field label="Reference (DN / invoice)" value={lotForm.reference} onChange={(v) => setLotForm({ ...lotForm, reference: v })} />
                     <Field label="Received date" type="date" value={lotForm.received_date} onChange={(v) => setLotForm({ ...lotForm, received_date: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
@@ -614,13 +613,23 @@ function InventoryPage() {
                           >
                             {lotItemOptions.map(([v, lb]) => <option key={v} value={v}>{lb}</option>)}
                           </select>
-                          <Input className="sm:col-span-2" placeholder="Supplier" value={l.supplier}
-                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, supplier: e.target.value } : r)))} />
+                          <select
+                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-2"
+                            value={l.supplier}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, supplier: e.target.value } : r)))}
+                          >
+                            <option value="">— supplier —</option>
+                            {approvedSuppliers.map((s: any) => (
+                              <option key={s.id} value={s.name}>{s.name}</option>
+                            ))}
+                          </select>
+                          <Input className="sm:col-span-2" placeholder="DN / invoice" value={l.reference}
+                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, reference: e.target.value } : r)))} />
                           <Input className="sm:col-span-1" placeholder="Qty" value={l.quantity}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
                           <Input className="sm:col-span-2" placeholder="Unit price" value={l.unit_cost}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, unit_cost: e.target.value } : r)))} />
-                          <Input className="sm:col-span-2" placeholder="Store location" value={l.store_location}
+                          <Input className="sm:col-span-3" placeholder="Store location" value={l.store_location}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, store_location: e.target.value } : r)))} />
                           <Button variant="ghost" size="sm" className="sm:col-span-1"
                             onClick={() => setLotLines(lotLines.length > 1 ? lotLines.filter((_, i) => i !== idx) : lotLines)}>
