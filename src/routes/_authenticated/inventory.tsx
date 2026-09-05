@@ -264,6 +264,13 @@ function InventoryPage() {
     [stock],
   );
 
+  const fetchSuppliers = useServerFn(listSuppliers);
+  const { data: suppliers } = useQuery({ queryKey: ["suppliers"], queryFn: () => fetchSuppliers() });
+  const approvedSuppliers = useMemo(
+    () => ((suppliers as any[]) ?? []).filter((s) => (s.approval_status ?? "approved") === "approved"),
+    [suppliers],
+  );
+
   const lotItemOptions = useMemo(
     () =>
       [["", "— select item —"] as [string, string]].concat(
@@ -607,7 +614,7 @@ function InventoryPage() {
                       {lotLines.map((l, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
                           <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-4"
+                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-3"
                             value={l.stock_item_id}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: e.target.value } : r)))}
                           >
@@ -627,9 +634,9 @@ function InventoryPage() {
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, reference: e.target.value } : r)))} />
                           <Input className="sm:col-span-1" placeholder="Qty" value={l.quantity}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
-                          <Input className="sm:col-span-2" placeholder="Unit price" value={l.unit_cost}
+                          <Input className="sm:col-span-1" placeholder="Price" value={l.unit_cost}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, unit_cost: e.target.value } : r)))} />
-                          <Input className="sm:col-span-3" placeholder="Store location" value={l.store_location}
+                          <Input className="sm:col-span-2" placeholder="Store location" value={l.store_location}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, store_location: e.target.value } : r)))} />
                           <Button variant="ghost" size="sm" className="sm:col-span-1"
                             onClick={() => setLotLines(lotLines.length > 1 ? lotLines.filter((_, i) => i !== idx) : lotLines)}>
