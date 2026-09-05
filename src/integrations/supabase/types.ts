@@ -2134,6 +2134,7 @@ export type Database = {
           id: string
           lot_id: string
           quantity: number
+          reference: string
           remarks: string
           sequence: number
           stock_item_id: string | null
@@ -2149,6 +2150,7 @@ export type Database = {
           id?: string
           lot_id: string
           quantity?: number
+          reference?: string
           remarks?: string
           sequence?: number
           stock_item_id?: string | null
@@ -2164,6 +2166,7 @@ export type Database = {
           id?: string
           lot_id?: string
           quantity?: number
+          reference?: string
           remarks?: string
           sequence?: number
           stock_item_id?: string | null
@@ -2655,6 +2658,9 @@ export type Database = {
       suppliers: {
         Row: {
           address: string
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           contact_person: string
           created_at: string
           created_by: string
@@ -2669,6 +2675,9 @@ export type Database = {
         }
         Insert: {
           address?: string
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           contact_person?: string
           created_at?: string
           created_by: string
@@ -2683,6 +2692,9 @@ export type Database = {
         }
         Update: {
           address?: string
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           contact_person?: string
           created_at?: string
           created_by?: string
