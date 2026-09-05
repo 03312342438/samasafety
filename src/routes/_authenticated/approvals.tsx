@@ -416,7 +416,7 @@ function ApprovalsPage() {
       </main>
 
       <Dialog open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[92vh] w-full max-w-5xl overflow-y-auto">
           <DialogHeader><DialogTitle>Request details</DialogTitle></DialogHeader>
           {(detail as any)?.kind === "quotation" && (() => {
             const q = (detail as any).quotation ?? {};
