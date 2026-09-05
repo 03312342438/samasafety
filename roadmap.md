@@ -6,4 +6,4 @@
 - [x] Route item-code approval to Project Managers and enforce technician/PM creation permissions.
 - [x] Restrict step completion to Installation & Maintenance and Project Managers; calculate workflow progress.
 - [x] Keep Management approval controls and approved-record locking aligned with the requested workflow.
-- [ ] Resolve or document the platform-managed `pg_net` security-linter warning before database work continues.
+- [x] Documented the platform-managed `pg_net` security-linter warning; no application change is available.

@@ -29,17 +29,22 @@ you had no admin rights and no data. The data was always safe in the database.
 # 1. Log in to Cloudflare once
 npx wrangler login
 
-# 2. (optional) add extra secrets you have
+# 2. Add your own database values
 cp .env.cloudflare.example .env.cloudflare   # then fill it in
 
-# 3. Build + push secrets + deploy
-bun run build
+# 3. Build the current app + push secrets + update sama.safetyportal.workers.dev
 bash scripts/deploy-cloudflare.sh
 ```
 
 The script sets the **required** secrets (`SUPABASE_URL`,
-`SUPABASE_PUBLISHABLE_KEY` — reused automatically from your `.env`) plus any
-optional ones it finds, then runs `wrangler deploy`.
+`SUPABASE_PUBLISHABLE_KEY`) plus any optional ones it finds, then runs
+`wrangler deploy`. It accepts either the standard names or the secure-form names
+`APP_SUPABASE_URL`, `APP_SUPABASE_PUBLISHABLE_KEY`, and
+`APP_SUPABASE_SERVICE_ROLE_KEY`, and maps them automatically.
+
+The script also pins the generated configuration to the existing `sama` Worker.
+This matters because deploying under the generated package name creates a second
+Worker while `sama.safetyportal.workers.dev` continues showing the old app.
 
 ## Manual deploy (if you prefer)
 
@@ -75,3 +80,7 @@ field before deploying. Keep the name stable so your secrets stay attached.
   Lovable project's Supabase URL and publishable key exactly.
 - **Sign-in works but everything else 500s:** the build was made without the
   `VITE_*` values in `.env`. Rebuild with `.env` present, then redeploy.
+- **The page still has the old appearance:** make sure
+  `CLOUDFLARE_WORKER_NAME=sama`, then run only
+  `bash scripts/deploy-cloudflare.sh`. The script builds first and updates the
+  same Worker URL, so the current navy sidebar and current program are deployed.
