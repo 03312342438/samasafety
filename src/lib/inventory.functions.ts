@@ -143,7 +143,7 @@ export const deleteStockItem = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Project Managers clear (or reject) a new item code before it can be used. */
+/** Management clears (or rejects) a new item code before it can be used. */
 export const setStockItemApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -157,8 +157,8 @@ export const setStockItemApproval = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const roles = await assertCan(supabase, userId, "stock.item.approve");
-    if (!roles.includes("project_manager") || roles.includes("admin")) {
-      throw new Error("Only a Project Manager can approve an item code.");
+    if (!roles.includes("admin")) {
+      throw new Error("Only Management can approve an item code.");
     }
     const { data: item } = await supabase
       .from("stock_items")

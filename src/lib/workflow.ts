@@ -258,11 +258,11 @@ const MATRIX: Record<Capability, Department[]> = {
   "sales.manage": ["sales"],
   "project.create": ["project_manager", "sales"],
   "bom.create": ["project_manager", "sales"],
-  "jobnumber.create": ["technician", "project_manager"],
+  "jobnumber.create": ["project_manager"],
   "jobnumber.approve_pm": ["project_manager"],
   "uom.manage": ["project_manager"],
-  "stock.item.create": ["technician", "project_manager"],
-  "stock.item.approve": ["project_manager"],
+  "stock.item.create": ["project_manager"],
+  "stock.item.approve": ["admin"],
   "stock.receive": ["inventory"],
   "stock.issue": ["inventory"],
   "material.request": ["inventory", "project_manager"],
@@ -276,7 +276,7 @@ const MATRIX: Record<Capability, Department[]> = {
  * Capabilities Management deliberately does NOT inherit — Management reviews
  * and approves this work rather than performing it.
  */
-const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create", "stock.item.create", "stock.item.approve"];
+const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create", "stock.item.create", "jobnumber.create"];
 
 /** Management sees everything, but only these departments may act. */
 export function can(roles: string[] | undefined, cap: Capability): boolean {

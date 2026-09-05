@@ -58,6 +58,17 @@ export const getJobReleasableItems = createServerFn({ method: "GET" })
     if (!job.bom_id) {
       throw new Error(`Job ${job.job_number} has no BOM / BOS attached, so it contains no items.`);
     }
+    const { data: priorRelease } = await supabase
+      .from("stock_releases")
+      .select("reference")
+      .eq("job_number_id", data.job_number_id)
+      .in("status", ["released", "pending"])
+      .limit(1);
+    if ((priorRelease ?? []).length > 0) {
+      throw new Error(
+        `Job ${job.job_number} has already been used for release ${(priorRelease as any[])[0].reference} — a job number can only be used once.`,
+      );
+    }
 
     const [{ data: bomItems }, { data: released }] = await Promise.all([
       supabase
@@ -174,6 +185,17 @@ export const createStockRelease = createServerFn({ method: "POST" })
         throw new Error(`Job ${j.job_number} is not approved — material cannot be released against it.`);
       }
       if (!j.bom_id) throw new Error(`Job ${j.job_number} has no BOM / BOS, so it contains no items.`);
+      const { data: prior } = await supabase
+        .from("stock_releases")
+        .select("reference")
+        .eq("job_number_id", data.job_number_id)
+        .in("status", ["released", "pending"])
+        .limit(1);
+      if ((prior ?? []).length > 0) {
+        throw new Error(
+          `Job ${j.job_number} has already been used for release ${(prior as any[])[0].reference} — a job number can only be used once.`,
+        );
+      }
       job = j;
       projectId = j.project_id ?? null;
 

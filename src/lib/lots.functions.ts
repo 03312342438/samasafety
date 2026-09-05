@@ -49,8 +49,8 @@ export const saveStockLot = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const roles = await myRoles(supabase, userId);
-    if (!roles.includes("inventory") && !roles.includes("admin")) {
-      throw new Error("Only the Store can create a restock lot.");
+    if (!roles.includes("inventory")) {
+      throw new Error("Only the Store (Inventory) can create a restock lot.");
     }
     const { id, items, ...raw } = data;
     const fields = { ...raw, received_date: raw.received_date || null };
@@ -145,6 +145,10 @@ export const submitStockLot = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .maybeSingle();
     if (!lot) throw new Error("Lot not found");
+    const submitRoles = await myRoles(supabase, userId);
+    if (!submitRoles.includes("inventory")) {
+      throw new Error("Only the Store (Inventory) can submit a restock lot.");
+    }
     if (lot.status === "approved") throw new Error("This lot is already approved.");
     if ((lot.stock_lot_items ?? []).length === 0) throw new Error("Add at least one item to the lot first.");
 
