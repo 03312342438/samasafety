@@ -19,7 +19,9 @@ create table if not exists public.profiles (
   full_name text not null default '',
   designation text not null default '',
   email text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  status text not null default 'pending',
+  hidden boolean not null default false
 );
 grant select, insert, update, delete on public.profiles to authenticated;
 grant all on public.profiles to service_role;
