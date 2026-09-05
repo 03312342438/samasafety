@@ -9,7 +9,7 @@ import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
-  Boxes, HardHat, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
+  Boxes, HardHat, Truck, Receipt, CheckSquare, ShieldCheck, Menu, TrendingUp, PackageSearch,
   PackageMinus, LayoutDashboard,
 } from "lucide-react";
 
@@ -86,6 +86,10 @@ export function AppHeader({
     {
       to: "/inventory", label: "Store", icon: Boxes,
       show: !!isAdmin || hasDept(roles, "inventory") || hasDept(roles, "project_manager"),
+    },
+    {
+      to: "/suppliers", label: "Suppliers", icon: Truck,
+      show: !!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "accounts"),
     },
     {
       to: "/releases", label: "Release Items", icon: PackageMinus,

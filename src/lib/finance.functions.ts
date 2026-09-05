@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
-import { assertCan } from "@/lib/permissions";
+import { assertCan, myRoles } from "@/lib/permissions";
 import { nextSequence } from "@/lib/sequence";
 import { CURRENCY } from "@/lib/workflow";
 
@@ -42,9 +42,22 @@ export const saveSupplier = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertCan(supabase, userId, "accounts.manage");
+    const roles = await myRoles(supabase, userId);
+    const admin = roles.includes("admin");
+    const canCreate = admin || roles.includes("accounts") || roles.includes("project_manager");
+    if (!canCreate) {
+      throw new Error("Only the Project Manager, Accounts or Management can maintain suppliers.");
+    }
     const { id, ...fields } = data;
     if (id) {
+      const { data: prev } = await supabase
+        .from("suppliers")
+        .select("approval_status")
+        .eq("id", id)
+        .maybeSingle();
+      if ((prev as any)?.approval_status === "approved" && !admin) {
+        throw new Error("This supplier is approved — only Management can change it.");
+      }
       const { error } = await supabase.from("suppliers").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
       await logActivity(supabase, userId, {
@@ -52,17 +65,61 @@ export const saveSupplier = createServerFn({ method: "POST" })
       });
       return { ok: true, id };
     }
+    const approved = admin;
     const { data: row, error } = await supabase
       .from("suppliers")
-      .insert({ ...fields, created_by: userId })
+      .insert({
+        ...fields,
+        created_by: userId,
+        approval_status: approved ? "approved" : "pending",
+        approved_by: approved ? userId : null,
+        approved_at: approved ? new Date().toISOString() : null,
+      } as any)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
       action: "create", entity_table: "suppliers", entity_id: row.id, entity_label: fields.name,
     });
+    if (!approved) {
+      await supabase.from("approvals").insert({
+        approval_type: "supplier",
+        entity_table: "suppliers",
+        entity_id: row.id,
+        title: `Supplier approval — ${fields.name}`,
+        details: [fields.contact_person, fields.phone, fields.email, fields.address]
+          .filter(Boolean)
+          .join(" · "),
+        decision: "pending",
+        submitted_by: userId,
+      } as any);
+      await notifyDepartments(supabase, ["admin"], {
+        title: "Supplier approval required",
+        message: fields.name,
+        category: "approval",
+        link: "/approvals",
+        entity_table: "suppliers",
+        entity_id: row.id,
+      });
+    }
     return { ok: true, id: row.id };
   });
+
+export const deleteSupplier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const roles = await myRoles(supabase, userId);
+    if (!roles.includes("admin")) throw new Error("Only Management can delete a supplier.");
+    const { error } = await supabase.from("suppliers").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logActivity(supabase, userId, {
+      action: "delete", entity_table: "suppliers", entity_id: data.id, entity_label: "",
+    });
+    return { ok: true };
+  });
+
 
 // ====================================================== supplier invoices ===
 

@@ -25,6 +25,7 @@ export const listStockLots = createServerFn({ method: "GET" })
 const lotItemSchema = z.object({
   stock_item_id: z.string().uuid(),
   supplier: z.string().max(200).default(""),
+  reference: z.string().max(120).default(""),
   quantity: z.number().min(0).default(0),
   unit_cost: z.number().min(0).default(0),
   store_location: z.string().max(200).default(""),
@@ -53,7 +54,12 @@ export const saveStockLot = createServerFn({ method: "POST" })
       throw new Error("Only the Store (Inventory) can create a restock lot.");
     }
     const { id, items, ...raw } = data;
-    const fields = { ...raw, received_date: raw.received_date || null };
+    const fields = {
+      ...raw,
+      supplier: raw.supplier || items.find((i) => i.supplier)?.supplier || "",
+      reference: raw.reference || items.find((i) => i.reference)?.reference || "",
+      received_date: raw.received_date || null,
+    };
     const total = round2(items.reduce((s, i) => s + i.quantity * i.unit_cost, 0));
 
     let lotId = id;
@@ -91,6 +97,7 @@ export const saveStockLot = createServerFn({ method: "POST" })
           description: byId.get(i.stock_item_id)?.description ?? "",
           unit: byId.get(i.stock_item_id)?.unit ?? "pcs",
           supplier: i.supplier,
+          reference: i.reference,
           quantity: i.quantity,
           unit_cost: i.unit_cost,
           store_location: i.store_location,
