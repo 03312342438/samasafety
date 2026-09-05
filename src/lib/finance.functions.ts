@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
-import { assertCan } from "@/lib/permissions";
+import { assertCan, myRoles } from "@/lib/permissions";
 import { nextSequence } from "@/lib/sequence";
 import { CURRENCY } from "@/lib/workflow";
 
