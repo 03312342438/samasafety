@@ -143,6 +143,7 @@ export const submitApproval = createServerFn({ method: "POST" })
           "item_code",
           "stock_lot",
           "stock_release",
+          "supplier",
 
         ]),
         title: z.string().trim().min(1).max(300),
@@ -243,6 +244,17 @@ export const decideApproval = createServerFn({ method: "POST" })
     }
     if (approval.entity_table === "stock_releases" && approval.entity_id) {
       await applyStockReleaseDecision(supabase, userId, approval.entity_id, data.decision);
+    }
+    if (approval.entity_table === "suppliers" && approval.entity_id) {
+      await supabase
+        .from("suppliers")
+        .update({
+          approval_status:
+            data.decision === "approved" ? "approved" : data.decision === "rejected" ? "rejected" : "pending",
+          approved_by: data.decision === "approved" ? userId : null,
+          approved_at: data.decision === "approved" ? new Date().toISOString() : null,
+        } as any)
+        .eq("id", approval.entity_id);
     }
     if (approval.entity_table === "stock_items" && approval.entity_id) {
 
