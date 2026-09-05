@@ -2854,6 +2854,12 @@ export type Database = {
     }
     Functions: {
       admin_exists: { Args: never; Returns: boolean }
+      users_with_roles: {
+        Args: { _roles: string[] }
+        Returns: {
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role:
