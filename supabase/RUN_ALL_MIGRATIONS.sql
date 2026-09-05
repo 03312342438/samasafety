@@ -5,6 +5,10 @@
 -- =============================================================================
 
 
+-- Ensure profiles has approval columns (safe to re-run)
+alter table public.profiles add column if not exists status text not null default 'pending';
+alter table public.profiles add column if not exists hidden boolean not null default false;
+
 -- >>>>> migration: 20260828190558_7c850897-c0af-4421-80d7-e8dca7cabd2a.sql
 
 -- ============ 1. Departments (extend existing enum, keep admin/employee) ============
