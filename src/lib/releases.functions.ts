@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { logActivity, notifyDepartments } from "@/lib/activity";
+import { logActivity, notifyDepartments, notifyUsers } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
 import { myRoles, isManagement } from "@/lib/permissions";
 
