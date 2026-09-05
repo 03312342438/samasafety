@@ -13,11 +13,14 @@ export function ItemImage({
   alt: string;
   className?: string;
 }) {
+  const isExternal = !!path && /^https?:\/\//i.test(path);
   const { data: url } = useQuery({
     queryKey: ["item-image", path],
     enabled: !!path,
     staleTime: 45 * 60 * 1000,
     queryFn: async () => {
+      // External URLs (e.g. imported from an Excel "Picture" column) are used as-is.
+      if (isExternal) return path as string;
       const { data } = await supabase.storage.from("item-images").createSignedUrl(path as string, 3600);
       return data?.signedUrl ?? "";
     },

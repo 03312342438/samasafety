@@ -147,22 +147,74 @@ function InventoryPage() {
         if (typeof v === "object") return String(v.text ?? v.result ?? v.hyperlink ?? "");
         return String(v);
       };
+
+      // Pictures pasted directly into the sheet (floating over a row).
+      const embeddedByRow = new Map<number, string>();
+      for (const img of (ws as any).getImages?.() ?? []) {
+        const row1 = Math.floor(img?.range?.tl?.row ?? -1) + 1; // tl is 0-based
+        if (row1 > 1 && img.imageId != null) embeddedByRow.set(row1, String(img.imageId));
+      }
+      const embeddedFile = (imageId: string): File | null => {
+        try {
+          const media: any = (wb as any).getImage?.(imageId);
+          if (!media) return null;
+          const ext = String(media.extension ?? "png").toLowerCase();
+          const raw = media.buffer ?? media.base64;
+          if (raw == null) return null;
+          let bytes: Uint8Array;
+          if (typeof raw === "string") {
+            const b64 = raw.includes("base64,") ? raw.split("base64,")[1] : raw;
+            const bin = atob(b64);
+            bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          } else if (raw instanceof Uint8Array) {
+            bytes = raw;
+          } else {
+            bytes = new Uint8Array(raw as ArrayBuffer);
+          }
+          if (!bytes.length) return null;
+          const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+          return new File([new Uint8Array(bytes)], `import-${crypto.randomUUID()}.${ext}`, { type: mime });
+        } catch {
+          return null;
+        }
+      };
+
       const rows: any[] = [];
+      const pendingImages: { index: number; file: File }[] = [];
       ws.eachRow((row, n) => {
         if (n === 1) return;
         const description = cell(row, "description").trim();
         if (!description) return;
+        let image_url = cell(row, "picture").trim();
+        const index = rows.length;
+        if (!image_url) {
+          const imageId = embeddedByRow.get(n);
+          if (imageId) {
+            const file = embeddedFile(imageId);
+            if (file) pendingImages.push({ index, file });
+          }
+        }
         rows.push({
           item_code: cell(row, "item code").trim(),
           description,
           category: cell(row, "catagory").trim() || cell(row, "category").trim(),
           unit: cell(row, "unit").trim() || "pcs",
           status: cell(row, "status").trim() || "active",
-          image_url: cell(row, "picture").trim(),
+          image_url,
           notes: cell(row, "note").trim() || cell(row, "notes").trim(),
         });
       });
       if (rows.length === 0) throw new Error("No item rows found — check the column headings.");
+
+      // Upload embedded pictures to the item bucket and use their storage paths.
+      for (const p of pendingImages) {
+        try {
+          rows[p.index].image_url = await uploadItemImage(p.file);
+        } catch {
+          /* keep the row without a picture */
+        }
+      }
       const res: any = await runImport({ data: { rows } });
       toast.success(`${res.created} item(s) imported — waiting for Management approval.` + (res.skipped ? ` ${res.skipped} skipped (code already exists).` : ""));
       qc.invalidateQueries({ queryKey: ["stock-items"] });
