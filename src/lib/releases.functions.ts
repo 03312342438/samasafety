@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { logActivity, notifyDepartments } from "@/lib/activity";
+import { logActivity, notifyDepartments, notifyUsers } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
 import { myRoles, isManagement } from "@/lib/permissions";
 
@@ -284,6 +284,7 @@ export const createStockRelease = createServerFn({ method: "POST" })
         .maybeSingle();
       await deductRelease(supabase, userId, full);
     } else {
+      const admin = await isManagement(supabase, userId);
       const { data: approval, error: approvalError } = await supabase
         .from("approvals")
         .insert({
@@ -293,21 +294,37 @@ export const createStockRelease = createServerFn({ method: "POST" })
           entity_table: "stock_releases",
           entity_id: created.id,
           amount: total,
-          decision: "pending",
+          decision: admin ? "approved" : "pending",
+          decision_comments: admin ? "Auto-approved: raised by Management." : "",
+          approver_id: admin ? userId : null,
+          decided_at: admin ? new Date().toISOString() : null,
           submitted_by: userId,
         })
         .select("id")
         .single();
       if (approvalError) throw new Error(approvalError.message);
-      await notifyDepartments(supabase, ["admin"], {
-        title: "Stock release approval required",
-        message: `${reference} · ${lines.length} item(s) without a job number`,
-        category: "inventory",
-        link: "/approvals",
-        entity_table: "approvals",
-        entity_id: approval.id,
-      });
+      if (admin) {
+        await applyStockReleaseDecision(supabase, userId, created.id, "approved");
+        await notifyUsers(supabase, [userId], {
+          title: "Release approved automatically",
+          message: `${reference} · ${lines.length} item(s) — raised by Management, no approval needed.`,
+          category: "inventory",
+          link: "/releases",
+          entity_table: "approvals",
+          entity_id: approval.id,
+        });
+      } else {
+        await notifyDepartments(supabase, ["admin"], {
+          title: "Stock release approval required",
+          message: `${reference} · ${lines.length} item(s) without a job number`,
+          category: "inventory",
+          link: "/approvals",
+          entity_table: "approvals",
+          entity_id: approval.id,
+        });
+      }
     }
+
 
     await logActivity(supabase, userId, {
       action: isJob ? "stock_released" : "approval_requested",
