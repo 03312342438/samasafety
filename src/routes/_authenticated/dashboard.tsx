@@ -65,8 +65,12 @@ function Dashboard() {
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
   const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
+  // Management never fills reports: the report form is hidden and the
+  // overview is always the landing tab.
   const activeTab =
-    (tab === "overview" && !isAdmin) || (tab === "new" && !canFillReport) ? fallbackTab : tab;
+    (tab === "overview" && !isAdmin) || (tab === "new" && (isAdmin || !canFillReport))
+      ? fallbackTab
+      : tab;
 
   const taskList = ((tasks as any[]) ?? []).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
@@ -170,7 +174,7 @@ function Dashboard() {
             ...(isAdmin
               ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
               : []),
-            ...(canFillReport
+            ...(canFillReport && !isAdmin
               ? [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]
               : []),
             { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</> },
