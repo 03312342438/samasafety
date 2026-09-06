@@ -173,7 +173,7 @@ function Dashboard() {
             ...(canFillReport
               ? [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]
               : []),
-            { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> History ({reports?.length ?? 0})</> },
+            { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</> },
             { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
         />
