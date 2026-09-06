@@ -95,6 +95,8 @@ export const saveProject = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { id, ...raw } = data;
+    // Inventory/Store and other departments can view projects but never create or edit them.
+    await assertCan(supabase, userId, "project.create");
     const fields = {
       ...raw,
       start_date: raw.start_date || null,
