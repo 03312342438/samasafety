@@ -459,7 +459,12 @@ function SalesPage() {
                         });
                       }}
                       options={((quotations as any[]) ?? [])
-                        .filter((x) => ["approved", "accepted", "won"].includes(x.status))
+                        .filter(
+                          (x) =>
+                            x.id === poForm.quotation_id ||
+                            approvalByEntity.get(x.id) === "approved" ||
+                            ["approved", "accepted", "won"].includes(x.status),
+                        )
                         .map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))}
                     />
                     <Field label="Document link" value={poForm.document_url} onChange={(v) => setPoForm({ ...poForm, document_url: v })} />
