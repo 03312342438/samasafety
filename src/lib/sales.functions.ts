@@ -299,8 +299,15 @@ export const setQuotationStage = createServerFn({ method: "POST" })
       ...(data.stage === "negotiation" ? { revision: (quotation.revision ?? 0) + 1 } : {}),
     };
 
-    const { error } = await supabase.from("quotations").update(patch).eq("id", data.id);
+    const { data: updated, error } = await supabase
+      .from("quotations")
+      .update(patch)
+      .eq("id", data.id)
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!updated)
+      throw new Error("You do not have permission to change this quotation's stage.");
 
     await logActivity(supabase, userId, {
       action: `quotation_${data.stage}`,
