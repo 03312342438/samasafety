@@ -678,41 +678,96 @@ function SalesPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-                  {!approvalState(p.id) && (
-                    <>
-                  <Button size="sm" variant="outline" className="h-7 text-xs"
-                    onClick={async () => {
-                      try { await verifyPo({ data: { id: p.id, verification_status: "verified", discrepancy_notes: "" } }); refresh(); toast.success("PO verified"); }
-                      catch (e) { toast.error(msg(e, "Could not verify")); }
-                    }}>
-                    Verify
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs"
-                    onClick={async () => {
-                      const notes = window.prompt("What needs clarification from the customer?") ?? "";
-                      if (!notes.trim()) return;
-                      try { await verifyPo({ data: { id: p.id, verification_status: "clarification_required", discrepancy_notes: notes } }); refresh(); toast.success("Clarification requested"); }
-                      catch (e) { toast.error(msg(e, "Could not update")); }
-                    }}>
-                    Clarification
-                  </Button>
-                    </>
-                  )}
+                  {(() => {
+                    const appr = approvalState(p.id);
+                    const isVerified = p.verification_status === "verified";
+                    return (
+                      <>
+                        {appr && (
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] ${appr.cls}`}>{appr.label}</span>
+                        )}
 
-                  {!p.project_id && (
-                    <Button size="sm" className="h-7 text-xs"
-                      onClick={async () => {
-                        const name = window.prompt("Project name", p.quotations?.boms?.title ?? p.quotations?.title ?? p.quotations?.reference ?? p.po_number ?? "") ?? "";
-                        if (!name.trim()) return;
-                        try {
-                          const res: any = await convertPo({ data: { id: p.id, name } });
-                          refresh();
-                          toast.success(`Project ${res.project_number} initiated`);
-                        } catch (e) { toast.error(msg(e, "Could not initiate project")); }
-                      }}>
-                      <ArrowRight className="mr-1 h-3.5 w-3.5" /> Initiate project
-                    </Button>
-                  )}
+                        {!isVerified && !p.project_id && (
+                          <>
+                            <Button size="sm" variant="outline" className="h-7 text-xs"
+                              onClick={async () => {
+                                try { await verifyPo({ data: { id: p.id, verification_status: "verified", discrepancy_notes: "" } }); refresh(); toast.success("PO verified"); }
+                                catch (e) { toast.error(msg(e, "Could not verify")); }
+                              }}>
+                              Verify
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs"
+                              onClick={async () => {
+                                const notes = window.prompt("What needs clarification from the customer?") ?? "";
+                                if (!notes.trim()) return;
+                                try { await verifyPo({ data: { id: p.id, verification_status: "clarification_required", discrepancy_notes: notes } }); refresh(); toast.success("Clarification requested"); }
+                                catch (e) { toast.error(msg(e, "Could not update")); }
+                              }}>
+                              Clarification
+                            </Button>
+                          </>
+                        )}
+
+                        {isVerified && !p.project_id && (
+                          <Button size="sm" variant="ghost" className="h-7 text-xs"
+                            onClick={async () => {
+                              try { await verifyPo({ data: { id: p.id, verification_status: "pending", discrepancy_notes: "" } }); refresh(); toast.success("Verification undone"); }
+                              catch (e) { toast.error(msg(e, "Could not undo verification")); }
+                            }}>
+                            Undo verification
+                          </Button>
+                        )}
+
+                        {isVerified && !p.project_id && !appr && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs"
+                            onClick={() => {
+                              const q = ((quotations as any[]) ?? []).find((x) => x.id === p.quotation_id);
+                              const lines = ((q?.quotation_items as any[]) ?? [])
+                                .slice()
+                                .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                                .map((it, i) =>
+                                  `${i + 1}. ${it.description || "—"} — ${num(it.quantity)} ${it.unit || ""} × ${money(it.unit_price)} = ${money(it.amount)}`,
+                                )
+                                .join("\n");
+                              const details = [
+                                `PO ${p.po_number || p.reference} dated ${p.po_date || "—"}`,
+                                `Customer: ${p.customers?.name ?? "—"}`,
+                                `Quotation: ${p.quotations?.reference ?? "—"} (${money(p.quotations?.total_amount ?? 0)} ${p.currency})`,
+                                `PO value: ${money(p.po_value)} ${p.currency}`,
+                                lines ? `\nLines:\n${lines}` : "",
+                              ]
+                                .filter(Boolean)
+                                .join("\n");
+                              askApproval(
+                                "project_initiation",
+                                `Customer PO ${p.po_number || p.reference} — project initiation`,
+                                details,
+                                num(p.po_value),
+                                "customer_pos",
+                                p.id,
+                              );
+                            }}>
+                            Request approval
+                          </Button>
+                        )}
+
+                        {!p.project_id && appr?.label === "Approved" && (
+                          <Button size="sm" className="h-7 text-xs"
+                            onClick={async () => {
+                              const name = window.prompt("Project name", p.quotations?.boms?.title ?? p.quotations?.title ?? p.quotations?.reference ?? p.po_number ?? "") ?? "";
+                              if (!name.trim()) return;
+                              try {
+                                const res: any = await convertPo({ data: { id: p.id, name } });
+                                refresh();
+                                toast.success(`Project ${res.project_number} initiated`);
+                              } catch (e) { toast.error(msg(e, "Could not initiate project")); }
+                            }}>
+                            <ArrowRight className="mr-1 h-3.5 w-3.5" /> Initiate project
+                          </Button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
