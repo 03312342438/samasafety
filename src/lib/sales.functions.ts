@@ -465,7 +465,7 @@ export const verifyCustomerPo = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        verification_status: z.enum(["verified", "clarification_required", "rejected"]),
+        verification_status: z.enum(["verified", "clarification_required", "rejected", "pending"]),
         discrepancy_notes: z.string().max(4000).default(""),
       })
       .parse(input),
@@ -479,7 +479,11 @@ export const verifyCustomerPo = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!po) throw new Error("Customer PO not found");
 
-    if (data.verification_status !== "verified" && !data.discrepancy_notes.trim()) {
+    if (data.verification_status === "pending" && po.project_id) {
+      throw new Error("A project has already been initiated from this PO — verification cannot be undone.");
+    }
+
+    if (!["verified", "pending"].includes(data.verification_status) && !data.discrepancy_notes.trim()) {
       throw new Error("Please record what needs clarification.");
     }
 
@@ -490,13 +494,14 @@ export const verifyCustomerPo = createServerFn({ method: "POST" })
           ? "clarification_required"
           : "po_received";
 
+    const undo = data.verification_status === "pending";
     const { error } = await supabase
       .from("customer_pos")
       .update({
         verification_status: data.verification_status,
         discrepancy_notes: data.discrepancy_notes,
-        verified_by: userId,
-        verified_at: new Date().toISOString(),
+        verified_by: undo ? null : userId,
+        verified_at: undo ? null : new Date().toISOString(),
         stage,
       })
       .eq("id", data.id);
