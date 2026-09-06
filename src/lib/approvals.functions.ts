@@ -268,7 +268,7 @@ async function applyDecisionEffects(
   if (approval.project_id && approved) {
     const stageByType: Record<string, string> = {
       project_initiation: "project_initiated",
-      bom_bos: "bom_preparation",
+      bom_bos: "bom_bos_preparation",
       job_number: "job_number_created",
       final_review: "closed",
     };
