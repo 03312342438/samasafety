@@ -50,19 +50,24 @@ export const getAnalytics = createServerFn({ method: "GET" })
       throw new Error("Forbidden: analytics are available to Management and Sales.");
     }
 
-    const [quotationsRes, projectsRes] = await Promise.all([
+    const [quotationsRes, projectsRes, posRes] = await Promise.all([
       supabase
         .from("quotations")
         .select("id, stage, total_amount, estimated_cost, created_at, sent_at"),
       supabase
         .from("projects")
         .select("id, stage, status, contract_value, estimated_cost, created_at, completed_date, updated_at"),
+      supabase.from("customer_pos").select("quotation_id"),
     ]);
     if (quotationsRes.error) throw new Error(quotationsRes.error.message);
     if (projectsRes.error) throw new Error(projectsRes.error.message);
 
     const quotations = quotationsRes.data ?? [];
     const projects = projectsRes.data ?? [];
+    // A quotation that already has a customer PO is no longer "awaiting order".
+    const quotedWithPo = new Set(
+      ((posRes.data ?? []) as any[]).map((p) => p.quotation_id).filter(Boolean),
+    );
 
     const months = lastTwelveMonths();
     const thisMonth = monthKey(new Date());
@@ -70,8 +75,11 @@ export const getAnalytics = createServerFn({ method: "GET" })
     // ---- current month split -------------------------------------------
     const quotedThisMonth = quotations.filter(
       (q: any) =>
-        QUOTED_STAGES.includes(q.stage) && keyOf(q.sent_at ?? q.created_at) === thisMonth,
+        QUOTED_STAGES.includes(q.stage) &&
+        !quotedWithPo.has(q.id) &&
+        keyOf(q.sent_at ?? q.created_at) === thisMonth,
     );
+
     const inProgress = projects.filter(
       (p: any) => !DONE_STAGES.includes(p.stage) && p.status !== "closed",
     );
