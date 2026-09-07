@@ -6,6 +6,7 @@ import { SAMA_LOGO_BASE64 } from "@/lib/logo";
 import { Button } from "@/components/ui/button";
 import { MaintenanceReminder } from "@/components/MaintenanceReminder";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { MyDetailsDialog } from "@/components/MyDetailsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
