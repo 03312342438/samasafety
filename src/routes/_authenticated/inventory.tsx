@@ -528,6 +528,12 @@ function InventoryPage() {
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
 
             {tab === "stock" && canManageItems && (
+              <Button variant="outline" size="sm" onClick={() => downloadStockTemplate()}>
+                <Download className="mr-1 h-4 w-4" /> Download template
+              </Button>
+            )}
+
+            {tab === "stock" && canManageItems && (
               <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
                 <Upload className="h-4 w-4" />
                 {importing ? "Importing…" : "Upload Excel"}
@@ -540,6 +546,7 @@ function InventoryPage() {
                 />
               </label>
             )}
+
 
             {tab === "stock" && canManageItems && (
               <Dialog open={stockOpen} onOpenChange={(o) => { setStockOpen(o); if (!o) setStockForm(emptyStock); }}>
