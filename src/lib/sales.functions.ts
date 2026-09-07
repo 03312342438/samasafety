@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
-import { nextSequence } from "@/lib/sequence";
+import { nextSequence, nextQuotationRef, initialsOf } from "@/lib/sequence";
 import { assertMutable } from "@/lib/permissions";
 
 // ================================================================ inquiries ==
@@ -107,7 +107,13 @@ export const listQuotations = createServerFn({ method: "GET" })
       .select("*, customers(name), inquiries(reference), quotation_items(*)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const rows = data ?? [];
+    const ids = [...new Set(rows.map((r: any) => r.created_by).filter(Boolean))];
+    const { data: people } = ids.length
+      ? await context.supabase.from("profiles").select("id, full_name, phone, initials").in("id", ids)
+      : { data: [] as any[] };
+    const byId = new Map((people ?? []).map((p: any) => [p.id, p]));
+    return rows.map((r: any) => ({ ...r, prepared_by_profile: byId.get(r.created_by) ?? null }));
   });
 
 const itemSchema = z.object({
@@ -209,7 +215,12 @@ export const saveQuotation = createServerFn({ method: "POST" })
         new_value: fields,
       });
     } else {
-      reference = await nextSequence(supabase, "quotations", "reference", "QTN");
+      const { data: me } = await supabase
+        .from("profiles")
+        .select("full_name, initials")
+        .eq("id", userId)
+        .maybeSingle();
+      reference = await nextQuotationRef(supabase, me?.initials || initialsOf(me?.full_name));
       const { data: created, error } = await supabase
         .from("quotations")
         .insert({ ...fields, reference, created_by: userId })
