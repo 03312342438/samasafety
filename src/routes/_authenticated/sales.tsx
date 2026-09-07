@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FileText, Inbox, Plus, Receipt, Trash2, Pencil, ShieldCheck, ArrowRight } from "lucide-react";
+import { FileText, Plus, Receipt, Trash2, Pencil, ShieldCheck, ArrowRight } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -20,7 +20,6 @@ import {
 import { listCustomers } from "@/lib/crm.functions";
 import { submitApproval, listApprovals } from "@/lib/approvals.functions";
 import {
-  listInquiries, saveInquiry, deleteInquiry,
   listQuotations, saveQuotation, setQuotationStage, deleteQuotation,
   listCustomerPos, saveCustomerPo, verifyCustomerPo, convertPoToProject,
 } from "@/lib/sales.functions";
@@ -76,17 +75,14 @@ const QUOTATION_STAGES = [
 function SalesPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
-  const [tab, setTab] = useState("inquiries");
+  const [tab, setTab] = useState("quotations");
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
 
 
   const fetchCustomers = useServerFn(listCustomers);
-  const fetchInquiries = useServerFn(listInquiries);
   const fetchQuotations = useServerFn(listQuotations);
   const fetchPos = useServerFn(listCustomerPos);
-  const saveInquiryFn = useServerFn(saveInquiry);
-  const removeInquiry = useServerFn(deleteInquiry);
   const saveQuotationFn = useServerFn(saveQuotation);
   const stageFn = useServerFn(setQuotationStage);
   const removeQuotation = useServerFn(deleteQuotation);
@@ -123,8 +119,6 @@ function SalesPage() {
   };
 
 
-  const [inqOpen, setInqOpen] = useState(false);
-  const [inqForm, setInqForm] = useState<any>(emptyInquiry);
   const [qtnOpen, setQtnOpen] = useState(false);
   const [qtnForm, setQtnForm] = useState<any>(emptyQuotation);
   const [items, setItems] = useState<ItemRow[]>([{ ...emptyItem }]);
@@ -132,7 +126,6 @@ function SalesPage() {
   const [poForm, setPoForm] = useState<any>(emptyPo);
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["inquiries"] });
     qc.invalidateQueries({ queryKey: ["quotations"] });
     qc.invalidateQueries({ queryKey: ["customer-pos"] });
     qc.invalidateQueries({ queryKey: ["projects"] });
