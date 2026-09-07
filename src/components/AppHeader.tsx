@@ -197,6 +197,7 @@ export function AppHeader({
           <div className="flex items-center gap-1 sm:gap-2">
             {name && <span className="hidden text-sm text-muted-foreground sm:inline">{name}</span>}
             <NotificationBell />
+            <MyDetailsDialog />
             <ChangePasswordDialog />
             <MaintenanceReminder />
           </div>
