@@ -5,8 +5,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Boxes, Plus, Pencil, Trash2, PackageCheck, Truck, ArrowDownUp, ShieldAlert,
-  Layers, Send, Upload,
+  Layers, Send, Upload, Download,
 } from "lucide-react";
+
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -33,6 +34,8 @@ import { listStockLots, saveStockLot, deleteStockLot, submitStockLot } from "@/l
 import { listSuppliers } from "@/lib/finance.functions";
 import { UomSelect } from "@/components/UomSelect";
 import { can, hasDept, humanize, statusBadgeClass, STOCK_CATEGORIES, CURRENCY } from "@/lib/workflow";
+import { downloadStockTemplate } from "@/lib/stock-template";
+
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   component: InventoryPage,
@@ -528,6 +531,12 @@ function InventoryPage() {
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
 
             {tab === "stock" && canManageItems && (
+              <Button variant="outline" size="sm" onClick={() => downloadStockTemplate()}>
+                <Download className="mr-1 h-4 w-4" /> Download template
+              </Button>
+            )}
+
+            {tab === "stock" && canManageItems && (
               <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
                 <Upload className="h-4 w-4" />
                 {importing ? "Importing…" : "Upload Excel"}
@@ -540,6 +549,7 @@ function InventoryPage() {
                 />
               </label>
             )}
+
 
             {tab === "stock" && canManageItems && (
               <Dialog open={stockOpen} onOpenChange={(o) => { setStockOpen(o); if (!o) setStockForm(emptyStock); }}>
@@ -816,10 +826,21 @@ function InventoryPage() {
                       <Button variant="outline" size="sm" onClick={() => decideItem(s.id, "rejected")}>Reject</Button>
                     )}
                     {canManageItems && !canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
-                      <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
-                        Send for approval
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label="Edit item / add picture"
+                          onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
+                          Send for approval
+                        </Button>
+                      </>
                     )}
+
                     {isAdmin && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}>
