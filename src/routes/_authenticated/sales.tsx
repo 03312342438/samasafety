@@ -251,7 +251,7 @@ function SalesPage() {
           <div>
             <h1 className="text-xl font-semibold">Sales Chain</h1>
             <p className="text-sm text-muted-foreground">
-              Inquiry → quotation → customer PO verification. Projects only start from a verified, approved PO.
+              Quotation → customer PO verification. Projects only start from a verified, approved PO.
             </p>
           </div>
           <div className="flex items-center gap-2">
