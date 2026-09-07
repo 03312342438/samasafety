@@ -214,8 +214,7 @@ export const deleteEmployee = createServerFn({ method: "POST" })
       throw new Error("This account cannot be removed.");
     }
 
-    // Remove all app access via RLS (no service role key needed): drop roles
-    // and the profile so the account can no longer be used in the portal.
+    // Remove all app access via RLS: drop roles and the profile.
     const { error: roleErr } = await supabase
       .from("user_roles")
       .delete()
@@ -225,7 +224,17 @@ export const deleteEmployee = createServerFn({ method: "POST" })
     const { error: pErr } = await supabase.from("profiles").delete().eq("id", data.id);
     if (pErr) throw new Error(pErr.message);
 
+    // Also remove the underlying login account, otherwise the same address
+    // cannot be registered again ("user already registered").
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.auth.admin.deleteUser(data.id);
+    } catch {
+      /* login account removal unavailable — app access is already revoked */
+    }
+
     return { ok: true };
+
   });
 
 // Approve a pending self-registered employee so their account becomes usable.
