@@ -42,13 +42,6 @@ export const Route = createFileRoute("/_authenticated/sales")({
   }),
 });
 
-const emptyInquiry = {
-  customer_id: "", contact_person: "", contact_email: "", contact_phone: "",
-  site_location: "", scope_type: "installation", requirement_details: "",
-  source: "direct", received_date: "", target_date: "", stage: "inquiry",
-  status: "open", notes: "",
-};
-
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
 const emptyQuotation = {
@@ -92,7 +85,6 @@ function SalesPage() {
   const requestApproval = useServerFn(submitApproval);
 
   const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => fetchCustomers() });
-  const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: () => fetchInquiries() });
   const { data: quotations } = useQuery({ queryKey: ["quotations"], queryFn: () => fetchQuotations() });
   const { data: pos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchPos() });
   const fetchBoms = useServerFn(listBoms);
@@ -151,25 +143,6 @@ function SalesPage() {
     qtnForm.labour_cost, qtnForm.inland_percent, qtnForm.transport_cost, qtnForm.margin_percent,
   ]);
 
-
-  const submitInquiry = async () => {
-    try {
-      await saveInquiryFn({
-        data: {
-          ...inqForm,
-          id: inqForm.id || undefined,
-          customer_id: inqForm.customer_id || null,
-          target_date: inqForm.target_date || null,
-        },
-      });
-      toast.success(inqForm.id ? "Inquiry updated" : "Inquiry logged");
-      setInqOpen(false);
-      setInqForm(emptyInquiry);
-      refresh();
-    } catch (e) {
-      toast.error(msg(e, "Could not save inquiry"));
-    }
-  };
 
   const submitQuotation = async () => {
     try {
@@ -260,9 +233,6 @@ function SalesPage() {
   };
 
   const q = query.trim().toLowerCase();
-  const inquiryList = ((inquiries as any[]) ?? []).filter(
-    (i) => !q || [i.reference, i.customers?.name, i.site_location, i.scope_type].join(" ").toLowerCase().includes(q),
-  );
   const quotationList = ((quotations as any[]) ?? []).filter(
     (x) =>
       (!q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q)) &&
