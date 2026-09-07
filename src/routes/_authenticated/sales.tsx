@@ -33,9 +33,9 @@ export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
     meta: [
       { title: "Sales Chain | SAMA Fire & Safety" },
-      { name: "description", content: "Track fire-safety inquiries, priced quotations and customer purchase order verification in one controlled sales chain." },
+      { name: "description", content: "Create priced fire-safety quotations and verify customer purchase orders in one controlled sales chain." },
       { property: "og:title", content: "Sales Chain | SAMA Fire & Safety" },
-      { property: "og:description", content: "Track fire-safety inquiries, priced quotations and customer purchase order verification in one controlled sales chain." },
+      { property: "og:description", content: "Create priced fire-safety quotations and verify customer purchase orders in one controlled sales chain." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
