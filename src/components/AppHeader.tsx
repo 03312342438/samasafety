@@ -6,6 +6,7 @@ import { SAMA_LOGO_BASE64 } from "@/lib/logo";
 import { Button } from "@/components/ui/button";
 import { MaintenanceReminder } from "@/components/MaintenanceReminder";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
+import { MyDetailsDialog } from "@/components/MyDetailsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
   LogOut, FileText, Building2, Handshake, FolderKanban, ClipboardList,
@@ -196,6 +197,7 @@ export function AppHeader({
           <div className="flex items-center gap-1 sm:gap-2">
             {name && <span className="hidden text-sm text-muted-foreground sm:inline">{name}</span>}
             <NotificationBell />
+            <MyDetailsDialog />
             <ChangePasswordDialog />
             <MaintenanceReminder />
           </div>

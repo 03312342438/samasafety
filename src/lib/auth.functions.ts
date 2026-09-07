@@ -30,6 +30,32 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 
 
+/** Personal details used on generated documents (quotation reference + contact note). */
+export const updateMyProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        full_name: z.string().trim().min(1).max(120),
+        phone: z.string().trim().max(40).default(""),
+        initials: z.string().trim().max(3).default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: data.full_name,
+        phone: data.phone,
+        initials: data.initials.toUpperCase().replace(/[^A-Z]/g, ""),
+      })
+      .eq("id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 const bootstrapSchema = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(6).max(72),

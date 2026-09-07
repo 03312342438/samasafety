@@ -42,12 +42,15 @@ export const Route = createFileRoute("/_authenticated/sales")({
   }),
 });
 
+/** Standard SAMA payment terms — editable per quotation. */
+const DEFAULT_PAYMENT_TERMS = "50% Advance, 40% on progress and 10% after testing & commissioning";
+
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
 const emptyQuotation = {
   inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
-  payment_terms: "", delivery_terms: "", scope_notes: "",
+  payment_terms: DEFAULT_PAYMENT_TERMS, delivery_terms: "", scope_notes: "",
   // Sales cost build-up: material comes from the preliminary BOM, the rest is typed in.
   bom_id: "", material_cost: "0", labour_cost: "0", inland_percent: "0",
   transport_cost: "0", margin_percent: "0",
