@@ -5,8 +5,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Boxes, Plus, Pencil, Trash2, PackageCheck, Truck, ArrowDownUp, ShieldAlert,
-  Layers, Send, Upload,
+  Layers, Send, Upload, Download,
 } from "lucide-react";
+
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
