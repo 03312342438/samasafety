@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FileText, Inbox, Plus, Receipt, Trash2, Pencil, ShieldCheck, ArrowRight } from "lucide-react";
+import { FileText, Plus, Receipt, Trash2, Pencil, ShieldCheck, ArrowRight } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -20,7 +20,6 @@ import {
 import { listCustomers } from "@/lib/crm.functions";
 import { submitApproval, listApprovals } from "@/lib/approvals.functions";
 import {
-  listInquiries, saveInquiry, deleteInquiry,
   listQuotations, saveQuotation, setQuotationStage, deleteQuotation,
   listCustomerPos, saveCustomerPo, verifyCustomerPo, convertPoToProject,
 } from "@/lib/sales.functions";
@@ -34,21 +33,14 @@ export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
     meta: [
       { title: "Sales Chain | SAMA Fire & Safety" },
-      { name: "description", content: "Track fire-safety inquiries, priced quotations and customer purchase order verification in one controlled sales chain." },
+      { name: "description", content: "Create priced fire-safety quotations and verify customer purchase orders in one controlled sales chain." },
       { property: "og:title", content: "Sales Chain | SAMA Fire & Safety" },
-      { property: "og:description", content: "Track fire-safety inquiries, priced quotations and customer purchase order verification in one controlled sales chain." },
+      { property: "og:description", content: "Create priced fire-safety quotations and verify customer purchase orders in one controlled sales chain." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
 });
-
-const emptyInquiry = {
-  customer_id: "", contact_person: "", contact_email: "", contact_phone: "",
-  site_location: "", scope_type: "installation", requirement_details: "",
-  source: "direct", received_date: "", target_date: "", stage: "inquiry",
-  status: "open", notes: "",
-};
 
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
@@ -76,17 +68,14 @@ const QUOTATION_STAGES = [
 function SalesPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
-  const [tab, setTab] = useState("inquiries");
+  const [tab, setTab] = useState("quotations");
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
 
 
   const fetchCustomers = useServerFn(listCustomers);
-  const fetchInquiries = useServerFn(listInquiries);
   const fetchQuotations = useServerFn(listQuotations);
   const fetchPos = useServerFn(listCustomerPos);
-  const saveInquiryFn = useServerFn(saveInquiry);
-  const removeInquiry = useServerFn(deleteInquiry);
   const saveQuotationFn = useServerFn(saveQuotation);
   const stageFn = useServerFn(setQuotationStage);
   const removeQuotation = useServerFn(deleteQuotation);
@@ -96,7 +85,6 @@ function SalesPage() {
   const requestApproval = useServerFn(submitApproval);
 
   const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => fetchCustomers() });
-  const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: () => fetchInquiries() });
   const { data: quotations } = useQuery({ queryKey: ["quotations"], queryFn: () => fetchQuotations() });
   const { data: pos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchPos() });
   const fetchBoms = useServerFn(listBoms);
@@ -123,8 +111,6 @@ function SalesPage() {
   };
 
 
-  const [inqOpen, setInqOpen] = useState(false);
-  const [inqForm, setInqForm] = useState<any>(emptyInquiry);
   const [qtnOpen, setQtnOpen] = useState(false);
   const [qtnForm, setQtnForm] = useState<any>(emptyQuotation);
   const [items, setItems] = useState<ItemRow[]>([{ ...emptyItem }]);
@@ -132,7 +118,6 @@ function SalesPage() {
   const [poForm, setPoForm] = useState<any>(emptyPo);
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["inquiries"] });
     qc.invalidateQueries({ queryKey: ["quotations"] });
     qc.invalidateQueries({ queryKey: ["customer-pos"] });
     qc.invalidateQueries({ queryKey: ["projects"] });
@@ -158,25 +143,6 @@ function SalesPage() {
     qtnForm.labour_cost, qtnForm.inland_percent, qtnForm.transport_cost, qtnForm.margin_percent,
   ]);
 
-
-  const submitInquiry = async () => {
-    try {
-      await saveInquiryFn({
-        data: {
-          ...inqForm,
-          id: inqForm.id || undefined,
-          customer_id: inqForm.customer_id || null,
-          target_date: inqForm.target_date || null,
-        },
-      });
-      toast.success(inqForm.id ? "Inquiry updated" : "Inquiry logged");
-      setInqOpen(false);
-      setInqForm(emptyInquiry);
-      refresh();
-    } catch (e) {
-      toast.error(msg(e, "Could not save inquiry"));
-    }
-  };
 
   const submitQuotation = async () => {
     try {
@@ -267,9 +233,6 @@ function SalesPage() {
   };
 
   const q = query.trim().toLowerCase();
-  const inquiryList = ((inquiries as any[]) ?? []).filter(
-    (i) => !q || [i.reference, i.customers?.name, i.site_location, i.scope_type].join(" ").toLowerCase().includes(q),
-  );
   const quotationList = ((quotations as any[]) ?? []).filter(
     (x) =>
       (!q || [x.reference, x.title, x.customers?.name, x.site_location].join(" ").toLowerCase().includes(q)) &&
@@ -288,41 +251,11 @@ function SalesPage() {
           <div>
             <h1 className="text-xl font-semibold">Sales Chain</h1>
             <p className="text-sm text-muted-foreground">
-              Inquiry → quotation → customer PO verification. Projects only start from a verified, approved PO.
+              Quotation → customer PO verification. Projects only start from a verified, approved PO.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "inquiries" && (
-              <Dialog open={inqOpen} onOpenChange={(o) => { setInqOpen(o); if (!o) setInqForm(emptyInquiry); }}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New inquiry</Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
-                  <DialogHeader><DialogTitle>{inqForm.id ? "Edit inquiry" : "New inquiry"}</DialogTitle></DialogHeader>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Select label="Customer" value={inqForm.customer_id} onChange={(v) => setInqForm({ ...inqForm, customer_id: v })}
-                      options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Field label="Contact person" value={inqForm.contact_person} onChange={(v) => setInqForm({ ...inqForm, contact_person: v })} />
-                    <Field label="Contact email" value={inqForm.contact_email} onChange={(v) => setInqForm({ ...inqForm, contact_email: v })} />
-                    <Field label="Contact phone" value={inqForm.contact_phone} onChange={(v) => setInqForm({ ...inqForm, contact_phone: v })} />
-                    <Field label="Site location" value={inqForm.site_location} onChange={(v) => setInqForm({ ...inqForm, site_location: v })} />
-                    <Select label="Scope" value={inqForm.scope_type} onChange={(v) => setInqForm({ ...inqForm, scope_type: v })}
-                      allowEmpty={false}
-                      options={["installation", "maintenance", "supply", "inspection", "modification"].map((s) => ({ value: s, label: humanize(s) }))} />
-                    <Select label="Source" value={inqForm.source} onChange={(v) => setInqForm({ ...inqForm, source: v })}
-                      allowEmpty={false}
-                      options={["direct", "email", "phone", "tender", "referral", "walk_in"].map((s) => ({ value: s, label: humanize(s) }))} />
-                    <Field label="Required by" type="date" value={inqForm.target_date} onChange={(v) => setInqForm({ ...inqForm, target_date: v })} />
-                    <div className="sm:col-span-2">
-                      <Label className="text-xs">Requirement details</Label>
-                      <Textarea rows={3} value={inqForm.requirement_details} onChange={(e) => setInqForm({ ...inqForm, requirement_details: e.target.value })} />
-                    </div>
-                  </div>
-                  <DialogFooter><Button onClick={submitInquiry}>Save</Button></DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
             {tab === "quotations" && (
               <Dialog open={qtnOpen} onOpenChange={(o) => { setQtnOpen(o); if (!o) { setQtnForm(emptyQuotation); setItems([{ ...emptyItem }]); } }}>
                 <DialogTrigger asChild>
@@ -333,8 +266,6 @@ function SalesPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Select label="Customer" value={qtnForm.customer_id} onChange={(v) => setQtnForm({ ...qtnForm, customer_id: v })}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Select label="Against inquiry" value={qtnForm.inquiry_id} onChange={(v) => setQtnForm({ ...qtnForm, inquiry_id: v })}
-                      options={((inquiries as any[]) ?? []).map((i) => ({ value: i.id, label: `${i.reference} — ${i.customers?.name ?? ""}` }))} />
                     <Field label="Title" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
                     <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
@@ -484,7 +415,6 @@ function SalesPage() {
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
             { value: "bom", label: `Preliminary BOM/BOS (${bomList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
@@ -495,49 +425,6 @@ function SalesPage() {
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
           {tab === "bom" && <PreliminaryBomPanel />}
-          {tab === "inquiries" && inquiryList.map((i) => (
-            <Card key={i.id}>
-              <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Inbox className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{i.reference}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(i.stage)}`}>{humanize(i.stage)}</span>
-                    {approvalState(i.id) && (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(i.id)!.cls}`}>
-                        {approvalState(i.id)!.label}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {[i.customers?.name, humanize(i.scope_type), i.site_location].filter(Boolean).join(" · ") || "—"}
-                  </p>
-                  {i.requirement_details && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{i.requirement_details}</p>}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setQtnForm({ ...emptyQuotation, inquiry_id: i.id, customer_id: i.customer_id ?? "", site_location: i.site_location ?? "", title: i.requirement_details?.slice(0, 80) ?? "" });
-                    setItems([{ ...emptyItem }]);
-                    setTab("quotations");
-                    setQtnOpen(true);
-                  }}>
-                    <FileText className="mr-1 h-4 w-4" /> Quote
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setInqForm({ ...emptyInquiry, ...i, customer_id: i.customer_id ?? "", target_date: i.target_date ?? "" }); setInqOpen(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={async () => {
-                    try { await removeInquiry({ data: { id: i.id } }); refresh(); toast.success("Inquiry deleted"); }
-                    catch (e) { toast.error(msg(e, "Could not delete")); }
-                  }}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
           {tab === "quotations" && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Filter:</span>
@@ -773,8 +660,7 @@ function SalesPage() {
             </Card>
           ))}
 
-          {((tab === "inquiries" && inquiryList.length === 0) ||
-            (tab === "quotations" && quotationList.length === 0) ||
+          {((tab === "quotations" && quotationList.length === 0) ||
             (tab === "orders" && poList.length === 0)) && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
