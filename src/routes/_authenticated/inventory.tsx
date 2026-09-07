@@ -826,10 +826,21 @@ function InventoryPage() {
                       <Button variant="outline" size="sm" onClick={() => decideItem(s.id, "rejected")}>Reject</Button>
                     )}
                     {canManageItems && !canApproveItems && (s.approval_status ?? "pending") !== "approved" && (
-                      <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
-                        Send for approval
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label="Edit item / add picture"
+                          onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => sendItemForApproval(s)}>
+                          Send for approval
+                        </Button>
+                      </>
                     )}
+
                     {isAdmin && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => { setStockForm({ ...emptyStock, ...s }); setStockOpen(true); }}>
