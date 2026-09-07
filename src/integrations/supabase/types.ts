@@ -1501,6 +1501,8 @@ export type Database = {
           full_name: string
           hidden: boolean
           id: string
+          initials: string
+          phone: string
           status: string
         }
         Insert: {
@@ -1510,6 +1512,8 @@ export type Database = {
           full_name?: string
           hidden?: boolean
           id: string
+          initials?: string
+          phone?: string
           status?: string
         }
         Update: {
@@ -1519,6 +1523,8 @@ export type Database = {
           full_name?: string
           hidden?: boolean
           id?: string
+          initials?: string
+          phone?: string
           status?: string
         }
         Relationships: []
