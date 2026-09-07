@@ -256,36 +256,6 @@ function SalesPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {tab === "inquiries" && (
-              <Dialog open={inqOpen} onOpenChange={(o) => { setInqOpen(o); if (!o) setInqForm(emptyInquiry); }}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New inquiry</Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
-                  <DialogHeader><DialogTitle>{inqForm.id ? "Edit inquiry" : "New inquiry"}</DialogTitle></DialogHeader>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Select label="Customer" value={inqForm.customer_id} onChange={(v) => setInqForm({ ...inqForm, customer_id: v })}
-                      options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Field label="Contact person" value={inqForm.contact_person} onChange={(v) => setInqForm({ ...inqForm, contact_person: v })} />
-                    <Field label="Contact email" value={inqForm.contact_email} onChange={(v) => setInqForm({ ...inqForm, contact_email: v })} />
-                    <Field label="Contact phone" value={inqForm.contact_phone} onChange={(v) => setInqForm({ ...inqForm, contact_phone: v })} />
-                    <Field label="Site location" value={inqForm.site_location} onChange={(v) => setInqForm({ ...inqForm, site_location: v })} />
-                    <Select label="Scope" value={inqForm.scope_type} onChange={(v) => setInqForm({ ...inqForm, scope_type: v })}
-                      allowEmpty={false}
-                      options={["installation", "maintenance", "supply", "inspection", "modification"].map((s) => ({ value: s, label: humanize(s) }))} />
-                    <Select label="Source" value={inqForm.source} onChange={(v) => setInqForm({ ...inqForm, source: v })}
-                      allowEmpty={false}
-                      options={["direct", "email", "phone", "tender", "referral", "walk_in"].map((s) => ({ value: s, label: humanize(s) }))} />
-                    <Field label="Required by" type="date" value={inqForm.target_date} onChange={(v) => setInqForm({ ...inqForm, target_date: v })} />
-                    <div className="sm:col-span-2">
-                      <Label className="text-xs">Requirement details</Label>
-                      <Textarea rows={3} value={inqForm.requirement_details} onChange={(e) => setInqForm({ ...inqForm, requirement_details: e.target.value })} />
-                    </div>
-                  </div>
-                  <DialogFooter><Button onClick={submitInquiry}>Save</Button></DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
             {tab === "quotations" && (
               <Dialog open={qtnOpen} onOpenChange={(o) => { setQtnOpen(o); if (!o) { setQtnForm(emptyQuotation); setItems([{ ...emptyItem }]); } }}>
                 <DialogTrigger asChild>
@@ -447,7 +417,6 @@ function SalesPage() {
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: "inquiries", label: `Inquiries (${inquiryList.length})` },
             { value: "bom", label: `Preliminary BOM/BOS (${bomList.length})` },
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
@@ -458,49 +427,6 @@ function SalesPage() {
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
           {tab === "bom" && <PreliminaryBomPanel />}
-          {tab === "inquiries" && inquiryList.map((i) => (
-            <Card key={i.id}>
-              <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Inbox className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{i.reference}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(i.stage)}`}>{humanize(i.stage)}</span>
-                    {approvalState(i.id) && (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${approvalState(i.id)!.cls}`}>
-                        {approvalState(i.id)!.label}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {[i.customers?.name, humanize(i.scope_type), i.site_location].filter(Boolean).join(" · ") || "—"}
-                  </p>
-                  {i.requirement_details && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{i.requirement_details}</p>}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setQtnForm({ ...emptyQuotation, inquiry_id: i.id, customer_id: i.customer_id ?? "", site_location: i.site_location ?? "", title: i.requirement_details?.slice(0, 80) ?? "" });
-                    setItems([{ ...emptyItem }]);
-                    setTab("quotations");
-                    setQtnOpen(true);
-                  }}>
-                    <FileText className="mr-1 h-4 w-4" /> Quote
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setInqForm({ ...emptyInquiry, ...i, customer_id: i.customer_id ?? "", target_date: i.target_date ?? "" }); setInqOpen(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={async () => {
-                    try { await removeInquiry({ data: { id: i.id } }); refresh(); toast.success("Inquiry deleted"); }
-                    catch (e) { toast.error(msg(e, "Could not delete")); }
-                  }}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
           {tab === "quotations" && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Filter:</span>
@@ -736,8 +662,7 @@ function SalesPage() {
             </Card>
           ))}
 
-          {((tab === "inquiries" && inquiryList.length === 0) ||
-            (tab === "quotations" && quotationList.length === 0) ||
+          {((tab === "quotations" && quotationList.length === 0) ||
             (tab === "orders" && poList.length === 0)) && (
             <p className="py-10 text-center text-sm text-muted-foreground">Nothing here yet.</p>
           )}
