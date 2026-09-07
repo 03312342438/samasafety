@@ -266,8 +266,6 @@ function SalesPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Select label="Customer" value={qtnForm.customer_id} onChange={(v) => setQtnForm({ ...qtnForm, customer_id: v })}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Select label="Against inquiry" value={qtnForm.inquiry_id} onChange={(v) => setQtnForm({ ...qtnForm, inquiry_id: v })}
-                      options={((inquiries as any[]) ?? []).map((i) => ({ value: i.id, label: `${i.reference} — ${i.customers?.name ?? ""}` }))} />
                     <Field label="Title" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
                     <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
