@@ -34,6 +34,8 @@ import { listStockLots, saveStockLot, deleteStockLot, submitStockLot } from "@/l
 import { listSuppliers } from "@/lib/finance.functions";
 import { UomSelect } from "@/components/UomSelect";
 import { can, hasDept, humanize, statusBadgeClass, STOCK_CATEGORIES, CURRENCY } from "@/lib/workflow";
+import { downloadStockTemplate } from "@/lib/stock-template";
+
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   component: InventoryPage,
