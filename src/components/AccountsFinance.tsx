@@ -20,6 +20,12 @@ import {
   listProjectCosts, addProjectCost,
 } from "@/lib/finance.functions";
 import { CURRENCY, humanize, statusBadgeClass } from "@/lib/workflow";
+import {
+  Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+
+const AGING_COLORS = ["#16a34a", "#65a30d", "#f59e0b", "#f97316", "#ea580c", "#dc2626"];
+const COST_COLORS = ["#2563eb", "#0891b2", "#7c3aed", "#f59e0b", "#dc2626", "#16a34a"];
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (n: unknown) => `${Number(n ?? 0).toFixed(2)} ${CURRENCY}`;
