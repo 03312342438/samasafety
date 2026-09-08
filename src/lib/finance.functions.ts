@@ -510,7 +510,42 @@ export const financeSummary = createServerFn({ method: "GET" })
     const readyForBilling = invoices.filter((i) => i.stage === "billing").length;
     const profit = round2(collected - totalCost);
 
+    // --- last 12 months: invoiced, money in, money out, cost ---
+    const monthKeys: string[] = [];
+    const base = new Date(today.getFullYear(), today.getMonth(), 1);
+    for (let k = 11; k >= 0; k--) {
+      const d = new Date(base.getFullYear(), base.getMonth() - k, 1);
+      monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    const blank = () => ({ invoiced: 0, received: 0, paid_out: 0, cost: 0 });
+    const series = new Map(monthKeys.map((m) => [m, blank()]));
+    const bump = (date: unknown, field: "invoiced" | "received" | "paid_out" | "cost", amount: number) => {
+      if (typeof date !== "string" || date.length < 7) return;
+      const row = series.get(date.slice(0, 7));
+      if (row) row[field] = round2(row[field] + amount);
+    };
+    invoices.forEach((i) => bump(i.invoice_date, "invoiced", num(i.total_amount)));
+    ((pay.data ?? []) as any[]).forEach((p) => bump(p.payment_date, "received", num(p.amount)));
+    ((spay.data ?? []) as any[]).forEach((p) => bump(p.payment_date, "paid_out", num(p.amount)));
+    costRows.forEach((c) => bump(c.incurred_on, "cost", num(c.amount)));
+    const monthly = monthKeys.map((m) => {
+      const [y, mo] = m.split("-");
+      const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString("en", { month: "short" });
+      return { month: m, label, ...(series.get(m) ?? blank()) };
+    });
+
+    const byType = new Map<string, number>();
+    costRows.forEach((c) => {
+      const key = String(c.cost_type ?? "other");
+      byType.set(key, round2((byType.get(key) ?? 0) + num(c.amount)));
+    });
+    const costBreakdown = [...byType.entries()]
+      .map(([type, amount]) => ({ type, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
     return {
+      monthly,
+      costBreakdown,
       currency: CURRENCY,
       kpis: {
         invoiced,
