@@ -422,11 +422,11 @@ export const financeSummary = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase } = context;
     const [inv, pay, sinv, spay, costs, projects] = await Promise.all([
-      supabase.from("invoices").select("id, reference, customer_id, project_id, total_amount, amount_paid, due_date, status, stage, customers(name)").limit(1000),
+      supabase.from("invoices").select("id, reference, customer_id, project_id, total_amount, amount_paid, invoice_date, due_date, status, stage, customers(name)").limit(1000),
       supabase.from("payments").select("amount, payment_date").limit(1000),
       supabase.from("supplier_invoices").select("amount, amount_paid, status").limit(1000),
       supabase.from("supplier_payments").select("amount, approved, payment_date").limit(1000),
-      supabase.from("project_costs").select("project_id, amount, cost_type").limit(2000),
+      supabase.from("project_costs").select("project_id, amount, cost_type, incurred_on").limit(2000),
       supabase.from("projects").select("id, project_number, name, contract_value, estimated_cost, status").limit(500),
     ]);
 
