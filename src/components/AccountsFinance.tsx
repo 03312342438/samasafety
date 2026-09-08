@@ -20,6 +20,12 @@ import {
   listProjectCosts, addProjectCost,
 } from "@/lib/finance.functions";
 import { CURRENCY, humanize, statusBadgeClass } from "@/lib/workflow";
+import {
+  Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+
+const AGING_COLORS = ["#16a34a", "#65a30d", "#f59e0b", "#f97316", "#ea580c", "#dc2626"];
+const COST_COLORS = ["#2563eb", "#0891b2", "#7c3aed", "#f59e0b", "#dc2626", "#16a34a"];
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (n: unknown) => `${Number(n ?? 0).toFixed(2)} ${CURRENCY}`;
@@ -95,19 +101,86 @@ export function FinanceDashboard() {
         <Kpi label="Ready for billing" value={String(s.kpis.readyForBilling)} />
       </div>
 
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-4">
+            <p className="mb-2 text-sm font-medium">Money in vs money out (last 12 months)</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={(s.monthly ?? []) as any[]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} width={50} />
+                  <Tooltip formatter={(v: any) => money(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="invoiced" name="Invoiced" fill="#2563eb" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="received" name="Received" fill="#16a34a" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="paid_out" name="Paid out" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="cost" name="Cost" fill="#dc2626" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <p className="mb-2 text-sm font-medium">Receivables aging</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={agingRows.map(([label, value]) => ({ label, value }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} width={50} />
+                  <Tooltip formatter={(v: any) => money(v)} />
+                  <Bar dataKey="value" name="Outstanding" radius={[3, 3, 0, 0]}>
+                    {agingRows.map(([label], i) => (
+                      <Cell key={label} fill={AGING_COLORS[i % AGING_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {agingRows.map(([label, v]) => (
+                <div key={label} className="rounded-md border p-2">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-sm font-medium">{money(v)}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardContent className="p-4">
-          <p className="mb-2 text-sm font-medium">Receivables aging</p>
-          <div className="grid gap-2 sm:grid-cols-6">
-            {agingRows.map(([label, v]) => (
-              <div key={label} className="rounded-md border p-2">
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-sm font-medium">{money(v)}</p>
-              </div>
-            ))}
-          </div>
+          <p className="mb-2 text-sm font-medium">Where the money is spent</p>
+          {(s.costBreakdown ?? []).length === 0 ? (
+            <p className="text-xs text-muted-foreground">No costs recorded yet.</p>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={(s.costBreakdown as any[]).map((c) => ({ ...c, name: humanize(c.type) }))}
+                    dataKey="amount"
+                    nameKey="name"
+                    outerRadius={90}
+                    label={(e: any) => `${e.name}: ${money(e.value)}`}
+                  >
+                    {(s.costBreakdown as any[]).map((c, i) => (
+                      <Cell key={c.type} fill={COST_COLORS[i % COST_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: any) => money(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
+
 
       <Card>
         <CardContent className="p-4">
