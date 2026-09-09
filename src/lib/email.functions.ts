@@ -92,21 +92,14 @@ export const emailReport = createServerFn({ method: "POST" })
         <p style="margin:16px 0 0;color:#94a3b8;font-size:12px">Sama Safety &amp; Security · www.samasafety.net</p>
       </div>`;
 
-    const body: Record<string, unknown> = {
-      from: resolveFrom(),
-      to,
-      subject,
-      html,
-    };
-    if (clientEmail) body.reply_to = clientEmail;
-    if (data.pdf_base64) {
-      body.attachments = [
-        {
-          filename: data.file_name || `report-${data.msr_no || "report"}.pdf`,
-          content: data.pdf_base64,
-        },
-      ];
-    }
+    const attachments = data.pdf_base64
+      ? [
+          {
+            filename: data.file_name || `report-${data.msr_no || "report"}.pdf`,
+            content: data.pdf_base64,
+          },
+        ]
+      : undefined;
 
     const url = useGateway
       ? `${GATEWAY_URL}/emails`
@@ -121,19 +114,48 @@ export const emailReport = createServerFn({ method: "POST" })
       headers.Authorization = `Bearer ${resendKey}`;
     }
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    // Send one message per recipient so every address is delivered and
+    // traceable individually (a single multi-recipient send can be collapsed
+    // or partially dropped by the provider).
+    const delivered: string[] = [];
+    const failures: string[] = [];
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(formatResendError(res.status, text));
+    for (const recipient of to) {
+      const body: Record<string, unknown> = {
+        from: resolveFrom(),
+        to: [recipient],
+        subject,
+        html,
+      };
+      if (clientEmail) body.reply_to = clientEmail;
+      if (attachments) body.attachments = attachments;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        delivered.push(recipient);
+      } else {
+        const text = await res.text();
+        failures.push(`${recipient}: ${formatResendError(res.status, text)}`);
+      }
     }
 
-    return { sent: true, count: to.length, to };
+    if (delivered.length === 0) {
+      throw new Error(failures.join(" | ") || "Email send failed");
+    }
+
+    return {
+      sent: true,
+      count: delivered.length,
+      to: delivered,
+      failed: failures,
+    };
   });
+
 
 function formatResendError(status: number, body: string) {
   let reason = body;
