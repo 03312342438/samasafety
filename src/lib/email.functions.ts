@@ -35,9 +35,13 @@ export const emailReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => emailSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    void context;
 
-    const { data: recipients, error } = await supabase
+    // The recipient list is admin-only under RLS, but every report submitter
+    // must be able to copy it, so read it with the privileged client after the
+    // auth middleware has verified the caller.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: recipients, error } = await supabaseAdmin
       .from("report_recipients")
       .select("email");
     if (error) throw new Error(error.message);
