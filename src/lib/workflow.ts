@@ -98,6 +98,15 @@ export function isAccountsOnly(roles: string[] | undefined, isAdmin?: boolean): 
   return !isAdmin && real.includes("accounts") && real.every((r) => r === "accounts");
 }
 
+/**
+ * Maintenance-only account: sees nothing but the maintenance service reports
+ * (new report, history and pending maintenance).
+ */
+export function isMaintenanceOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
+  const real = (roles ?? []).filter((r) => r !== "employee");
+  return !isAdmin && real.includes("maintenance") && real.every((r) => r === "maintenance");
+}
+
 // --------------------------------------------------------------------------
 // Master lifecycle — the single controlled status list (section 22).
 // --------------------------------------------------------------------------
