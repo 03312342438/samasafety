@@ -11,7 +11,7 @@ function resolveFrom() {
   if (!email) {
     throw new Error("RESEND_FROM_EMAIL is not set to a valid sender address.");
   }
-  return raw.includes("<") ? raw : `${FROM_NAME} <${email}>`;
+  return raw.includes("<") ? raw : `${fromName()} <${email}>`;
 }
 
 function dateStr(d: Date) {
