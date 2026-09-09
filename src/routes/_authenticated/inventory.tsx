@@ -371,6 +371,8 @@ function InventoryPage() {
         data: {
           id: lotForm.id || undefined,
           received_date: lotForm.received_date || null,
+          supplier: lotForm.supplier ?? "",
+          reference: lotForm.reference ?? "",
           notes: lotForm.notes,
           items: lotLines
             .filter((l) => l.stock_item_id)
@@ -606,7 +608,24 @@ function InventoryPage() {
                 <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
                   <DialogHeader><DialogTitle>{lotForm.id ? `Edit lot ${lotForm.lot_number ?? ""}` : "New restock lot"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Supplier (one supplier per lot)</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={lotForm.supplier ?? ""}
+                        onChange={(e) => setLotForm({ ...lotForm, supplier: e.target.value })}
+                      >
+                        <option value="">— select supplier —</option>
+                        {approvedSuppliers.map((s: any) => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
                     <Field label="Received date" type="date" value={lotForm.received_date} onChange={(v) => setLotForm({ ...lotForm, received_date: v })} />
+                    <Field label="Supplier DN / invoice" value={lotForm.reference ?? ""} onChange={(v) => setLotForm({ ...lotForm, reference: v })} />
+                    <div className="sm:col-span-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+                      A lot holds material from one supplier only. For three suppliers, create three lots.
+                    </div>
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={lotForm.notes} onChange={(e) => setLotForm({ ...lotForm, notes: e.target.value })} />
@@ -624,23 +643,13 @@ function InventoryPage() {
                       {lotLines.map((l, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
                           <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-3"
+                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-4"
                             value={l.stock_item_id}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: e.target.value } : r)))}
                           >
                             {lotItemOptions.map(([v, lb]) => <option key={v} value={v}>{lb}</option>)}
                           </select>
-                          <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-2"
-                            value={l.supplier}
-                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, supplier: e.target.value } : r)))}
-                          >
-                            <option value="">— supplier —</option>
-                            {approvedSuppliers.map((s: any) => (
-                              <option key={s.id} value={s.name}>{s.name}</option>
-                            ))}
-                          </select>
-                          <Input className="sm:col-span-2" placeholder="DN / invoice" value={l.reference}
+                          <Input className="sm:col-span-3" placeholder="DN / invoice" value={l.reference}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, reference: e.target.value } : r)))} />
                           <Input className="sm:col-span-1" placeholder="Qty" value={l.quantity}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
@@ -661,7 +670,7 @@ function InventoryPage() {
                   </div>
 
                   <DialogFooter>
-                    <Button onClick={submitLot} disabled={!lotLines.some((l) => l.stock_item_id)}>Save lot</Button>
+                    <Button onClick={submitLot} disabled={!lotForm.supplier || !lotLines.some((l) => l.stock_item_id)}>Save lot</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -917,7 +926,7 @@ function InventoryPage() {
                             <td className="whitespace-nowrap px-2 py-1.5">
                               {i.stock_items?.item_code ?? "—"} — {i.description}
                             </td>
-                            <td className="px-2 py-1.5">{i.supplier || "—"}</td>
+                            <td className="px-2 py-1.5">{i.supplier || l.supplier || "—"}</td>
                             <td className="px-2 py-1.5 text-right">{i.quantity} {i.unit}</td>
                             <td className="px-2 py-1.5 text-right">{Number(i.unit_cost ?? 0).toFixed(3)}</td>
                             <td className="px-2 py-1.5">{i.store_location || "—"}</td>
