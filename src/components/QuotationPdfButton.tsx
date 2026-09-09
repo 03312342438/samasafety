@@ -72,7 +72,7 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
             <div style={{ textAlign: "right", fontSize: 11 }}>
               <div style={{ fontWeight: 700, color: "#103a52" }}>Fire Alarm &amp; Fire Fighting Specialist</div>
               <div>Approved by Bahrain Civil Defence</div>
-              <div style={{ marginTop: 4 }}>VAT No. 220000996700002</div>
+              <div style={{ marginTop: 4, fontWeight: 700 }}>VAT No. 220000996700002</div>
             </div>
           </div>
 
