@@ -453,6 +453,30 @@ export const setInstallationStepStatus = createServerFn({ method: "POST" })
       const done = rows.filter((r: any) => r.status === "completed").length;
       const pct = rows.length ? Math.round((done / rows.length) * 100) : 0;
       await supabase.from("job_numbers").update({ progress_percent: pct }).eq("id", step.job_number_id);
+
+      // A completed step can release the next billing milestone.
+      const { data: job } = await supabase
+        .from("job_numbers")
+        .select("project_id")
+        .eq("id", step.job_number_id)
+        .maybeSingle();
+      if (job?.project_id) {
+        const { data: siblings } = await supabase
+          .from("job_numbers")
+          .select("id, progress_percent")
+          .eq("project_id", job.project_id);
+        const jobRows = (siblings ?? []) as any[];
+        if (jobRows.length) {
+          const projectPct = Math.round(
+            jobRows.reduce((s, j) => s + Number(j.progress_percent ?? 0), 0) / jobRows.length,
+          );
+          await supabase
+            .from("projects")
+            .update({ progress_percent: projectPct })
+            .eq("id", job.project_id);
+        }
+        await evaluateProjectPaymentTerms(supabase, job.project_id);
+      }
     }
 
     await logActivity(supabase, userId, {
