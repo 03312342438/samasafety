@@ -21,7 +21,7 @@ import {
 import { listActivity } from "@/lib/notifications.functions";
 import { listProjects } from "@/lib/projects.functions";
 import { listQuotations, listCustomerPos } from "@/lib/sales.functions";
-import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass, hasDept } from "@/lib/workflow";
+import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass, hasDept, isAccountsStore } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   component: ApprovalsPage,
