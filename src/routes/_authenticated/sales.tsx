@@ -536,7 +536,7 @@ function SalesPage() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     )}
-                    {(!isApproved || profile?.isAdmin) && (
+                    {!isApproved && (
                     <Button variant="outline" size="sm" onClick={async () => {
                       try { await removeQuotation({ data: { id: x.id } }); refresh(); toast.success("Quotation deleted"); }
                       catch (e) { toast.error(msg(e, "Could not delete")); }

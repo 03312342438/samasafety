@@ -367,11 +367,9 @@ export const deleteQuotation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: prev } = await supabase.from("quotations").select("reference, status").eq("id", data.id).maybeSingle();
-    await assertMutable(supabase, userId, {
-      approved: ["approved", "accepted", "won"].includes(prev?.status ?? ""),
-      label: `Quotation ${prev?.reference ?? ""}`.trim(),
-      action: "delete",
-    });
+    if (["approved", "accepted", "won"].includes(prev?.status ?? "")) {
+      throw new Error(`Quotation ${prev?.reference ?? ""} has been approved — it is undeletable and can no longer be removed.`);
+    }
     const { error } = await supabase.from("quotations").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, {
