@@ -1,0 +1,2 @@
+ALTER TABLE public.supplier_invoices ADD COLUMN IF NOT EXISTS stock_lot_id uuid REFERENCES public.stock_lots(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS supplier_invoices_stock_lot_id_idx ON public.supplier_invoices(stock_lot_id);
