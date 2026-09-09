@@ -56,7 +56,8 @@ function Dashboard() {
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
-  // Only Installation & Maintenance / Technician staff may fill service reports.
+  // Only Project Manager, Installation & Maintenance and Maintenance staff
+  // may see the maintenance service report area at all.
   const accountsOnly = isAccountsOnly(profile?.roles, isAdmin);
   const canFillReport = can(profile?.roles, "report.fill") && !accountsOnly;
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales") && !accountsOnly;
