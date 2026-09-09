@@ -62,6 +62,8 @@ function Dashboard() {
   const canFillReport = can(profile?.roles, "report.fill") && !accountsOnly;
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales") && !accountsOnly;
   const isInventoryOnly = isStoreOnly(profile?.roles, isAdmin);
+  // Maintenance staff see nothing but the three maintenance report tabs.
+  const maintenanceOnly = isMaintenanceOnly(profile?.roles, isAdmin);
 
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
