@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getManagementOverview } from "@/lib/overview.functions";
 import { AnalyticsCharts } from "@/components/AnalyticsCharts";
+import { ReceivablesOverview } from "@/components/Receivables";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
