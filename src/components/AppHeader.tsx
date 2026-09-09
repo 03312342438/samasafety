@@ -74,6 +74,7 @@ export function AppHeader({
     ? [{ to: "/dashboard", label: "Maintenance", icon: FileText, show: true }]
     : [
     ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
+    ...(accountsStore ? [{ to: "/accounts", label: "Accounts", icon: Receipt, show: true } as NavItem] : []),
     ...(isPm && !isAdmin
       ? [{ to: "/overview", label: "Dashboard", icon: LayoutDashboard, show: true } as NavItem]
       : []),
@@ -81,7 +82,7 @@ export function AppHeader({
       to: "/dashboard",
       label: isPm && !isAdmin ? "Maintenance" : "Dashboard",
       icon: FileText,
-      show: !inventoryOnly && !accountsOnly,
+      show: !inventoryOnly && !accountsOnly && !accountsStore,
       ...(isPm && !isAdmin ? { search: { view: "maintenance" } } : {}),
     },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
@@ -92,8 +93,9 @@ export function AppHeader({
     { to: "/projects", label: "Projects", icon: FolderKanban, show: !!isAdmin || canSeeProjects },
     {
       to: "/engineering", label: "Planning", icon: ClipboardList,
-      show: !inventoryOnly && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
+      show: !inventoryOnly && !accountsStore && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
     },
+
     {
       to: "/inventory", label: "Store", icon: Boxes,
       show: !!isAdmin || hasDept(roles, "inventory") || hasDept(roles, "project_manager"),
