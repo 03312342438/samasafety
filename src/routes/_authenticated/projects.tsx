@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,14 +20,15 @@ import {
 } from "@/components/ui/dialog";
 import { listCustomers } from "@/lib/crm.functions";
 import {
-  listProjects, saveProject, deleteProject,
+  listProjects, saveProject, deleteProject, listProjectPaymentTerms,
   listJobNumbers, saveJobNumber, deleteJobNumber,
   listInstallationSteps, setInstallationStepStatus,
 } from "@/lib/projects.functions";
 import { listBoms } from "@/lib/engineering.functions";
 import { listCustomerPos } from "@/lib/sales.functions";
 
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly } from "@/lib/workflow";
+import { DEFAULT_PAYMENT_TERMS, TRIGGER_TYPES, TRIGGER_LABELS } from "@/lib/payment-terms";
 import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/projects")({
@@ -49,6 +50,12 @@ const emptyProject = {
   project_type: "installation", stage: "project_initiated", status: "active",
   contract_value: "", currency: "BHD", estimated_cost: "", start_date: "",
   target_date: "", progress_percent: "0", notes: "",
+  payment_terms: DEFAULT_PAYMENT_TERMS.map((t) => ({
+    percent: String(t.percent),
+    milestone: t.milestone,
+    trigger_type: t.trigger_type as string,
+    trigger_steps: String(t.trigger_steps ?? 0),
+  })),
 };
 
 const emptyJob = {
@@ -79,6 +86,8 @@ function ProjectsPage() {
     !hasDept(profile?.roles, "technician") &&
     !hasDept(profile?.roles, "sales") &&
     !hasDept(profile?.roles, "accounts");
+  // Accounts staff read the project list for billing, but never change it.
+  const viewOnly = storeOnly || isAccountsOnly(profile?.roles, profile?.isAdmin);
   const activeTab = salesOnly ? "projects" : tab;
 
 
@@ -107,11 +116,48 @@ function ProjectsPage() {
   const [jobOpen, setJobOpen] = useState(false);
   const [jobForm, setJobForm] = useState<any>(emptyJob);
 
+  // ---- payment milestones -------------------------------------------------
+  const fetchTerms = useServerFn(listProjectPaymentTerms);
+  const { data: savedTerms } = useQuery({
+    queryKey: ["project-terms", form.id],
+    queryFn: () => fetchTerms({ data: { project_id: form.id } }),
+    enabled: !!form.id && open,
+  });
+  useEffect(() => {
+    if (!savedTerms || !savedTerms.length) return;
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: savedTerms.map((t: any) => ({
+        percent: String(t.percent),
+        milestone: t.milestone ?? "",
+        trigger_type: t.trigger_type,
+        trigger_steps: String(t.trigger_steps ?? 0),
+      })),
+    }));
+  }, [savedTerms]);
+
+  const termsTotal =
+    Math.round(form.payment_terms.reduce((s: number, t: any) => s + Number(t.percent || 0), 0) * 100) / 100;
+  const updateTerm = (i: number, patch: any) =>
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: f.payment_terms.map((t: any, idx: number) => (idx === i ? { ...t, ...patch } : t)),
+    }));
+  const addTerm = () =>
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: [...f.payment_terms, { percent: "", milestone: "", trigger_type: "project_start", trigger_steps: "0" }],
+    }));
+  const removeTerm = (i: number) =>
+    setForm((f: any) => ({ ...f, payment_terms: f.payment_terms.filter((_: any, idx: number) => idx !== i) }));
+
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["projects"] });
     qc.invalidateQueries({ queryKey: ["job-numbers"] });
     qc.invalidateQueries({ queryKey: ["approvals"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
+    qc.invalidateQueries({ queryKey: ["receivables"] });
+    qc.invalidateQueries({ queryKey: ["project-terms"] });
   };
 
   const submitProject = async () => {
@@ -124,6 +170,14 @@ function ProjectsPage() {
           contract_value: Number(form.contract_value || 0),
           estimated_cost: Number(form.estimated_cost || 0),
           progress_percent: Number(form.progress_percent || 0),
+          payment_terms: form.payment_terms
+            .map((t: any) => ({
+              percent: Number(t.percent || 0),
+              milestone: t.milestone ?? "",
+              trigger_type: t.trigger_type,
+              trigger_steps: Number(t.trigger_steps || 0),
+            }))
+            .filter((t: any) => t.percent > 0 || t.milestone.trim()),
         },
       });
       toast.success(form.id ? "Project updated" : "Project created");
@@ -191,7 +245,7 @@ function ProjectsPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {activeTab === "projects" && !storeOnly ? (
+            {activeTab === "projects" && !viewOnly ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
@@ -259,13 +313,58 @@ function ProjectsPage() {
                     <Field label="Start date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
                     <Field label="Target date" type="date" value={form.target_date} onChange={(v) => setForm({ ...form, target_date: v })} />
                     <Field label="Progress %" value={form.progress_percent} onChange={(v) => setForm({ ...form, progress_percent: v })} />
+                    <div className="sm:col-span-2 space-y-2 rounded-md border p-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold">Payment terms</Label>
+                        <span className={`text-xs ${termsTotal === 100 ? "text-emerald-600" : "text-destructive"}`}>
+                          Total {termsTotal}% (must be 100%)
+                        </span>
+                      </div>
+                      {form.payment_terms.map((t: any, i: number) => (
+                        <div key={i} className="grid gap-2 sm:grid-cols-[80px_1fr_170px_90px_auto]">
+                          <Input
+                            placeholder="%" value={t.percent}
+                            onChange={(e) => updateTerm(i, { percent: e.target.value })}
+                          />
+                          <Input
+                            placeholder="Milestone / description" value={t.milestone}
+                            onChange={(e) => updateTerm(i, { milestone: e.target.value })}
+                          />
+                          <select
+                            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                            value={t.trigger_type}
+                            onChange={(e) => updateTerm(i, { trigger_type: e.target.value })}
+                          >
+                            {TRIGGER_TYPES.map((tt) => (
+                              <option key={tt} value={tt}>{TRIGGER_LABELS[tt]}</option>
+                            ))}
+                          </select>
+                          <Input
+                            placeholder="Steps"
+                            disabled={t.trigger_type !== "steps_completed"}
+                            value={t.trigger_steps}
+                            onChange={(e) => updateTerm(i, { trigger_steps: e.target.value })}
+                          />
+                          <Button variant="ghost" size="icon" onClick={() => removeTerm(i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm" onClick={addTerm}>
+                        <Plus className="mr-1 h-3 w-3" /> Add payment term
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground">
+                        Accounts are notified automatically when a milestone is reached.
+                      </p>
+                    </div>
+
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={submitProject} disabled={!form.name.trim()}>Save</Button>
+                    <Button onClick={submitProject} disabled={!form.name.trim() || termsTotal !== 100}>Save</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>

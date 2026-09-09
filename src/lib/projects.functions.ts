@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity, notifyDepartments } from "@/lib/activity";
 import { nextSequence } from "@/lib/sequence";
 import { assertCan, assertMutable } from "@/lib/permissions";
+import { evaluateProjectPaymentTerms, TRIGGER_TYPES } from "@/lib/payment-terms";
 
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -89,12 +90,22 @@ export const saveProject = createServerFn({ method: "POST" })
         project_manager_id: z.string().uuid().nullable().default(null),
         progress_percent: z.number().int().min(0).max(100).default(0),
         notes: z.string().max(4000).default(""),
+        payment_terms: z
+          .array(
+            z.object({
+              percent: z.number().min(0).max(100),
+              milestone: z.string().max(300).default(""),
+              trigger_type: z.enum(TRIGGER_TYPES).default("project_start"),
+              trigger_steps: z.number().int().min(0).max(200).default(0),
+            }),
+          )
+          .default([]),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { id, ...raw } = data;
+    const { id, payment_terms: paymentTerms, ...raw } = data;
     // Inventory/Store and other departments can view projects but never create or edit them.
     await assertCan(supabase, userId, "project.create");
     const fields = {
@@ -103,10 +114,43 @@ export const saveProject = createServerFn({ method: "POST" })
       target_date: raw.target_date || null,
     };
 
+    // Payment milestones must add up to exactly 100% of the project value.
+    const terms = paymentTerms.filter((t) => t.percent > 0 || t.milestone.trim());
+    if (terms.length) {
+      const total = Math.round(terms.reduce((s, t) => s + t.percent, 0) * 100) / 100;
+      if (total !== 100) {
+        throw new Error(`Payment terms must add up to 100% — they currently total ${total}%.`);
+      }
+    }
+
+    /** Replace the milestones that have not been invoiced yet. */
+    const writeTerms = async (projectId: string) => {
+      if (!terms.length) return;
+      await supabase
+        .from("project_payment_terms")
+        .delete()
+        .eq("project_id", projectId)
+        .neq("status", "invoiced");
+      const { error } = await supabase.from("project_payment_terms").insert(
+        terms.map((t, i) => ({
+          project_id: projectId,
+          sequence: i + 1,
+          percent: t.percent,
+          milestone: t.milestone,
+          trigger_type: t.trigger_type,
+          trigger_steps: t.trigger_type === "steps_completed" ? Math.max(1, t.trigger_steps) : 0,
+          status: "pending",
+        })),
+      );
+      if (error) throw new Error(error.message);
+    };
+
     if (id) {
       const { data: prev } = await supabase.from("projects").select("*").eq("id", id).maybeSingle();
       const { error } = await supabase.from("projects").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
+      await writeTerms(id);
+      await evaluateProjectPaymentTerms(supabase, id);
       await logActivity(supabase, userId, {
         action: "edit",
         entity_table: "projects",
@@ -125,6 +169,8 @@ export const saveProject = createServerFn({ method: "POST" })
       .select("id, project_number")
       .single();
     if (error) throw new Error(error.message);
+    await writeTerms(created.id);
+    await evaluateProjectPaymentTerms(supabase, created.id);
     await logActivity(supabase, userId, {
       action: "create",
       entity_table: "projects",
@@ -407,6 +453,30 @@ export const setInstallationStepStatus = createServerFn({ method: "POST" })
       const done = rows.filter((r: any) => r.status === "completed").length;
       const pct = rows.length ? Math.round((done / rows.length) * 100) : 0;
       await supabase.from("job_numbers").update({ progress_percent: pct }).eq("id", step.job_number_id);
+
+      // A completed step can release the next billing milestone.
+      const { data: job } = await supabase
+        .from("job_numbers")
+        .select("project_id")
+        .eq("id", step.job_number_id)
+        .maybeSingle();
+      if (job?.project_id) {
+        const { data: siblings } = await supabase
+          .from("job_numbers")
+          .select("id, progress_percent")
+          .eq("project_id", job.project_id);
+        const jobRows = (siblings ?? []) as any[];
+        if (jobRows.length) {
+          const projectPct = Math.round(
+            jobRows.reduce((s, j) => s + Number(j.progress_percent ?? 0), 0) / jobRows.length,
+          );
+          await supabase
+            .from("projects")
+            .update({ progress_percent: projectPct })
+            .eq("id", job.project_id);
+        }
+        await evaluateProjectPaymentTerms(supabase, job.project_id);
+      }
     }
 
     await logActivity(supabase, userId, {
@@ -445,3 +515,19 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
 
 // Job numbers are submitted directly to Management by Installation & Maintenance
 // or Project Managers. Management makes the only approval decision in Approvals.
+
+// ------------------------------------------------------ payment milestones ---
+
+/** The billing milestones attached to a project. */
+export const listProjectPaymentTerms = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ project_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("project_payment_terms")
+      .select("*")
+      .eq("project_id", data.project_id)
+      .order("sequence");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });

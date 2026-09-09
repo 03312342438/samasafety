@@ -1589,6 +1589,66 @@ export type Database = {
           },
         ]
       }
+      project_payment_terms: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string | null
+          milestone: string
+          notified_at: string | null
+          percent: number
+          project_id: string
+          sequence: number
+          status: string
+          trigger_steps: number
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          milestone?: string
+          notified_at?: string | null
+          percent?: number
+          project_id: string
+          sequence?: number
+          status?: string
+          trigger_steps?: number
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          milestone?: string
+          notified_at?: string | null
+          percent?: number
+          project_id?: string
+          sequence?: number
+          status?: string
+          trigger_steps?: number
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_payment_terms_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_payment_terms_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_tasks: {
         Row: {
           actual_end: string | null

@@ -84,6 +84,16 @@ export function isSalesOnly(roles: string[] | undefined, isAdmin?: boolean): boo
   return !isAdmin && real.includes("sales") && real.every((r) => r === "sales");
 }
 
+/**
+ * Accounts-only account: finance staff and nothing else. The legacy "employee"
+ * role is ignored — it is granted to every sign-up and would otherwise make an
+ * accountant look like a technician (maintenance reports, site work).
+ */
+export function isAccountsOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
+  const real = (roles ?? []).filter((r) => r !== "employee");
+  return !isAdmin && real.includes("accounts") && real.every((r) => r === "accounts");
+}
+
 // --------------------------------------------------------------------------
 // Master lifecycle — the single controlled status list (section 22).
 // --------------------------------------------------------------------------

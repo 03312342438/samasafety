@@ -28,6 +28,7 @@ import { can, humanize, statusBadgeClass } from "@/lib/workflow";
 import {
   FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
 } from "@/components/AccountsFinance";
+import { ReceivablesOverview, ReceivablesTable } from "@/components/Receivables";
 
 
 export const Route = createFileRoute("/_authenticated/accounts")({
@@ -99,6 +100,8 @@ function AccountsPage() {
     qc.invalidateQueries({ queryKey: ["projects"] });
     qc.invalidateQueries({ queryKey: ["approvals"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
+    qc.invalidateQueries({ queryKey: ["receivables"] });
+    qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
 
   const itemsTotal = useMemo(() => {
@@ -370,6 +373,7 @@ function AccountsPage() {
           onChange={setTab}
           tabs={[
             { value: "dashboard", label: "Dashboard" },
+            { value: "receivables", label: "Receivables" },
             { value: "invoices", label: "Invoices" },
             { value: "payments", label: "Payments" },
             { value: "suppliers", label: "Suppliers" },
@@ -380,7 +384,13 @@ function AccountsPage() {
         />
 
         <div className="mt-4 space-y-3">
-          {tab === "dashboard" && <FinanceDashboard />}
+          {tab === "dashboard" && (
+            <div className="space-y-4">
+              <ReceivablesOverview />
+              <FinanceDashboard />
+            </div>
+          )}
+          {tab === "receivables" && <ReceivablesTable />}
           {tab === "suppliers" && <SuppliersTab />}
           {tab === "payables" && (
             <PayablesTab projectOptions={projectOptions} jobOptions={jobOptions} isAdmin={profile?.isAdmin} />

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getManagementOverview } from "@/lib/overview.functions";
 import { AnalyticsCharts } from "@/components/AnalyticsCharts";
+import { ReceivablesOverview } from "@/components/Receivables";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { humanize, statusBadgeClass } from "@/lib/workflow";
@@ -85,6 +86,13 @@ export function ManagementOverview() {
   return (
     <div className="space-y-6">
       <AnalyticsCharts />
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Invoicing &amp; payments
+        </h2>
+        <ReceivablesOverview />
+      </div>
 
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

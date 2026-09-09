@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly, isSalesOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
@@ -60,6 +60,8 @@ export function AppHeader({
   // Store staff work only in Stock, Store, Release Items, Projects and Approvals.
   const inventoryOnly = isStoreOnly(roles, isAdmin);
   const salesOnly = isSalesOnly(roles, isAdmin);
+  // Accounts staff work only in Accounts, Projects (read-only), Suppliers and Approvals.
+  const accountsOnly = isAccountsOnly(roles, isAdmin);
   const isPm = hasDept(roles, "project_manager");
 
   const items: NavItem[] = [
@@ -71,7 +73,7 @@ export function AppHeader({
       to: "/dashboard",
       label: isPm && !isAdmin ? "Maintenance" : "Dashboard",
       icon: FileText,
-      show: !inventoryOnly,
+      show: !inventoryOnly && !accountsOnly,
       ...(isPm && !isAdmin ? { search: { view: "maintenance" } } : {}),
     },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
@@ -101,14 +103,17 @@ export function AppHeader({
       show:
         !inventoryOnly &&
         !salesOnly &&
+        !accountsOnly &&
         (!!isAdmin || hasDept(roles, "technician") || hasDept(roles, "project_manager")),
     },
 
     {
       to: "/progress", label: "Progress", icon: TrendingUp,
-      show: hasDept(roles, "sales"),
+      show: hasDept(roles, "sales") && !accountsOnly,
     },
-    ...(inventoryOnly ? [] : [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem]),
+    ...(inventoryOnly || accountsOnly
+      ? []
+      : [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem]),
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
