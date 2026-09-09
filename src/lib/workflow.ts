@@ -57,8 +57,14 @@ export const DEPARTMENT_LABELS: Record<string, string> = {
 /** Legacy "employee" accounts are technicians in the unified workflow. */
 export function normalizeRoles(roles: string[] | undefined): Department[] {
   const set = new Set<Department>();
+  const real = (roles ?? []).filter((r) => r !== "employee");
   (roles ?? []).forEach((r) => {
-    if (r === "employee") set.add("technician");
+    // The legacy "employee" role is granted to every sign-up; only treat it as
+    // a technician when the account has no real department of its own.
+    if (r === "employee") {
+      if (real.length === 0) set.add("technician");
+      return;
+    }
     set.add(r as Department);
   });
   return [...set];
