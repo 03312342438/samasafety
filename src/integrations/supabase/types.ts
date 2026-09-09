@@ -1853,6 +1853,7 @@ export type Database = {
       }
       quotations: {
         Row: {
+          attention: string
           bom_id: string | null
           created_at: string
           created_by: string
@@ -1870,6 +1871,7 @@ export type Database = {
           margin_percent: number
           material_cost: number
           payment_terms: string
+          project_id: string | null
           reference: string
           revision: number
           scope_notes: string
@@ -1886,6 +1888,7 @@ export type Database = {
           vat_percent: number
         }
         Insert: {
+          attention?: string
           bom_id?: string | null
           created_at?: string
           created_by?: string
@@ -1903,6 +1906,7 @@ export type Database = {
           margin_percent?: number
           material_cost?: number
           payment_terms?: string
+          project_id?: string | null
           reference: string
           revision?: number
           scope_notes?: string
@@ -1919,6 +1923,7 @@ export type Database = {
           vat_percent?: number
         }
         Update: {
+          attention?: string
           bom_id?: string | null
           created_at?: string
           created_by?: string
@@ -1936,6 +1941,7 @@ export type Database = {
           margin_percent?: number
           material_cost?: number
           payment_terms?: string
+          project_id?: string | null
           reference?: string
           revision?: number
           scope_notes?: string
@@ -1971,6 +1977,13 @@ export type Database = {
             columns: ["inquiry_id"]
             isOneToOne: false
             referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
