@@ -50,6 +50,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [designation, setDesignation] = useState("");
+  const [phone, setPhone] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +114,7 @@ function AuthPage() {
         full_name: fullName,
         designation: designation || undefined,
         email,
+        phone,
         status: "pending",
       });
       if (profileErr) throw new Error(profileErr.message);
@@ -215,6 +217,10 @@ function AuthPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sphone">Phone Number</Label>
+                    <Input id="sphone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+973 3xxxxxxx" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="semail">Email</Label>
