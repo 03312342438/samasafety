@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const FROM_NAME = "Sama Safety & Security";
+function fromName() {
+  return (process.env.RESEND_FROM_NAME || "").trim() || "Sama Safety & Security";
+}
 
 function resolveFrom() {
   const raw = (process.env.RESEND_FROM_EMAIL || "").trim();
