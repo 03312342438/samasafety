@@ -270,8 +270,29 @@ function SalesPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Select label="Customer" value={qtnForm.customer_id} onChange={(v) => setQtnForm({ ...qtnForm, customer_id: v })}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Field label="Title" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
-                    <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
+                    <Select
+                      label="Project"
+                      value={qtnForm.project_id}
+                      onChange={(v) => {
+                        const p = projectList.find((x: any) => x.id === v);
+                        setQtnForm({
+                          ...qtnForm,
+                          project_id: v,
+                          site_location: p?.site_location || qtnForm.site_location,
+                          customer_id: p?.customer_id || qtnForm.customer_id,
+                        });
+                      }}
+                      options={projectList.map((p: any) => ({
+                        value: p.id,
+                        label: `${p.project_number ?? ""} — ${p.name}`,
+                      }))}
+                    />
+                    <Field label="ATTN" value={qtnForm.attention} onChange={(v) => setQtnForm({ ...qtnForm, attention: v })} />
+                    <Field label="Subject" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
+                    <div>
+                      <Label className="text-xs">Site location (from project)</Label>
+                      <Input className="mt-1" readOnly value={qtnForm.site_location} />
+                    </div>
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
                     <Field label="VAT %" value={qtnForm.vat_percent} onChange={(v) => setQtnForm({ ...qtnForm, vat_percent: v })} />
                     
