@@ -162,6 +162,20 @@ export const submitApproval = createServerFn({ method: "POST" })
 
     const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const isManagement = (myRoles ?? []).some((r) => r.role === "admin");
+
+    // A quotation may only be sent for approval by the person who prepared it.
+    if (entity_table === "quotations" && entity_id) {
+      const { data: qtn } = await supabase
+        .from("quotations")
+        .select("reference, created_by")
+        .eq("id", entity_id)
+        .maybeSingle();
+      if (qtn?.created_by && qtn.created_by !== userId) {
+        throw new Error(
+          `Quotation ${qtn.reference ?? ""} was prepared by someone else — only its author can send it for approval.`,
+        );
+      }
+    }
     const now = new Date().toISOString();
 
     const { data: created, error } = await supabase
