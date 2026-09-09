@@ -27,7 +27,8 @@ import {
 import { listBoms } from "@/lib/engineering.functions";
 import { listCustomerPos } from "@/lib/sales.functions";
 
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly } from "@/lib/workflow";
+import { DEFAULT_PAYMENT_TERMS, TRIGGER_TYPES, TRIGGER_LABELS } from "@/lib/payment-terms";
 import { FilterTable } from "@/components/FilterTable";
 
 export const Route = createFileRoute("/_authenticated/projects")({
@@ -49,6 +50,12 @@ const emptyProject = {
   project_type: "installation", stage: "project_initiated", status: "active",
   contract_value: "", currency: "BHD", estimated_cost: "", start_date: "",
   target_date: "", progress_percent: "0", notes: "",
+  payment_terms: DEFAULT_PAYMENT_TERMS.map((t) => ({
+    percent: String(t.percent),
+    milestone: t.milestone,
+    trigger_type: t.trigger_type as string,
+    trigger_steps: String(t.trigger_steps ?? 0),
+  })),
 };
 
 const emptyJob = {
