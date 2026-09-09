@@ -25,6 +25,7 @@ import {
 } from "@/lib/sales.functions";
 import { humanize, statusBadgeClass, CURRENCY } from "@/lib/workflow";
 import { listBoms } from "@/lib/engineering.functions";
+import { listProjects } from "@/lib/projects.functions";
 import { QuotationPdfButton } from "@/components/QuotationPdfButton";
 import { PreliminaryBomPanel } from "@/components/PreliminaryBomPanel";
 
@@ -158,6 +159,8 @@ function SalesPage() {
           ...qtnForm,
           id: qtnForm.id || undefined,
           inquiry_id: qtnForm.inquiry_id || null,
+          project_id: qtnForm.project_id || null,
+          attention: qtnForm.attention || "",
           customer_id: qtnForm.customer_id || null,
           bom_id: qtnForm.bom_id || null,
           material_cost: num(qtnForm.material_cost),
