@@ -254,6 +254,16 @@ async function applyDecisionEffects(
       })
       .eq("id", approval.entity_id);
   }
+  if (approval.entity_table === "quotations" && approval.entity_id) {
+    await supabase
+      .from("quotations")
+      .update({
+        status: approved ? "approved" : decision === "rejected" ? "rejected" : "draft",
+        approved_by: approved ? userId : null,
+        approved_at: approved ? now : null,
+      } as any)
+      .eq("id", approval.entity_id);
+  }
   if (approval.entity_table === "stock_items" && approval.entity_id) {
     await supabase
       .from("stock_items")
