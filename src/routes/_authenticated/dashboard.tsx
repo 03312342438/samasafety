@@ -28,7 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can, hasDept, isStoreOnly } from "@/lib/workflow";
+import { can, hasDept, isStoreOnly, isAccountsOnly } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
 
 
@@ -57,10 +57,10 @@ function Dashboard() {
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
   // Only Installation & Maintenance / Technician staff may fill service reports.
-  const canFillReport = can(profile?.roles, "report.fill");
-  const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales");
+  const accountsOnly = isAccountsOnly(profile?.roles, isAdmin);
+  const canFillReport = can(profile?.roles, "report.fill") && !accountsOnly;
+  const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales") && !accountsOnly;
   const isInventoryOnly = isStoreOnly(profile?.roles, isAdmin);
-    !hasDept(profile?.roles, "accounts");
 
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
