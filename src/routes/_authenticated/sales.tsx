@@ -25,6 +25,7 @@ import {
 } from "@/lib/sales.functions";
 import { humanize, statusBadgeClass, CURRENCY } from "@/lib/workflow";
 import { listBoms } from "@/lib/engineering.functions";
+import { listProjects } from "@/lib/projects.functions";
 import { QuotationPdfButton } from "@/components/QuotationPdfButton";
 import { PreliminaryBomPanel } from "@/components/PreliminaryBomPanel";
 
@@ -48,7 +49,8 @@ const DEFAULT_PAYMENT_TERMS = "50% Advance, 40% on progress and 10% after testin
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
 const emptyQuotation = {
-  inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "BHD",
+  inquiry_id: "", customer_id: "", project_id: "", attention: "",
+  title: "", site_location: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
   payment_terms: DEFAULT_PAYMENT_TERMS, delivery_terms: "", scope_notes: "",
   // Sales cost build-up: material comes from the preliminary BOM, the rest is typed in.
@@ -93,6 +95,9 @@ function SalesPage() {
   const fetchBoms = useServerFn(listBoms);
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
   const bomList = (boms as any[]) ?? [];
+  const fetchProjects = useServerFn(listProjects);
+  const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
+  const projectList = (projects as any[]) ?? [];
   const fetchApprovals = useServerFn(listApprovals);
   const { data: approvals } = useQuery({ queryKey: ["approvals"], queryFn: () => fetchApprovals() });
 
@@ -154,6 +159,8 @@ function SalesPage() {
           ...qtnForm,
           id: qtnForm.id || undefined,
           inquiry_id: qtnForm.inquiry_id || null,
+          project_id: qtnForm.project_id || null,
+          attention: qtnForm.attention || "",
           customer_id: qtnForm.customer_id || null,
           bom_id: qtnForm.bom_id || null,
           material_cost: num(qtnForm.material_cost),
@@ -269,8 +276,29 @@ function SalesPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Select label="Customer" value={qtnForm.customer_id} onChange={(v) => setQtnForm({ ...qtnForm, customer_id: v })}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
-                    <Field label="Title" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
-                    <Field label="Site location" value={qtnForm.site_location} onChange={(v) => setQtnForm({ ...qtnForm, site_location: v })} />
+                    <Select
+                      label="Project"
+                      value={qtnForm.project_id}
+                      onChange={(v) => {
+                        const p = projectList.find((x: any) => x.id === v);
+                        setQtnForm({
+                          ...qtnForm,
+                          project_id: v,
+                          site_location: p?.site_location || qtnForm.site_location,
+                          customer_id: p?.customer_id || qtnForm.customer_id,
+                        });
+                      }}
+                      options={projectList.map((p: any) => ({
+                        value: p.id,
+                        label: `${p.project_number ?? ""} — ${p.name}`,
+                      }))}
+                    />
+                    <Field label="ATTN" value={qtnForm.attention} onChange={(v) => setQtnForm({ ...qtnForm, attention: v })} />
+                    <Field label="Subject" value={qtnForm.title} onChange={(v) => setQtnForm({ ...qtnForm, title: v })} />
+                    <div>
+                      <Label className="text-xs">Site location (from project)</Label>
+                      <Input className="mt-1" readOnly value={qtnForm.site_location} />
+                    </div>
                     <Field label="Discount amount" value={qtnForm.discount_amount} onChange={(v) => setQtnForm({ ...qtnForm, discount_amount: v })} />
                     <Field label="VAT %" value={qtnForm.vat_percent} onChange={(v) => setQtnForm({ ...qtnForm, vat_percent: v })} />
                     

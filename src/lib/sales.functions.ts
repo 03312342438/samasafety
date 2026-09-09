@@ -104,7 +104,9 @@ export const listQuotations = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("quotations")
-      .select("*, customers(name), inquiries(reference), quotation_items(*)")
+      .select(
+        "*, customers(name, contact_person), inquiries(reference), quotation_items(*), projects(id, name, project_number, site_location), boms(id, reference, title, bom_items(id, sequence, description, unit, quantity))",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = data ?? [];
@@ -147,6 +149,8 @@ export const saveQuotation = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         inquiry_id: z.string().uuid().nullable().default(null),
         customer_id: z.string().uuid().nullable().default(null),
+        project_id: z.string().uuid().nullable().default(null),
+        attention: z.string().max(200).default(""),
         title: z.string().max(300).default(""),
         site_location: z.string().max(500).default(""),
         currency: z.string().max(10).default("BHD"),
