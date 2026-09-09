@@ -26,7 +26,6 @@ const lotItemSchema = z.object({
   stock_item_id: z.string().uuid(),
   supplier: z.string().max(200).default(""),
   reference: z.string().max(120).default(""),
-
   quantity: z.number().min(0).default(0),
   unit_cost: z.number().min(0).default(0),
   store_location: z.string().max(200).default(""),
@@ -102,8 +101,8 @@ export const saveStockLot = createServerFn({ method: "POST" })
           sequence: index + 1,
           description: byId.get(i.stock_item_id)?.description ?? "",
           unit: byId.get(i.stock_item_id)?.unit ?? "pcs",
-          supplier: i.supplier,
-          reference: i.reference,
+          supplier,
+          reference: i.reference || fields.reference,
           quantity: i.quantity,
           unit_cost: i.unit_cost,
           store_location: i.store_location,
