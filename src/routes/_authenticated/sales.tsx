@@ -51,7 +51,7 @@ type ItemRow = { description: string; unit: string; quantity: string; unit_price
 const emptyQuotation = {
   inquiry_id: "", customer_id: "", project_id: "", attention: "",
   title: "", site_location: "", currency: "BHD",
-  discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
+  discount_amount: "0", vat_percent: "10", estimated_cost: "0", validity_days: "30",
   payment_terms: DEFAULT_PAYMENT_TERMS, delivery_terms: "", scope_notes: "",
   // Sales cost build-up: material comes from the preliminary BOM, the rest is typed in.
   bom_id: "", material_cost: "0", labour_cost: "0", inland_percent: "0",
@@ -274,18 +274,21 @@ function SalesPage() {
                 <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
                   <DialogHeader><DialogTitle>{qtnForm.id ? "Edit quotation" : "New quotation"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Select label="Customer" value={qtnForm.customer_id} onChange={(v) => setQtnForm({ ...qtnForm, customer_id: v })}
+                    <Select label="Customer (from project)" disabled value={qtnForm.customer_id} onChange={() => {}}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
                     <Select
                       label="Project"
                       value={qtnForm.project_id}
                       onChange={(v) => {
                         const p = projectList.find((x: any) => x.id === v);
+                        const bom = bomList.find((b: any) => b.project_id === v);
                         setQtnForm({
                           ...qtnForm,
                           project_id: v,
                           site_location: p?.site_location || qtnForm.site_location,
                           customer_id: p?.customer_id || qtnForm.customer_id,
+                          bom_id: bom?.id ?? "",
+                          material_cost: bom ? String(bom.estimated_cost ?? 0) : "0",
                         });
                       }}
                       options={projectList.map((p: any) => ({
@@ -311,16 +314,10 @@ function SalesPage() {
                     <Label className="text-xs font-semibold">Cost build-up</Label>
                     <div className="mt-2 grid gap-3 sm:grid-cols-3">
                       <Select
-                        label="Preliminary BOM/BOS"
+                        label="Preliminary BOM/BOS (from project)"
+                        disabled
                         value={qtnForm.bom_id}
-                        onChange={(v) => {
-                          const bom = bomList.find((b: any) => b.id === v);
-                          setQtnForm({
-                            ...qtnForm,
-                            bom_id: v,
-                            material_cost: bom ? String(bom.estimated_cost ?? 0) : qtnForm.material_cost,
-                          });
-                        }}
+                        onChange={() => {}}
                         options={bomList.map((b: any) => ({
                           value: b.id,
                           label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
@@ -405,7 +402,7 @@ function SalesPage() {
                     <Field label="PO number" value={poForm.po_number} onChange={(v) => setPoForm({ ...poForm, po_number: v })} />
                     <Field label="PO date" type="date" value={poForm.po_date} onChange={(v) => setPoForm({ ...poForm, po_date: v })} />
                     <Field label="PO value" value={poForm.po_value} onChange={(v) => setPoForm({ ...poForm, po_value: v })} />
-                    <Select label="Customer" value={poForm.customer_id} onChange={(v) => setPoForm({ ...poForm, customer_id: v })}
+                    <Select label="Customer (from quotation)" disabled value={poForm.customer_id} onChange={() => {}}
                       options={customerList.map((c) => ({ value: c.id, label: c.name }))} />
                     <Select
                       label="Against quotation"
@@ -521,7 +518,7 @@ function SalesPage() {
                       setQtnForm({
                         ...emptyQuotation, ...x,
                         customer_id: x.customer_id ?? "", inquiry_id: x.inquiry_id ?? "",
-                        discount_amount: String(x.discount_amount ?? 0), vat_percent: String(x.vat_percent ?? 15),
+                        discount_amount: String(x.discount_amount ?? 0), vat_percent: String(x.vat_percent ?? 10),
                         estimated_cost: String(x.estimated_cost ?? 0), validity_days: String(x.validity_days ?? 30),
                         bom_id: x.bom_id ?? "",
                         material_cost: String(x.material_cost ?? 0), labour_cost: String(x.labour_cost ?? 0),
@@ -731,19 +728,21 @@ function Field({
 }
 
 function Select({
-  label, value, onChange, options, allowEmpty = true,
+  label, value, onChange, options, allowEmpty = true, disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
   allowEmpty?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
       <select
-        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+        disabled={disabled}
+        className={`mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm${disabled ? " cursor-not-allowed opacity-60" : ""}`}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       >
