@@ -94,6 +94,9 @@ function SalesPage() {
   const fetchBoms = useServerFn(listBoms);
   const { data: boms } = useQuery({ queryKey: ["boms"], queryFn: () => fetchBoms() });
   const bomList = (boms as any[]) ?? [];
+  const fetchProjects = useServerFn(listProjects);
+  const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
+  const projectList = (projects as any[]) ?? [];
   const fetchApprovals = useServerFn(listApprovals);
   const { data: approvals } = useQuery({ queryKey: ["approvals"], queryFn: () => fetchApprovals() });
 
