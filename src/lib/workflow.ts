@@ -49,6 +49,7 @@ export const DEPARTMENT_LABELS: Record<string, string> = {
   project_manager: "Project Manager",
   inventory: "Inventory",
   technician: "Technician",
+  maintenance: "Maintenance",
   accounts: "Accounts",
   employee: "Technician",
 };
