@@ -45,6 +45,8 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
 
   const net = Math.max(Number(quotation.subtotal ?? 0) - Number(quotation.discount_amount ?? 0), 0);
   const vatAmount = Number(quotation.total_amount ?? 0) - net;
+  const approvedStatuses = ["approved", "customer_accepted", "accepted", "won"];
+  const isApproved = approvedStatuses.includes(String(quotation.status ?? "").toLowerCase());
 
   return (
     <>
@@ -92,15 +94,21 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
           <div><strong>PROJECT</strong> : {projectName}</div>
           <div><strong>SUBJECT</strong> : {quotation.title || "—"}</div>
 
-          <div style={{ textAlign: "center", marginTop: 12 }}>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#103a52", letterSpacing: 1 }}>QUOTATION</span>
-          </div>
-
-          <p style={{ marginTop: 8, fontSize: 11 }}>
+          <p style={{ marginTop: 12, fontSize: 11 }}>
             Further to the above mentioned subject &amp; Based on your inquiry we are please to submit our best
             offer for the above mention project. Please find attached our financial offer for details of the
             following system.
           </p>
+
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#103a52", letterSpacing: 1 }}>QUOTATION</span>
+            {!isApproved && (
+              <div style={{ marginTop: 4, fontSize: 14, fontWeight: 700, color: "#b91c1c", letterSpacing: 2 }}>
+                NOT APPROVED
+              </div>
+            )}
+          </div>
+
 
           {(bomItems.length > 0 || items.length > 0) && (
             <table style={{ width: "100%", marginTop: 10, borderCollapse: "collapse" }}>
@@ -147,7 +155,8 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
           <p style={{ marginTop: 14, fontSize: 11 }}>
             We trust our requirement and looking forward for your valued order for the above project. Should you
             require any further clarification or assistance, please do not hesitate to contact to
-            {" "}Mr. {preparerName || "our office"}{preparerPhone ? ` on ${preparerPhone}` : ""}.
+            {" "}Mr. <strong>{preparerName || "our office"}</strong>
+            {preparerPhone ? <> on <strong>{preparerPhone}</strong></> : null}.
           </p>
 
           <div style={{ marginTop: 24, fontSize: 11 }}>
