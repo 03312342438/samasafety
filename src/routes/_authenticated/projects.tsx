@@ -114,11 +114,48 @@ function ProjectsPage() {
   const [jobOpen, setJobOpen] = useState(false);
   const [jobForm, setJobForm] = useState<any>(emptyJob);
 
+  // ---- payment milestones -------------------------------------------------
+  const fetchTerms = useServerFn(listProjectPaymentTerms);
+  const { data: savedTerms } = useQuery({
+    queryKey: ["project-terms", form.id],
+    queryFn: () => fetchTerms({ data: { project_id: form.id } }),
+    enabled: !!form.id && open,
+  });
+  useEffect(() => {
+    if (!savedTerms || !savedTerms.length) return;
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: savedTerms.map((t: any) => ({
+        percent: String(t.percent),
+        milestone: t.milestone ?? "",
+        trigger_type: t.trigger_type,
+        trigger_steps: String(t.trigger_steps ?? 0),
+      })),
+    }));
+  }, [savedTerms]);
+
+  const termsTotal =
+    Math.round(form.payment_terms.reduce((s: number, t: any) => s + Number(t.percent || 0), 0) * 100) / 100;
+  const updateTerm = (i: number, patch: any) =>
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: f.payment_terms.map((t: any, idx: number) => (idx === i ? { ...t, ...patch } : t)),
+    }));
+  const addTerm = () =>
+    setForm((f: any) => ({
+      ...f,
+      payment_terms: [...f.payment_terms, { percent: "", milestone: "", trigger_type: "project_start", trigger_steps: "0" }],
+    }));
+  const removeTerm = (i: number) =>
+    setForm((f: any) => ({ ...f, payment_terms: f.payment_terms.filter((_: any, idx: number) => idx !== i) }));
+
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["projects"] });
     qc.invalidateQueries({ queryKey: ["job-numbers"] });
     qc.invalidateQueries({ queryKey: ["approvals"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
+    qc.invalidateQueries({ queryKey: ["receivables"] });
+    qc.invalidateQueries({ queryKey: ["project-terms"] });
   };
 
   const submitProject = async () => {
@@ -131,6 +168,14 @@ function ProjectsPage() {
           contract_value: Number(form.contract_value || 0),
           estimated_cost: Number(form.estimated_cost || 0),
           progress_percent: Number(form.progress_percent || 0),
+          payment_terms: form.payment_terms
+            .map((t: any) => ({
+              percent: Number(t.percent || 0),
+              milestone: t.milestone ?? "",
+              trigger_type: t.trigger_type,
+              trigger_steps: Number(t.trigger_steps || 0),
+            }))
+            .filter((t: any) => t.percent > 0 || t.milestone.trim()),
         },
       });
       toast.success(form.id ? "Project updated" : "Project created");
