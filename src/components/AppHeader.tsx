@@ -64,7 +64,12 @@ export function AppHeader({
   const accountsOnly = isAccountsOnly(roles, isAdmin);
   const isPm = hasDept(roles, "project_manager");
 
-  const items: NavItem[] = [
+  // Maintenance staff only ever see the maintenance report area.
+  const maintenanceOnly = isMaintenanceOnly(roles, isAdmin);
+
+  const items: NavItem[] = maintenanceOnly
+    ? [{ to: "/dashboard", label: "Maintenance", icon: FileText, show: true }]
+    : [
     ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
     ...(isPm && !isAdmin
       ? [{ to: "/overview", label: "Dashboard", icon: LayoutDashboard, show: true } as NavItem]
