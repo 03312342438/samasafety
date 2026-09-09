@@ -213,7 +213,7 @@ function ApprovalsPage() {
               Store lots are submitted from the Store screen, not here. */}
           {!isAdmin && !isStoreOnly && (
 
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyRequest); }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); setForm({ ...emptyRequest, approval_type: o ? defaultGate : emptyRequest.approval_type }); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Request approval</Button>
             </DialogTrigger>
