@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { listCustomers } from "@/lib/crm.functions";
 import {
-  listProjects, saveProject, deleteProject,
+  listProjects, saveProject, deleteProject, listProjectPaymentTerms,
   listJobNumbers, saveJobNumber, deleteJobNumber,
   listInstallationSteps, setInstallationStepStatus,
 } from "@/lib/projects.functions";
@@ -86,6 +86,8 @@ function ProjectsPage() {
     !hasDept(profile?.roles, "technician") &&
     !hasDept(profile?.roles, "sales") &&
     !hasDept(profile?.roles, "accounts");
+  // Accounts staff read the project list for billing, but never change it.
+  const viewOnly = storeOnly || isAccountsOnly(profile?.roles, profile?.isAdmin);
   const activeTab = salesOnly ? "projects" : tab;
 
 
@@ -243,7 +245,7 @@ function ProjectsPage() {
           </div>
           <div className="flex items-center gap-2">
             <SearchInput value={query} onChange={setQuery} placeholder="Search…" />
-            {activeTab === "projects" && !storeOnly ? (
+            {activeTab === "projects" && !viewOnly ? (
               <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyProject); }}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
