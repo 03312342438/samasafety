@@ -316,7 +316,10 @@ function ProjectsPage() {
 
                     <Field label="Start date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
                     <Field label="Target date" type="date" value={form.target_date} onChange={(v) => setForm({ ...form, target_date: v })} />
-                    <Field label="Progress %" value={form.progress_percent} onChange={(v) => setForm({ ...form, progress_percent: v })} />
+                    <div className="sm:col-span-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+                      Progress is calculated automatically from the completed job number steps.
+                    </div>
+
                     <div className="sm:col-span-2 space-y-2 rounded-md border p-3">
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-semibold">Payment terms</Label>
@@ -479,7 +482,7 @@ function ProjectsPage() {
               ]}
               actions={(p: any) => (
                 <div className="flex justify-end gap-2">
-                  {storeOnly ? (
+                  {viewOnly ? (
                     <span className="text-xs text-muted-foreground">View only</span>
                   ) : (
                     <>
