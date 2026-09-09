@@ -31,6 +31,11 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
   };
 
   const items = ((quotation.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sequence - b.sequence);
+  const bomItems = ((quotation.boms?.bom_items ?? []) as any[])
+    .slice()
+    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  const projectName =
+    quotation.projects?.name || quotation.boms?.title || quotation.site_location || "—";
   const cur = quotation.currency || CURRENCY;
   const preparer = quotation.prepared_by_profile ?? {};
   const preparerName = preparer.full_name || "";
