@@ -14,7 +14,25 @@ export const listApprovals = createServerFn({ method: "GET" })
       .select("*, projects(project_number, name), job_numbers(job_number)")
       .order("submitted_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const rows = data ?? [];
+
+    const ids = [...new Set(rows.map((r) => r.submitted_by).filter(Boolean))] as string[];
+    const names = new Map<string, { full_name: string; designation: string }>();
+    if (ids.length) {
+      const { data: people } = await context.supabase
+        .from("profiles")
+        .select("id, full_name, designation")
+        .in("id", ids);
+      for (const p of people ?? []) {
+        names.set(p.id, { full_name: p.full_name ?? "", designation: p.designation ?? "" });
+      }
+    }
+
+    return rows.map((r) => ({
+      ...r,
+      submitted_by_name: names.get(r.submitted_by)?.full_name ?? "",
+      submitted_by_designation: names.get(r.submitted_by)?.designation ?? "",
+    }));
   });
 
 /** Full detail of the record a request is attached to, for the approver. */

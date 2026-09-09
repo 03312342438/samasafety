@@ -155,7 +155,7 @@ export const saveQuotation = createServerFn({ method: "POST" })
         site_location: z.string().max(500).default(""),
         currency: z.string().max(10).default("BHD"),
         discount_amount: z.number().min(0).default(0),
-        vat_percent: z.number().min(0).max(100).default(15),
+        vat_percent: z.number().min(0).max(100).default(10),
         estimated_cost: z.number().min(0).default(0),
         validity_days: z.number().int().min(0).max(365).default(30),
         payment_terms: z.string().max(500).default(""),
