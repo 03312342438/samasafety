@@ -28,7 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can, hasDept, isStoreOnly, isAccountsOnly } from "@/lib/workflow";
+import { can, hasDept, isStoreOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
 
 
