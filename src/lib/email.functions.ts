@@ -132,7 +132,7 @@ export const emailReport = createServerFn({ method: "POST" })
       throw new Error(formatResendError(res.status, text));
     }
 
-    return { sent: true, count: to.length };
+    return { sent: true, count: to.length, to };
   });
 
 function formatResendError(status: number, body: string) {
