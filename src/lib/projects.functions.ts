@@ -105,7 +105,7 @@ export const saveProject = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { id, ...raw } = data;
+    const { id, payment_terms: paymentTerms, ...raw } = data;
     // Inventory/Store and other departments can view projects but never create or edit them.
     await assertCan(supabase, userId, "project.create");
     const fields = {
@@ -114,10 +114,43 @@ export const saveProject = createServerFn({ method: "POST" })
       target_date: raw.target_date || null,
     };
 
+    // Payment milestones must add up to exactly 100% of the project value.
+    const terms = paymentTerms.filter((t) => t.percent > 0 || t.milestone.trim());
+    if (terms.length) {
+      const total = Math.round(terms.reduce((s, t) => s + t.percent, 0) * 100) / 100;
+      if (total !== 100) {
+        throw new Error(`Payment terms must add up to 100% — they currently total ${total}%.`);
+      }
+    }
+
+    /** Replace the milestones that have not been invoiced yet. */
+    const writeTerms = async (projectId: string) => {
+      if (!terms.length) return;
+      await supabase
+        .from("project_payment_terms")
+        .delete()
+        .eq("project_id", projectId)
+        .neq("status", "invoiced");
+      const { error } = await supabase.from("project_payment_terms").insert(
+        terms.map((t, i) => ({
+          project_id: projectId,
+          sequence: i + 1,
+          percent: t.percent,
+          milestone: t.milestone,
+          trigger_type: t.trigger_type,
+          trigger_steps: t.trigger_type === "steps_completed" ? Math.max(1, t.trigger_steps) : 0,
+          status: "pending",
+        })),
+      );
+      if (error) throw new Error(error.message);
+    };
+
     if (id) {
       const { data: prev } = await supabase.from("projects").select("*").eq("id", id).maybeSingle();
       const { error } = await supabase.from("projects").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
+      await writeTerms(id);
+      await evaluateProjectPaymentTerms(supabase, id);
       await logActivity(supabase, userId, {
         action: "edit",
         entity_table: "projects",
