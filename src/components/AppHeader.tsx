@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly, isAccountsStore, isMaintenanceOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
