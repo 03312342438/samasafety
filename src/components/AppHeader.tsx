@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly, isSalesOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
@@ -60,6 +60,8 @@ export function AppHeader({
   // Store staff work only in Stock, Store, Release Items, Projects and Approvals.
   const inventoryOnly = isStoreOnly(roles, isAdmin);
   const salesOnly = isSalesOnly(roles, isAdmin);
+  // Accounts staff work only in Accounts, Projects (read-only), Suppliers and Approvals.
+  const accountsOnly = isAccountsOnly(roles, isAdmin);
   const isPm = hasDept(roles, "project_manager");
 
   const items: NavItem[] = [
