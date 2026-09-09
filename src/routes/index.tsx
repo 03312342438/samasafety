@@ -11,12 +11,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Sama Portal — the official platform for Sama Safety & Security technicians to complete fire safety maintenance reports and generate signed PDFs.",
+          "Sama Portal — the official platform for Sama Safety & Security teams to manage sales, projects, inventory, accounts, approvals and maintenance reports.",
       },
       { property: "og:title", content: "Sama Safety & Security — Sama Portal" },
       {
         property: "og:description",
-        content: "Complete fire safety maintenance reports and generate signed PDFs.",
+        content: "Manage sales, projects, inventory, accounts, approvals and maintenance reports in one place.",
       },
     ],
   }),
@@ -48,9 +48,8 @@ function Index() {
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">Sama Portal</h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
-            The official platform for Sama Safety &amp; Security teams to create service reports,
-            capture on-screen signatures, schedule recurring visits and download official PDF
-            reports in seconds.
+            The official platform for Sama Safety &amp; Security teams to manage sales, projects,
+            inventory, accounts, approvals and maintenance reports — all in one place.
           </p>
           <div className="mt-8">
             <Button size="lg" className="w-full sm:w-auto" disabled={isNavigating} onClick={handleSignIn}>
