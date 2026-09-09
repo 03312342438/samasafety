@@ -2611,6 +2611,7 @@ export type Database = {
           project_id: string | null
           reference: string
           status: string
+          stock_lot_id: string | null
           supplier_id: string | null
           updated_at: string
         }
@@ -2629,6 +2630,7 @@ export type Database = {
           project_id?: string | null
           reference?: string
           status?: string
+          stock_lot_id?: string | null
           supplier_id?: string | null
           updated_at?: string
         }
@@ -2647,6 +2649,7 @@ export type Database = {
           project_id?: string | null
           reference?: string
           status?: string
+          stock_lot_id?: string | null
           supplier_id?: string | null
           updated_at?: string
         }
@@ -2663,6 +2666,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invoices_stock_lot_id_fkey"
+            columns: ["stock_lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lots"
             referencedColumns: ["id"]
           },
           {

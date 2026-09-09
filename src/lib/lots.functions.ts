@@ -54,10 +54,15 @@ export const saveStockLot = createServerFn({ method: "POST" })
       throw new Error("Only the Store (Inventory) can create a restock lot.");
     }
     const { id, items, ...raw } = data;
+    // One lot carries material from exactly one supplier. Three suppliers = three lots.
+    const supplier = (raw.supplier || "").trim();
+    if (!supplier) {
+      throw new Error("Select the supplier for this lot. A lot can only hold material from one supplier.");
+    }
     const fields = {
       ...raw,
-      supplier: raw.supplier || items.find((i) => i.supplier)?.supplier || "",
-      reference: raw.reference || items.find((i) => i.reference)?.reference || "",
+      supplier,
+      reference: raw.reference || "",
       received_date: raw.received_date || null,
     };
     const total = round2(items.reduce((s, i) => s + i.quantity * i.unit_cost, 0));
@@ -96,8 +101,8 @@ export const saveStockLot = createServerFn({ method: "POST" })
           sequence: index + 1,
           description: byId.get(i.stock_item_id)?.description ?? "",
           unit: byId.get(i.stock_item_id)?.unit ?? "pcs",
-          supplier: i.supplier,
-          reference: i.reference,
+          supplier,
+          reference: i.reference || fields.reference,
           quantity: i.quantity,
           unit_cost: i.unit_cost,
           store_location: i.store_location,

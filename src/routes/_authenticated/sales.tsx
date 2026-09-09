@@ -477,6 +477,7 @@ function SalesPage() {
           {tab === "quotations" && quotationList.map((x) => {
             const appr = approvalState(x.id);
             const isApproved = appr?.label === "Approved";
+            const isMine = !x.created_by || x.created_by === profile?.profile?.id;
             const stages = isApproved
               ? QUOTATION_STAGES.filter(
                   (s) => !["quotation_draft", "technical_review", "quotation_approval"].includes(s),
@@ -503,7 +504,7 @@ function SalesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <QuotationPdfButton quotation={x} customerName={x.customers?.name} />
-                    {!appr && (
+                    {!appr && isMine && (
                       <Button variant="outline" size="sm" onClick={() => askApproval(
                         "quotation_commercial",
                         `A1 — ${x.reference}`,
@@ -515,7 +516,7 @@ function SalesPage() {
                         <ShieldCheck className="mr-1 h-4 w-4" /> Request A1
                       </Button>
                     )}
-                    {!isApproved && (
+                    {!isApproved && isMine && (
                     <Button variant="outline" size="sm" onClick={() => {
                       setQtnForm({
                         ...emptyQuotation, ...x,
@@ -536,7 +537,7 @@ function SalesPage() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     )}
-                    {!isApproved && (
+                    {!isApproved && isMine && (
                     <Button variant="outline" size="sm" onClick={async () => {
                       try { await removeQuotation({ data: { id: x.id } }); refresh(); toast.success("Quotation deleted"); }
                       catch (e) { toast.error(msg(e, "Could not delete")); }

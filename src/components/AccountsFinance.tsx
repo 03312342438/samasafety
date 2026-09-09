@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { listStockLots } from "@/lib/lots.functions";
 import { toast } from "sonner";
 import { Plus, Truck, FileMinus, Coins, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -306,13 +307,13 @@ export function SuppliersTab() {
 // =============================================================== payables ===
 
 const emptySupplierInvoice = {
-  supplier_id: "", project_id: "", job_number_id: "", invoice_number: "",
+  supplier_id: "", project_id: "", stock_lot_id: "", invoice_number: "",
   invoice_date: today(), due_date: "", currency: CURRENCY, amount: "0", notes: "",
 };
 
 export function PayablesTab({
-  projectOptions, jobOptions, isAdmin,
-}: { projectOptions: [string, string][]; jobOptions: [string, string][]; isAdmin?: boolean }) {
+  projectOptions, isAdmin,
+}: { projectOptions: [string, string][]; jobOptions?: [string, string][]; isAdmin?: boolean }) {
   const qc = useQueryClient();
   const fetchSuppliers = useServerFn(listSuppliers);
   const fetchInvoices = useServerFn(listSupplierInvoices);
@@ -324,6 +325,15 @@ export function PayablesTab({
   const { data: suppliers } = useQuery({ queryKey: ["suppliers"], queryFn: () => fetchSuppliers() });
   const { data: invoices } = useQuery({ queryKey: ["supplier-invoices"], queryFn: () => fetchInvoices() });
   const { data: payments } = useQuery({ queryKey: ["supplier-payments"], queryFn: () => fetchPayments() });
+  const fetchLots = useServerFn(listStockLots);
+  const { data: lots } = useQuery({ queryKey: ["stock-lots"], queryFn: () => fetchLots() });
+
+  const lotOptions: [string, string][] = [
+    ["", "— select lot —"],
+    ...((lots as any[]) ?? []).map(
+      (l) => [l.id, `${l.lot_number}${l.supplier ? ` · ${l.supplier}` : ""}`] as [string, string],
+    ),
+  ];
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(emptySupplierInvoice);
@@ -346,7 +356,7 @@ export function PayablesTab({
           ...form,
           supplier_id: form.supplier_id || null,
           project_id: form.project_id || null,
-          job_number_id: form.job_number_id || null,
+          stock_lot_id: form.stock_lot_id || null,
           due_date: form.due_date || null,
           invoice_date: form.invoice_date || null,
           amount: Number(form.amount || 0),
@@ -393,7 +403,7 @@ export function PayablesTab({
             <Picker label="Supplier" value={form.supplier_id} onChange={(v) => setForm({ ...form, supplier_id: v })} options={supplierOptions} />
             <Field label="Invoice number" value={form.invoice_number} onChange={(v) => setForm({ ...form, invoice_number: v })} />
             <Picker label="Project" value={form.project_id} onChange={(v) => setForm({ ...form, project_id: v })} options={projectOptions} />
-            <Picker label="Job number" value={form.job_number_id} onChange={(v) => setForm({ ...form, job_number_id: v })} options={jobOptions} />
+            <Picker label="Lot number" value={form.stock_lot_id} onChange={(v) => setForm({ ...form, stock_lot_id: v })} options={lotOptions} />
             <Field label="Invoice date" type="date" value={form.invoice_date} onChange={(v) => setForm({ ...form, invoice_date: v })} />
             <Field label="Due date" type="date" value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} />
             <Field label="Amount" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} />
@@ -418,7 +428,7 @@ export function PayablesTab({
                   <span className={`rounded-full px-2 py-0.5 text-xs ${statusBadgeClass(i.status)}`}>{humanize(i.status)}</span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {[i.suppliers?.name, i.projects?.project_number, i.job_numbers?.job_number, i.due_date && `due ${i.due_date}`]
+                  {[i.suppliers?.name, i.projects?.project_number, i.stock_lots?.lot_number, i.due_date && `due ${i.due_date}`]
                     .filter(Boolean).join(" · ") || "—"}
                 </p>
                 <p className="mt-1 text-xs">

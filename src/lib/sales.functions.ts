@@ -203,6 +203,11 @@ export const saveQuotation = createServerFn({ method: "POST" })
 
     if (id) {
       const { data: prev } = await supabase.from("quotations").select("*").eq("id", id).maybeSingle();
+      if (prev?.created_by && prev.created_by !== userId) {
+        throw new Error(
+          `Quotation ${prev.reference ?? ""} was prepared by someone else — only the person who created it can edit it.`,
+        );
+      }
       await assertMutable(supabase, userId, {
         approved: ["approved", "accepted", "won"].includes(prev?.status ?? ""),
         label: `Quotation ${prev?.reference ?? ""}`.trim(),
@@ -366,7 +371,16 @@ export const deleteQuotation = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: prev } = await supabase.from("quotations").select("reference, status").eq("id", data.id).maybeSingle();
+    const { data: prev } = await supabase
+      .from("quotations")
+      .select("reference, status, created_by")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (prev?.created_by && prev.created_by !== userId) {
+      throw new Error(
+        `Quotation ${prev.reference ?? ""} was prepared by someone else — only the person who created it can delete it.`,
+      );
+    }
     if (["approved", "accepted", "won"].includes(prev?.status ?? "")) {
       throw new Error(`Quotation ${prev?.reference ?? ""} has been approved — it is undeletable and can no longer be removed.`);
     }
