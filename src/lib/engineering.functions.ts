@@ -67,7 +67,7 @@ export const saveBom = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { id, items, ...raw } = data;
+    const { id, items, kind, ...raw } = data;
     const estimated_cost = round2(items.reduce((s, i) => s + i.quantity * i.unit_cost, 0));
     const fields = { ...raw, estimated_cost };
 
