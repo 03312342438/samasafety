@@ -125,6 +125,11 @@ function Dashboard() {
     );
   }
 
+  // Accounts staff have no maintenance section — send them to the finance area.
+  if (accountsOnly) {
+    return <Navigate to="/accounts" replace />;
+  }
+
   // Store staff have no dashboard section — send them straight to the Store.
   if (isInventoryOnly) {
     return <Navigate to="/stock" replace />;
