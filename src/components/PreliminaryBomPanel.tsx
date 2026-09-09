@@ -232,16 +232,16 @@ export function PreliminaryBomPanel() {
                 return (
                   <div key={idx} className="grid grid-cols-12 items-center gap-2">
                     <select
-                      className="col-span-3 h-9 rounded-md border bg-background px-2 text-sm"
+                      className="col-span-4 h-9 rounded-md border bg-background px-2 text-sm"
                       value={l.stock_item_id}
                       onChange={(e) => pickItem(idx, e.target.value)}
                     >
-                      <option value="">— item code —</option>
+                      <option value="">— item code / description —</option>
                       {approvedStock.map((s) => (
-                        <option key={s.id} value={s.id}>{s.item_code}</option>
+                        <option key={s.id} value={s.id}>{s.item_code} — {s.description}</option>
                       ))}
                     </select>
-                    <Input className="col-span-3" readOnly placeholder="Description" value={l.description} />
+                    <Input className="col-span-2" readOnly placeholder="Description" value={l.description} />
                     <Input className="col-span-1" readOnly placeholder="UOM" value={l.unit} />
                     <Input
                       className={cn("col-span-1", short && "border-orange-500 bg-orange-50 text-orange-700")}

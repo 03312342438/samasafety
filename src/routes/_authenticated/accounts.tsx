@@ -26,7 +26,7 @@ import { submitApproval } from "@/lib/approvals.functions";
 import { UomSelect } from "@/components/UomSelect";
 import { can, humanize, statusBadgeClass } from "@/lib/workflow";
 import {
-  FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
+  FinanceDashboard, SuppliersTab, PayablesTab, CostsTab,
 } from "@/components/AccountsFinance";
 import { ReceivablesOverview, ReceivablesTable } from "@/components/Receivables";
 
@@ -379,7 +379,6 @@ function AccountsPage() {
             { value: "suppliers", label: "Suppliers" },
             { value: "payables", label: "Payables" },
             { value: "costs", label: "Project costs" },
-            { value: "notes", label: "Credit / debit notes" },
           ]}
         />
 
@@ -396,13 +395,6 @@ function AccountsPage() {
             <PayablesTab projectOptions={projectOptions} jobOptions={jobOptions} isAdmin={profile?.isAdmin} />
           )}
           {tab === "costs" && <CostsTab projectOptions={projectOptions} jobOptions={jobOptions} />}
-          {tab === "notes" && (
-            <CreditNotesTab
-              invoiceOptions={invoiceOptions}
-              customerOptions={customerOptions}
-              isAdmin={profile?.isAdmin}
-            />
-          )}
 
           {tab === "invoices" &&
             invoiceList.map((i: any) => {
