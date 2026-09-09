@@ -90,6 +90,16 @@ export const saveProject = createServerFn({ method: "POST" })
         project_manager_id: z.string().uuid().nullable().default(null),
         progress_percent: z.number().int().min(0).max(100).default(0),
         notes: z.string().max(4000).default(""),
+        payment_terms: z
+          .array(
+            z.object({
+              percent: z.number().min(0).max(100),
+              milestone: z.string().max(300).default(""),
+              trigger_type: z.enum(TRIGGER_TYPES).default("project_start"),
+              trigger_steps: z.number().int().min(0).max(200).default(0),
+            }),
+          )
+          .default([]),
       })
       .parse(input),
   )
