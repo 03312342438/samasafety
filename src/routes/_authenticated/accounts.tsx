@@ -373,6 +373,7 @@ function AccountsPage() {
           onChange={setTab}
           tabs={[
             { value: "dashboard", label: "Dashboard" },
+            { value: "receivables", label: "Receivables" },
             { value: "invoices", label: "Invoices" },
             { value: "payments", label: "Payments" },
             { value: "suppliers", label: "Suppliers" },
