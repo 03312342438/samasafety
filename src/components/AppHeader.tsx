@@ -124,7 +124,7 @@ export function AppHeader({
     ...(inventoryOnly || accountsOnly
       ? []
       : [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem]),
-    { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
+    { to: "/accounts", label: "Accounts", icon: Receipt, show: !accountsStore && (!!isAdmin || hasDept(roles, "accounts")) },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
     ];
