@@ -35,6 +35,7 @@ export const DESIGNATIONS: { value: string; department: Department }[] = [
   { value: "Installation & Maintenance", department: "technician" },
   { value: "Accounts", department: "accounts" },
   { value: "Technician", department: "technician" },
+  { value: "Maintenance", department: "maintenance" },
 ];
 
 export function departmentForDesignation(designation: string): Department {
