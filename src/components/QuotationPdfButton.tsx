@@ -135,6 +135,10 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
 
           <table style={{ marginTop: 12, marginLeft: "auto", borderCollapse: "collapse", minWidth: 340 }}>
             <tbody>
+              <Row label="Subtotal (Excluding VAT)" value={`${cur} ${money(quotation.subtotal)}`} />
+              {Number(quotation.discount_amount ?? 0) > 0 && (
+                <Row label="Discount" value={`- ${cur} ${money(quotation.discount_amount)}`} />
+              )}
               <Row label="Lumpsum Price (Excluding VAT)" value={`${cur} ${money(net)}`} />
               <Row label={`${Number(quotation.vat_percent ?? 0)}% VAT`} value={`${cur} ${money(vatAmount)}`} />
               <tr>
