@@ -259,13 +259,58 @@ function ProjectsPage() {
                     <Field label="Start date" type="date" value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
                     <Field label="Target date" type="date" value={form.target_date} onChange={(v) => setForm({ ...form, target_date: v })} />
                     <Field label="Progress %" value={form.progress_percent} onChange={(v) => setForm({ ...form, progress_percent: v })} />
+                    <div className="sm:col-span-2 space-y-2 rounded-md border p-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold">Payment terms</Label>
+                        <span className={`text-xs ${termsTotal === 100 ? "text-emerald-600" : "text-destructive"}`}>
+                          Total {termsTotal}% (must be 100%)
+                        </span>
+                      </div>
+                      {form.payment_terms.map((t: any, i: number) => (
+                        <div key={i} className="grid gap-2 sm:grid-cols-[80px_1fr_170px_90px_auto]">
+                          <Input
+                            placeholder="%" value={t.percent}
+                            onChange={(e) => updateTerm(i, { percent: e.target.value })}
+                          />
+                          <Input
+                            placeholder="Milestone / description" value={t.milestone}
+                            onChange={(e) => updateTerm(i, { milestone: e.target.value })}
+                          />
+                          <select
+                            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                            value={t.trigger_type}
+                            onChange={(e) => updateTerm(i, { trigger_type: e.target.value })}
+                          >
+                            {TRIGGER_TYPES.map((tt) => (
+                              <option key={tt} value={tt}>{TRIGGER_LABELS[tt]}</option>
+                            ))}
+                          </select>
+                          <Input
+                            placeholder="Steps"
+                            disabled={t.trigger_type !== "steps_completed"}
+                            value={t.trigger_steps}
+                            onChange={(e) => updateTerm(i, { trigger_steps: e.target.value })}
+                          />
+                          <Button variant="ghost" size="icon" onClick={() => removeTerm(i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm" onClick={addTerm}>
+                        <Plus className="mr-1 h-3 w-3" /> Add payment term
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground">
+                        Accounts are notified automatically when a milestone is reached.
+                      </p>
+                    </div>
+
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={submitProject} disabled={!form.name.trim()}>Save</Button>
+                    <Button onClick={submitProject} disabled={!form.name.trim() || termsTotal !== 100}>Save</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
