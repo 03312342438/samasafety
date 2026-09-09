@@ -515,3 +515,19 @@ export const deleteJobNumber = createServerFn({ method: "POST" })
 
 // Job numbers are submitted directly to Management by Installation & Maintenance
 // or Project Managers. Management makes the only approval decision in Approvals.
+
+// ------------------------------------------------------ payment milestones ---
+
+/** The billing milestones attached to a project. */
+export const listProjectPaymentTerms = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ project_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("project_payment_terms")
+      .select("*")
+      .eq("project_id", data.project_id)
+      .order("sequence");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
