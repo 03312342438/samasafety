@@ -27,7 +27,7 @@ import {
 import { listBoms } from "@/lib/engineering.functions";
 import { listCustomerPos } from "@/lib/sales.functions";
 
-import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly } from "@/lib/workflow";
+import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly, isAccountsStore } from "@/lib/workflow";
 import { DEFAULT_PAYMENT_TERMS, TRIGGER_TYPES, TRIGGER_LABELS } from "@/lib/payment-terms";
 import { FilterTable } from "@/components/FilterTable";
 
