@@ -54,6 +54,14 @@ const SALES_GATES: Record<string, string> = {
   commercial_review: "Commercial review",
 };
 
+/** Accounts (Finance) + Store accounts may only raise these three requests. */
+const ACCOUNTS_STORE_GATES: Record<string, string> = {
+  material_request: "Material request approval",
+  stock_lot: "Restock lot approval",
+  payment_received: "Customer payment approval",
+};
+
+
 const money = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3 });
 
 function ApprovalsPage() {
