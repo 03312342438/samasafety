@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { PackageMinus, Plus, Trash2, Send, HardHat, Boxes } from "lucide-react";
+import { PackageMinus, Plus, Trash2, Send, HardHat, Boxes, ChevronDown, ChevronRight } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
@@ -44,6 +44,7 @@ function ReleasesPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState("job");
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState("");
 
   const fetchReleases = useServerFn(listStockReleases);
   const fetchJobs = useServerFn(listReleasableJobs);
@@ -364,12 +365,23 @@ function ReleasesPage() {
 
         {tab === "history" && (
           <div className="mt-4 space-y-3">
-            {history.map((r: any) => (
+            {history.map((r: any) => {
+              const open = expanded === r.id;
+              return (
               <Card key={r.id}>
                 <CardContent className="space-y-2 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => setExpanded(open ? "" : r.id)}
+                    >
                       <div className="flex flex-wrap items-center gap-2">
+                        {open ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
                         {r.release_kind === "job" ? (
                           <HardHat className="h-4 w-4 text-muted-foreground" />
                         ) : (
@@ -388,8 +400,11 @@ function ReleasesPage() {
                           .filter(Boolean).join(" · ") || "—"} · {(r.stock_release_items ?? []).length} line(s) ·{" "}
                         {CURRENCY} {Number(r.total_value ?? 0).toFixed(3)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
-                    </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(r.created_at).toLocaleString()} ·{" "}
+                        {open ? "Hide released items" : "Click to see released items"}
+                      </p>
+                    </button>
                     {(isAdmin || r.status !== "released") && (
                       <Button variant="outline" size="sm" onClick={async () => {
                         try { await remove({ data: { id: r.id } }); toast.success("Release removed"); refresh(); }
@@ -400,6 +415,7 @@ function ReleasesPage() {
                     )}
                   </div>
 
+                  {open && (
                   <div className="overflow-x-auto rounded-md border">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50 text-xs">
@@ -421,17 +437,23 @@ function ReleasesPage() {
                             <td className="px-2 py-1.5">{i.remarks || "—"}</td>
                           </tr>
                         ))}
+                        {(r.stock_release_items ?? []).length === 0 && (
+                          <tr><td colSpan={4} className="px-2 py-3 text-center text-muted-foreground">No items on this release.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
+                  )}
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
             {history.length === 0 && (
               <p className="py-10 text-center text-sm text-muted-foreground">No releases yet.</p>
             )}
           </div>
         )}
+
       </main>
     </div>
   );
