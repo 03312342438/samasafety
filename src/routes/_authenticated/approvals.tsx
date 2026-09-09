@@ -107,7 +107,10 @@ function ApprovalsPage() {
     enabled: !!detailId,
   });
 
-  const gates = isSales ? SALES_GATES : APPROVAL_TYPE_LABELS;
+  const accountsStore = isAccountsStore(profile?.roles, isAdmin);
+  const gates = isSales ? SALES_GATES : accountsStore ? ACCOUNTS_STORE_GATES : APPROVAL_TYPE_LABELS;
+  const defaultGate = Object.keys(gates)[0] ?? "quotation_commercial";
+
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["approvals"] });
