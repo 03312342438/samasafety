@@ -183,10 +183,12 @@ function Dashboard() {
               ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
               : []),
             ...(canFillReport && !isAdmin
-              ? [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]
+              ? [
+                  { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
+                  { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
+                  { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
+                ]
               : []),
-            { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</> },
-            { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
         />
 
