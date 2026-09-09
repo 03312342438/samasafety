@@ -87,7 +87,11 @@ function ProjectsPage() {
     !hasDept(profile?.roles, "sales") &&
     !hasDept(profile?.roles, "accounts");
   // Accounts staff read the project list for billing, but never change it.
-  const viewOnly = storeOnly || isAccountsOnly(profile?.roles, profile?.isAdmin);
+  const viewOnly =
+    storeOnly ||
+    isAccountsOnly(profile?.roles, profile?.isAdmin) ||
+    isAccountsStore(profile?.roles, profile?.isAdmin);
+
   const activeTab = salesOnly ? "projects" : tab;
 
 
