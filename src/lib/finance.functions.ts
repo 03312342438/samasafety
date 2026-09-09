@@ -128,7 +128,7 @@ export const listSupplierInvoices = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("supplier_invoices")
-      .select("*, suppliers(name), projects(project_number, name), job_numbers(job_number)")
+      .select("*, suppliers(name), projects(project_number, name), job_numbers(job_number), stock_lots(lot_number, supplier)")
       .order("created_at", { ascending: false })
       .limit(300);
     if (error) throw new Error(error.message);
@@ -144,6 +144,7 @@ export const saveSupplierInvoice = createServerFn({ method: "POST" })
         supplier_id: z.string().uuid().nullable().default(null),
         project_id: z.string().uuid().nullable().default(null),
         job_number_id: z.string().uuid().nullable().default(null),
+        stock_lot_id: z.string().uuid().nullable().default(null),
         invoice_number: z.string().max(120).default(""),
         invoice_date: z.string().nullable().default(null),
         due_date: z.string().nullable().default(null),
