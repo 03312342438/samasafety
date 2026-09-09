@@ -169,6 +169,8 @@ export const saveProject = createServerFn({ method: "POST" })
       .select("id, project_number")
       .single();
     if (error) throw new Error(error.message);
+    await writeTerms(created.id);
+    await evaluateProjectPaymentTerms(supabase, created.id);
     await logActivity(supabase, userId, {
       action: "create",
       entity_table: "projects",
