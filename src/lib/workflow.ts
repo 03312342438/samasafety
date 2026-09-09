@@ -223,7 +223,10 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
   commercial_review: "Commercial review",
   item_code: "Item code approval",
   stock_lot: "Restock lot approval",
+  material_request: "Material request approval",
+  payment_received: "Customer payment approval",
 };
+
 
 /** Fixed store categories — the only categories an item may be filed under. */
 export const STOCK_CATEGORIES = [
