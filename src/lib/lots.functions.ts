@@ -26,6 +26,7 @@ const lotItemSchema = z.object({
   stock_item_id: z.string().uuid(),
   supplier: z.string().max(200).default(""),
   reference: z.string().max(120).default(""),
+
   quantity: z.number().min(0).default(0),
   unit_cost: z.number().min(0).default(0),
   store_location: z.string().max(200).default(""),
