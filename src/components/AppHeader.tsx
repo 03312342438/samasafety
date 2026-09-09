@@ -62,6 +62,9 @@ export function AppHeader({
   const salesOnly = isSalesOnly(roles, isAdmin);
   // Accounts staff work only in Accounts, Projects (read-only), Suppliers and Approvals.
   const accountsOnly = isAccountsOnly(roles, isAdmin);
+  // Finance + Store combined account: no maintenance dashboard, no planning.
+  const accountsStore = isAccountsStore(roles, isAdmin);
+
   const isPm = hasDept(roles, "project_manager");
 
   // Maintenance staff only ever see the maintenance report area.
