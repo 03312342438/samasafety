@@ -18,7 +18,7 @@ function resolveFrom() {
     );
   }
   // Allow either a bare address or already-formatted "Name <email>".
-  return raw.includes("<") ? raw : `${FROM_NAME} <${email}>`;
+  return raw.includes("<") ? raw : `${fromName()} <${email}>`;
 }
 
 const emailSchema = z.object({
