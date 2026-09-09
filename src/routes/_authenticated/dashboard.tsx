@@ -166,7 +166,11 @@ function Dashboard() {
         )}
         <div className="mb-5">
           <h1 className="text-2xl font-bold">
-            {isAdmin ? "Management Dashboard" : "Maintenance Service Reports"}
+            {isAdmin
+              ? "Management Dashboard"
+              : maintenanceOnly
+                ? "Maintenance"
+                : "Maintenance Service Reports"}
           </h1>
           <p className="text-sm text-muted-foreground">
             {isAdmin
