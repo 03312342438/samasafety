@@ -48,7 +48,8 @@ const DEFAULT_PAYMENT_TERMS = "50% Advance, 40% on progress and 10% after testin
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
 
 const emptyQuotation = {
-  inquiry_id: "", customer_id: "", title: "", site_location: "", currency: "BHD",
+  inquiry_id: "", customer_id: "", project_id: "", attention: "",
+  title: "", site_location: "", currency: "BHD",
   discount_amount: "0", vat_percent: "15", estimated_cost: "0", validity_days: "30",
   payment_terms: DEFAULT_PAYMENT_TERMS, delivery_terms: "", scope_notes: "",
   // Sales cost build-up: material comes from the preliminary BOM, the rest is typed in.
