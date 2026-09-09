@@ -92,6 +92,7 @@ export function PreliminaryBomPanel() {
           project_id: projectId || null,
           customer_id: project?.customer_id ?? null,
           title: title || project?.name || "Preliminary BOM/BOS",
+          kind: "preliminary",
           bom_type: "material",
           currency: CURRENCY,
           items: lines

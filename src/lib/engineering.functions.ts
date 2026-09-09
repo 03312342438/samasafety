@@ -56,6 +56,7 @@ export const saveBom = createServerFn({ method: "POST" })
         customer_id: z.string().uuid().nullable().default(null),
         title: z.string().max(300).default(""),
         bom_type: z.enum(["material", "service"]).default("material"),
+        kind: z.enum(["preliminary", "actual"]).default("actual"),
         currency: z.string().max(10).default("BHD"),
         stage: z.string().max(60).default("bom_bos_preparation"),
         status: z.string().max(40).default("draft"),
@@ -66,7 +67,7 @@ export const saveBom = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { id, items, ...raw } = data;
+    const { id, items, kind, ...raw } = data;
     const estimated_cost = round2(items.reduce((s, i) => s + i.quantity * i.unit_cost, 0));
     const fields = { ...raw, estimated_cost };
 
@@ -103,7 +104,12 @@ export const saveBom = createServerFn({ method: "POST" })
       });
     } else {
       await assertCan(supabase, userId, "bom.create");
-      reference = await nextSequence(supabase, "boms", "reference", "BOM");
+      reference = await nextSequence(
+        supabase,
+        "boms",
+        "reference",
+        kind === "preliminary" ? "PBOM" : "BOM",
+      );
       const { data: created, error } = await supabase
         .from("boms")
         .insert({ ...fields, reference, prepared_by: userId, created_by: userId })
