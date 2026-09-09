@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly, isAccountsStore, isMaintenanceOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
@@ -62,6 +62,9 @@ export function AppHeader({
   const salesOnly = isSalesOnly(roles, isAdmin);
   // Accounts staff work only in Accounts, Projects (read-only), Suppliers and Approvals.
   const accountsOnly = isAccountsOnly(roles, isAdmin);
+  // Finance + Store combined account: no maintenance dashboard, no planning.
+  const accountsStore = isAccountsStore(roles, isAdmin);
+
   const isPm = hasDept(roles, "project_manager");
 
   // Maintenance staff only ever see the maintenance report area.
@@ -71,6 +74,7 @@ export function AppHeader({
     ? [{ to: "/dashboard", label: "Maintenance", icon: FileText, show: true }]
     : [
     ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
+    ...(accountsStore ? [{ to: "/accounts", label: "Accounts", icon: Receipt, show: true } as NavItem] : []),
     ...(isPm && !isAdmin
       ? [{ to: "/overview", label: "Dashboard", icon: LayoutDashboard, show: true } as NavItem]
       : []),
@@ -78,7 +82,7 @@ export function AppHeader({
       to: "/dashboard",
       label: isPm && !isAdmin ? "Maintenance" : "Dashboard",
       icon: FileText,
-      show: !inventoryOnly && !accountsOnly,
+      show: !inventoryOnly && !accountsOnly && !accountsStore,
       ...(isPm && !isAdmin ? { search: { view: "maintenance" } } : {}),
     },
     { to: "/customers", label: "Customers", icon: Building2, show: !!isAdmin || canSeeCustomers },
@@ -89,8 +93,9 @@ export function AppHeader({
     { to: "/projects", label: "Projects", icon: FolderKanban, show: !!isAdmin || canSeeProjects },
     {
       to: "/engineering", label: "Planning", icon: ClipboardList,
-      show: !inventoryOnly && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
+      show: !inventoryOnly && !accountsStore && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
     },
+
     {
       to: "/inventory", label: "Store", icon: Boxes,
       show: !!isAdmin || hasDept(roles, "inventory") || hasDept(roles, "project_manager"),
@@ -119,7 +124,7 @@ export function AppHeader({
     ...(inventoryOnly || accountsOnly
       ? []
       : [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem]),
-    { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
+    { to: "/accounts", label: "Accounts", icon: Receipt, show: !accountsStore && (!!isAdmin || hasDept(roles, "accounts")) },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
     ];

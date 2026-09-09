@@ -28,7 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can, hasDept, isStoreOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
+import { can, hasDept, isStoreOnly, isAccountsOnly, isAccountsStore, isMaintenanceOnly } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
 
 
@@ -58,7 +58,7 @@ function Dashboard() {
   });
   // Only Project Manager, Installation & Maintenance and Maintenance staff
   // may see the maintenance service report area at all.
-  const accountsOnly = isAccountsOnly(profile?.roles, isAdmin);
+  const accountsOnly = isAccountsOnly(profile?.roles, isAdmin) || isAccountsStore(profile?.roles, isAdmin);
   const canFillReport = can(profile?.roles, "report.fill") && !accountsOnly;
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales") && !accountsOnly;
   const isInventoryOnly = isStoreOnly(profile?.roles, isAdmin);

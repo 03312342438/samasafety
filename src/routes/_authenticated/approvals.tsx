@@ -21,7 +21,7 @@ import {
 import { listActivity } from "@/lib/notifications.functions";
 import { listProjects } from "@/lib/projects.functions";
 import { listQuotations, listCustomerPos } from "@/lib/sales.functions";
-import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass, hasDept } from "@/lib/workflow";
+import { APPROVAL_TYPE_LABELS, humanize, statusBadgeClass, hasDept, isAccountsStore } from "@/lib/workflow";
 
 export const Route = createFileRoute("/_authenticated/approvals")({
   component: ApprovalsPage,
@@ -53,6 +53,14 @@ const SALES_GATES: Record<string, string> = {
   customer_po: "Purchase Order approval",
   commercial_review: "Commercial review",
 };
+
+/** Accounts (Finance) + Store accounts may only raise these three requests. */
+const ACCOUNTS_STORE_GATES: Record<string, string> = {
+  material_request: "Material request approval",
+  stock_lot: "Restock lot approval",
+  payment_received: "Customer payment approval",
+};
+
 
 const money = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3 });
 
@@ -99,7 +107,10 @@ function ApprovalsPage() {
     enabled: !!detailId,
   });
 
-  const gates = isSales ? SALES_GATES : APPROVAL_TYPE_LABELS;
+  const accountsStore = isAccountsStore(profile?.roles, isAdmin);
+  const gates = isSales ? SALES_GATES : accountsStore ? ACCOUNTS_STORE_GATES : APPROVAL_TYPE_LABELS;
+  const defaultGate = Object.keys(gates)[0] ?? "quotation_commercial";
+
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["approvals"] });
@@ -202,7 +213,7 @@ function ApprovalsPage() {
               Store lots are submitted from the Store screen, not here. */}
           {!isAdmin && !isStoreOnly && (
 
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(emptyRequest); }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); setForm({ ...emptyRequest, approval_type: o ? defaultGate : emptyRequest.approval_type }); }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Request approval</Button>
             </DialogTrigger>
