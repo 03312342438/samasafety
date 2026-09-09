@@ -88,6 +88,13 @@ export function ManagementOverview() {
 
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Invoicing &amp; payments
+        </h2>
+        <ReceivablesOverview />
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Sales &amp; pipeline
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
