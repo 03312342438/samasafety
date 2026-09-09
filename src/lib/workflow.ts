@@ -10,6 +10,7 @@ export type Department =
   | "project_manager"
   | "inventory"
   | "technician"
+  | "maintenance"
   | "accounts"
   | "employee";
 
@@ -19,6 +20,7 @@ export const DEPARTMENTS: { value: Department; label: string; description: strin
   { value: "project_manager", label: "Project Manager", description: "Planning, BOM/BOS, job numbers" },
   { value: "inventory", label: "Inventory / Store", description: "Stock, reservations, material issue" },
   { value: "technician", label: "Installation & Maintenance", description: "Site work, reports, daily progress" },
+  { value: "maintenance", label: "Maintenance", description: "Maintenance service reports only" },
   { value: "accounts", label: "Accounts", description: "Invoices, payments, project costs" },
 ];
 
@@ -33,6 +35,7 @@ export const DESIGNATIONS: { value: string; department: Department }[] = [
   { value: "Installation & Maintenance", department: "technician" },
   { value: "Accounts", department: "accounts" },
   { value: "Technician", department: "technician" },
+  { value: "Maintenance", department: "maintenance" },
 ];
 
 export function departmentForDesignation(designation: string): Department {
@@ -46,6 +49,7 @@ export const DEPARTMENT_LABELS: Record<string, string> = {
   project_manager: "Project Manager",
   inventory: "Inventory",
   technician: "Technician",
+  maintenance: "Maintenance",
   accounts: "Accounts",
   employee: "Technician",
 };
@@ -92,6 +96,15 @@ export function isSalesOnly(roles: string[] | undefined, isAdmin?: boolean): boo
 export function isAccountsOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
   const real = (roles ?? []).filter((r) => r !== "employee");
   return !isAdmin && real.includes("accounts") && real.every((r) => r === "accounts");
+}
+
+/**
+ * Maintenance-only account: sees nothing but the maintenance service reports
+ * (new report, history and pending maintenance).
+ */
+export function isMaintenanceOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
+  const real = (roles ?? []).filter((r) => r !== "employee");
+  return !isAdmin && real.includes("maintenance") && real.every((r) => r === "maintenance");
 }
 
 // --------------------------------------------------------------------------
@@ -263,7 +276,7 @@ export type Capability =
   | "management.analytics";
 
 const MATRIX: Record<Capability, Department[]> = {
-  "report.fill": ["technician"],
+  "report.fill": ["technician", "maintenance", "project_manager"],
   "customer.manage": ["sales"],
   "sales.manage": ["sales"],
   "project.create": ["project_manager", "sales"],

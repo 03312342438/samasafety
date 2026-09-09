@@ -28,7 +28,7 @@ import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
 import { downloadReportsExcel } from "@/lib/export-reports-excel";
-import { can, hasDept, isStoreOnly, isAccountsOnly } from "@/lib/workflow";
+import { can, hasDept, isStoreOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
 import { SalesDashboard } from "@/components/SalesDashboard";
 
 
@@ -56,11 +56,14 @@ function Dashboard() {
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
     queryFn: () => (isAdmin ? fetchAllTasks() : fetchMyTasks()),
   });
-  // Only Installation & Maintenance / Technician staff may fill service reports.
+  // Only Project Manager, Installation & Maintenance and Maintenance staff
+  // may see the maintenance service report area at all.
   const accountsOnly = isAccountsOnly(profile?.roles, isAdmin);
   const canFillReport = can(profile?.roles, "report.fill") && !accountsOnly;
   const isSalesOnly = !isAdmin && hasDept(profile?.roles, "sales") && !accountsOnly;
   const isInventoryOnly = isStoreOnly(profile?.roles, isAdmin);
+  // Maintenance staff see nothing but the three maintenance report tabs.
+  const maintenanceOnly = isMaintenanceOnly(profile?.roles, isAdmin);
 
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
@@ -163,7 +166,11 @@ function Dashboard() {
         )}
         <div className="mb-5">
           <h1 className="text-2xl font-bold">
-            {isAdmin ? "Management Dashboard" : "Maintenance Service Reports"}
+            {isAdmin
+              ? "Management Dashboard"
+              : maintenanceOnly
+                ? "Maintenance"
+                : "Maintenance Service Reports"}
           </h1>
           <p className="text-sm text-muted-foreground">
             {isAdmin
@@ -180,10 +187,12 @@ function Dashboard() {
               ? [{ value: "overview", label: (<><LayoutDashboard className="mr-1 h-4 w-4" /> Overview</>) }]
               : []),
             ...(canFillReport && !isAdmin
-              ? [{ value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) }]
+              ? [
+                  { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
+                  { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
+                  { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
+                ]
               : []),
-            { value: "history", label: <><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</> },
-            { value: "maintenance", label: <><CalendarClock className="mr-1 h-4 w-4" /> Maintenance ({pending.length})</> },
           ]}
         />
 
@@ -200,13 +209,13 @@ function Dashboard() {
             />
           </div>
         )}
-        {activeTab === "history" && (
+        {activeTab === "history" && canFillReport && !isAdmin && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
           </div>
         )}
 
-        {activeTab === "maintenance" && (
+        {activeTab === "maintenance" && canFillReport && !isAdmin && (
           <div className="mt-5 space-y-6">
             <SearchInput
               value={taskQuery}

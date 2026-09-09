@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 
-import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly } from "@/lib/workflow";
+import { hasDept, isStoreOnly, isSalesOnly, isAccountsOnly, isMaintenanceOnly } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: typeof FileText; show: boolean; search?: Record<string, string> };
@@ -64,7 +64,12 @@ export function AppHeader({
   const accountsOnly = isAccountsOnly(roles, isAdmin);
   const isPm = hasDept(roles, "project_manager");
 
-  const items: NavItem[] = [
+  // Maintenance staff only ever see the maintenance report area.
+  const maintenanceOnly = isMaintenanceOnly(roles, isAdmin);
+
+  const items: NavItem[] = maintenanceOnly
+    ? [{ to: "/dashboard", label: "Maintenance", icon: FileText, show: true }]
+    : [
     ...(inventoryOnly ? [{ to: "/stock", label: "Stock", icon: PackageSearch, show: true } as NavItem] : []),
     ...(isPm && !isAdmin
       ? [{ to: "/overview", label: "Dashboard", icon: LayoutDashboard, show: true } as NavItem]
@@ -117,7 +122,7 @@ export function AppHeader({
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !!isAdmin || hasDept(roles, "accounts") },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
-  ];
+    ];
 
 
 
