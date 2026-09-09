@@ -205,7 +205,7 @@ function Dashboard() {
             />
           </div>
         )}
-        {activeTab === "history" && (
+        {activeTab === "history" && canFillReport && !isAdmin && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
           </div>
