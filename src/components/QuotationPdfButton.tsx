@@ -88,8 +88,8 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
             </tbody>
           </table>
 
-          <p style={{ marginTop: 12 }}>Dear Sir,</p>
-          <div><strong>PROJECT</strong> : {quotation.site_location || "—"}</div>
+          <p style={{ marginTop: 12 }}>Dear Sir/Madam,</p>
+          <div><strong>PROJECT</strong> : {projectName}</div>
           <div><strong>SUBJECT</strong> : {quotation.title || "—"}</div>
 
           <div style={{ textAlign: "center", marginTop: 12 }}>
@@ -97,11 +97,12 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
           </div>
 
           <p style={{ marginTop: 8, fontSize: 11 }}>
-            Further to the above mentioned subject and based on your inquiry we are pleased to submit our best
-            offer for the above mentioned project. Please find below our financial offer for the following systems.
+            Further to the above mentioned subject &amp; Based on your inquiry we are please to submit our best
+            offer for the above mention project. Please find attached our financial offer for details of the
+            following system.
           </p>
 
-          {items.length > 0 && (
+          {(bomItems.length > 0 || items.length > 0) && (
             <table style={{ width: "100%", marginTop: 10, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#103a52", color: "#ffffff" }}>
@@ -109,26 +110,24 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
                   <th style={{ ...th, textAlign: "left" }}>DESCRIPTION</th>
                   <th style={th}>QTY</th>
                   <th style={th}>UNIT</th>
-                  <th style={th}>TOTAL PRICE {cur}</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((it, i) => (
+                {[...bomItems, ...items].map((it: any, i: number) => (
                   <tr key={it.id ?? i}>
                     <td style={td}>{i + 1}</td>
                     <td style={{ ...td, textAlign: "left" }}>{it.description}</td>
                     <td style={td}>{it.quantity}</td>
                     <td style={td}>{it.unit}</td>
-                    <td style={td}>{money(it.amount)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
 
-          <table style={{ marginTop: 12, marginLeft: "auto", borderCollapse: "collapse", minWidth: 320 }}>
+          <table style={{ marginTop: 12, marginLeft: "auto", borderCollapse: "collapse", minWidth: 340 }}>
             <tbody>
-              <Row label="Sub Total (Excluding VAT)" value={`${cur} ${money(net)}`} />
+              <Row label="Lumpsum Price (Excluding VAT)" value={`${cur} ${money(net)}`} />
               <Row label={`${Number(quotation.vat_percent ?? 0)}% VAT`} value={`${cur} ${money(vatAmount)}`} />
               <tr>
                 <td style={{ ...td, textAlign: "left", fontWeight: 700, background: "#e2e8f0" }}>Grand Total (Including VAT)</td>
@@ -148,16 +147,16 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
           <p style={{ marginTop: 14, fontSize: 11 }}>
             We trust our requirement and looking forward for your valued order for the above project. Should you
             require any further clarification or assistance, please do not hesitate to contact to
-            {" "}{preparerName || "our office"}{preparerPhone ? ` on ${preparerPhone}` : ""}.
+            {" "}Mr. {preparerName || "our office"}{preparerPhone ? ` on ${preparerPhone}` : ""}.
           </p>
 
           <div style={{ marginTop: 24, fontSize: 11 }}>
             <p style={{ margin: 0 }}>Thanks &amp; Best Regards,</p>
             <p style={{ margin: 0 }}>Sincerely,</p>
             <p style={{ margin: 0 }}>For, SAMA Safety &amp; Security,</p>
-            <div style={{ marginTop: 34, borderTop: "1px solid #94a3b8", width: 220 }} />
-            <p style={{ margin: 0, fontWeight: 700 }}>{preparerName || "Authorised signatory"}</p>
-            {preparerPhone && <p style={{ margin: 0 }}>Mob: {preparerPhone}</p>}
+            <p style={{ margin: "12px 0 0", fontWeight: 700 }}>Mr Ali Yousif Awachi</p>
+            <p style={{ margin: 0 }}>General Manager</p>
+            <p style={{ margin: 0 }}>Ph: +973 39400147</p>
           </div>
         </div>
       </div>
