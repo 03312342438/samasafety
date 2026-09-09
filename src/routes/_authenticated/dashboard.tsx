@@ -211,7 +211,7 @@ function Dashboard() {
           </div>
         )}
 
-        {activeTab === "maintenance" && (
+        {activeTab === "maintenance" && canFillReport && !isAdmin && (
           <div className="mt-5 space-y-6">
             <SearchInput
               value={taskQuery}
