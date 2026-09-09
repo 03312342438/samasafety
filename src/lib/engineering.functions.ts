@@ -104,7 +104,12 @@ export const saveBom = createServerFn({ method: "POST" })
       });
     } else {
       await assertCan(supabase, userId, "bom.create");
-      reference = await nextSequence(supabase, "boms", "reference", "BOM");
+      reference = await nextSequence(
+        supabase,
+        "boms",
+        "reference",
+        kind === "preliminary" ? "PBOM" : "BOM",
+      );
       const { data: created, error } = await supabase
         .from("boms")
         .insert({ ...fields, reference, prepared_by: userId, created_by: userId })
