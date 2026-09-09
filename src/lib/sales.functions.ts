@@ -149,6 +149,8 @@ export const saveQuotation = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         inquiry_id: z.string().uuid().nullable().default(null),
         customer_id: z.string().uuid().nullable().default(null),
+        project_id: z.string().uuid().nullable().default(null),
+        attention: z.string().max(200).default(""),
         title: z.string().max(300).default(""),
         site_location: z.string().max(500).default(""),
         currency: z.string().max(10).default("BHD"),
