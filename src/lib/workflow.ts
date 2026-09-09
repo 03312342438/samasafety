@@ -10,6 +10,7 @@ export type Department =
   | "project_manager"
   | "inventory"
   | "technician"
+  | "maintenance"
   | "accounts"
   | "employee";
 
@@ -19,6 +20,7 @@ export const DEPARTMENTS: { value: Department; label: string; description: strin
   { value: "project_manager", label: "Project Manager", description: "Planning, BOM/BOS, job numbers" },
   { value: "inventory", label: "Inventory / Store", description: "Stock, reservations, material issue" },
   { value: "technician", label: "Installation & Maintenance", description: "Site work, reports, daily progress" },
+  { value: "maintenance", label: "Maintenance", description: "Maintenance service reports only" },
   { value: "accounts", label: "Accounts", description: "Invoices, payments, project costs" },
 ];
 
