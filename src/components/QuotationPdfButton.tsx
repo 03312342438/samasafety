@@ -159,6 +159,12 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
             {preparerPhone ? <> on <strong>{preparerPhone}</strong></> : null}.
           </p>
 
+          {isApproved && (
+            <div style={{ marginTop: 16, padding: 8, border: "1px solid #103a52", background: "#f0f9ff", fontSize: 11, color: "#103a52" }}>
+              <strong>Note:</strong> Quotation is generated and Approved by the System.
+            </div>
+          )}
+
           <div style={{ marginTop: 24, fontSize: 11 }}>
             <p style={{ margin: 0 }}>Thanks &amp; Best Regards,</p>
             <p style={{ margin: 0 }}>Sincerely,</p>
