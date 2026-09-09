@@ -152,11 +152,9 @@ export function ReportForm({
         },
       });
       if (res.sent) {
-        toast.success(
-          res.count > 0
-            ? `Report emailed (copied to ${res.count} recipient${res.count === 1 ? "" : "s"})`
-            : "Report emailed",
-        );
+        toast.success("Report emailed", {
+          description: res.to?.length ? `Sent to: ${res.to.join(", ")}` : undefined,
+        });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not email the report");
