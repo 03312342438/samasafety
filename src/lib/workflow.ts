@@ -105,6 +105,21 @@ export function isAccountsOnly(roles: string[] | undefined, isAdmin?: boolean): 
 }
 
 /**
+ * Combined Accounts (Finance) + Inventory/Store account. These users work in
+ * the finance area and the store, and nowhere else: no maintenance dashboard,
+ * no planning, and no project creation.
+ */
+export function isAccountsStore(roles: string[] | undefined, isAdmin?: boolean): boolean {
+  const real = (roles ?? []).filter((r) => r !== "employee");
+  return (
+    !isAdmin &&
+    real.includes("accounts") &&
+    real.includes("inventory") &&
+    real.every((r) => r === "accounts" || r === "inventory")
+  );
+}
+
+/**
  * Maintenance-only account: sees nothing but the maintenance service reports
  * (new report, history and pending maintenance).
  */
@@ -112,6 +127,7 @@ export function isMaintenanceOnly(roles: string[] | undefined, isAdmin?: boolean
   const real = (roles ?? []).filter((r) => r !== "employee");
   return !isAdmin && real.includes("maintenance") && real.every((r) => r === "maintenance");
 }
+
 
 // --------------------------------------------------------------------------
 // Master lifecycle — the single controlled status list (section 22).
