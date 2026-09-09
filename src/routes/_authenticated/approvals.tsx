@@ -345,6 +345,12 @@ function ApprovalsPage() {
                     <p className="text-xs text-muted-foreground">Decision note: {a.decision_comments}</p>
                   )}
                   <p className="text-[11px] text-muted-foreground">
+                    Requested by{" "}
+                    <span className="font-medium text-foreground">
+                      {a.submitted_by_name || "Unknown user"}
+                    </span>
+                    {a.submitted_by_designation ? ` (${humanize(a.submitted_by_designation)})` : ""}
+                    {" · "}
                     Submitted {new Date(a.submitted_at).toLocaleString()}
                   </p>
 
