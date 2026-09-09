@@ -384,7 +384,13 @@ function AccountsPage() {
         />
 
         <div className="mt-4 space-y-3">
-          {tab === "dashboard" && <FinanceDashboard />}
+          {tab === "dashboard" && (
+            <div className="space-y-4">
+              <ReceivablesOverview />
+              <FinanceDashboard />
+            </div>
+          )}
+          {tab === "receivables" && <ReceivablesTable />}
           {tab === "suppliers" && <SuppliersTab />}
           {tab === "payables" && (
             <PayablesTab projectOptions={projectOptions} jobOptions={jobOptions} isAdmin={profile?.isAdmin} />
