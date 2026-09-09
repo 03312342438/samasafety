@@ -28,6 +28,7 @@ import { can, humanize, statusBadgeClass } from "@/lib/workflow";
 import {
   FinanceDashboard, SuppliersTab, PayablesTab, CostsTab, CreditNotesTab,
 } from "@/components/AccountsFinance";
+import { ReceivablesOverview, ReceivablesTable } from "@/components/Receivables";
 
 
 export const Route = createFileRoute("/_authenticated/accounts")({
@@ -99,6 +100,8 @@ function AccountsPage() {
     qc.invalidateQueries({ queryKey: ["projects"] });
     qc.invalidateQueries({ queryKey: ["approvals"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
+    qc.invalidateQueries({ queryKey: ["receivables"] });
+    qc.invalidateQueries({ queryKey: ["finance-summary"] });
   };
 
   const itemsTotal = useMemo(() => {
