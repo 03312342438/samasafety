@@ -259,8 +259,6 @@ async function applyDecisionEffects(
       .from("quotations")
       .update({
         status: approved ? "approved" : decision === "rejected" ? "rejected" : "draft",
-        approved_by: approved ? userId : null,
-        approved_at: approved ? now : null,
       } as any)
       .eq("id", approval.entity_id);
   }
