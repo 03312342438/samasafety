@@ -104,7 +104,9 @@ export const listQuotations = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("quotations")
-      .select("*, customers(name), inquiries(reference), quotation_items(*)")
+      .select(
+        "*, customers(name, contact_person), inquiries(reference), quotation_items(*), projects(id, name, project_number, site_location), boms(id, reference, title, bom_items(id, sequence, description, unit, quantity))",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = data ?? [];
