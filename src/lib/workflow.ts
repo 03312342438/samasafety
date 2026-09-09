@@ -276,7 +276,7 @@ export type Capability =
   | "management.analytics";
 
 const MATRIX: Record<Capability, Department[]> = {
-  "report.fill": ["technician"],
+  "report.fill": ["technician", "maintenance", "project_manager"],
   "customer.manage": ["sales"],
   "sales.manage": ["sales"],
   "project.create": ["project_manager", "sales"],
