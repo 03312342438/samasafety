@@ -69,7 +69,7 @@ const emptyStock = {
   status: "active", notes: "", image_url: "",
 };
 
-const emptyLot = { received_date: "", notes: "" };
+const emptyLot = { supplier: "", reference: "", received_date: "", notes: "" };
 
 const emptyRequest = {
   project_id: "", job_number_id: "", bom_id: "", title: "",
