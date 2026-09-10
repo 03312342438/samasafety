@@ -67,7 +67,25 @@ export const saveBom = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { id, items, kind, ...raw } = data;
+    const { id, items: rawItems, kind, ...raw } = data;
+
+    // Always price catalogue lines at the latest cost the store recorded
+    // (stock_items.unit_cost is refreshed whenever a restock lot is approved).
+    const stockIds = [...new Set(rawItems.map((i) => i.stock_item_id).filter(Boolean))] as string[];
+    const latestCost = new Map<string, number>();
+    if (stockIds.length > 0) {
+      const { data: stockRows } = await supabase
+        .from("stock_items")
+        .select("id, unit_cost")
+        .in("id", stockIds);
+      for (const s of stockRows ?? []) latestCost.set(s.id as string, Number(s.unit_cost ?? 0));
+    }
+    const items = rawItems.map((i) =>
+      i.stock_item_id && latestCost.has(i.stock_item_id)
+        ? { ...i, unit_cost: latestCost.get(i.stock_item_id) as number }
+        : i,
+    );
+
     const estimated_cost = round2(items.reduce((s, i) => s + i.quantity * i.unit_cost, 0));
     const fields = { ...raw, estimated_cost };
 
