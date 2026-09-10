@@ -92,8 +92,9 @@ export function AppHeader({
     },
     { to: "/projects", label: "Projects", icon: FolderKanban, show: !!isAdmin || canSeeProjects },
     {
+      // Planning belongs to the Project Manager and Management only.
       to: "/engineering", label: "Planning", icon: ClipboardList,
-      show: !inventoryOnly && !accountsStore && (!!isAdmin || hasDept(roles, "project_manager") || hasDept(roles, "inventory")),
+      show: !!isAdmin || hasDept(roles, "project_manager"),
     },
 
     {
