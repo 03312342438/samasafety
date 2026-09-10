@@ -7,6 +7,7 @@ import { PackageMinus, Plus, Trash2, Send, HardHat, Boxes, ChevronDown, ChevronR
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { SearchSelect } from "@/components/SearchSelect";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

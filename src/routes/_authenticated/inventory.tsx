@@ -11,6 +11,7 @@ import {
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { SearchSelect } from "@/components/SearchSelect";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { ItemImage, uploadItemImage } from "@/components/ItemImage";
 import { Button } from "@/components/ui/button";
