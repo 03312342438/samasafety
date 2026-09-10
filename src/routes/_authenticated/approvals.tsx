@@ -61,6 +61,14 @@ const ACCOUNTS_STORE_GATES: Record<string, string> = {
   payment_received: "Customer payment approval",
 };
 
+/** Combined Sales + Store + Accounts accounts raise these four requests. */
+const SALES_FINANCE_GATES: Record<string, string> = {
+  payment_received: "Payment approval",
+  quotation_commercial: "Quotation approval",
+  customer_po: "Purchase Order approval",
+  commercial_review: "Commercial review",
+};
+
 
 const money = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3 });
 
@@ -108,7 +116,18 @@ function ApprovalsPage() {
   });
 
   const accountsStore = isAccountsStore(profile?.roles, isAdmin);
-  const gates = isSales ? SALES_GATES : accountsStore ? ACCOUNTS_STORE_GATES : APPROVAL_TYPE_LABELS;
+  // Sales staff who also carry store / finance duties additionally raise payments.
+  const salesFinance =
+    !isAdmin &&
+    isSales &&
+    (hasDept(profile?.roles, "accounts") || hasDept(profile?.roles, "inventory"));
+  const gates = salesFinance
+    ? SALES_FINANCE_GATES
+    : isSales
+      ? SALES_GATES
+      : accountsStore
+        ? ACCOUNTS_STORE_GATES
+        : APPROVAL_TYPE_LABELS;
   const defaultGate = Object.keys(gates)[0] ?? "quotation_commercial";
 
 

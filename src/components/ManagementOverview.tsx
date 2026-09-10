@@ -85,6 +85,35 @@ export function ManagementOverview() {
 
   return (
     <div className="space-y-6">
+      <Card className="border-primary/30 bg-primary/5 shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Overall price, cost &amp; gross margin</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Overall price (contract value)
+            </p>
+            <p className="mt-1 text-2xl font-bold">{money(k.contractValue, c)}</p>
+            <p className="text-xs text-muted-foreground">{k.totalProjects} projects</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Overall cost
+            </p>
+            <p className="mt-1 text-2xl font-bold">{money(k.estimatedCost, c)}</p>
+            <p className="text-xs text-muted-foreground">Estimated project cost</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Gross margin
+            </p>
+            <p className="mt-1 text-2xl font-bold text-primary">{money(k.grossMargin, c)}</p>
+            <p className="text-xs text-muted-foreground">{k.marginPercent}% of contract value</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <AnalyticsCharts />
 
       <div>

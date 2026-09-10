@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Pencil, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SearchSelect } from "@/components/SearchSelect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -232,16 +233,20 @@ export function PreliminaryBomPanel() {
                 const short = available !== null && num(l.quantity) > available;
                 return (
                   <div key={idx} className="grid grid-cols-12 items-center gap-2">
-                    <select
-                      className="col-span-4 h-9 rounded-md border bg-background px-2 text-sm"
-                      value={l.stock_item_id}
-                      onChange={(e) => pickItem(idx, e.target.value)}
-                    >
-                      <option value="">— item code / description —</option>
-                      {approvedStock.map((s) => (
-                        <option key={s.id} value={s.id}>{s.item_code} — {s.description}</option>
-                      ))}
-                    </select>
+                    <div className="col-span-4">
+                      <SearchSelect
+                        value={l.stock_item_id}
+                        placeholder="— item code / description —"
+                        searchPlaceholder="Search item code or description…"
+                        options={[
+                          ["", "— item code / description —"] as [string, string],
+                          ...approvedStock.map(
+                            (s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string],
+                          ),
+                        ]}
+                        onChange={(v) => pickItem(idx, v)}
+                      />
+                    </div>
                     <Input className="col-span-2" readOnly placeholder="Description" value={l.description} />
                     <Input className="col-span-1" readOnly placeholder="UOM" value={l.unit} />
                     <Input

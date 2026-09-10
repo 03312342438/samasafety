@@ -11,6 +11,7 @@ import {
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { SearchSelect } from "@/components/SearchSelect";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { ItemImage, uploadItemImage } from "@/components/ItemImage";
 import { Button } from "@/components/ui/button";
@@ -642,13 +643,15 @@ function InventoryPage() {
                     <div className="space-y-2">
                       {lotLines.map((l, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
-                          <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-4"
-                            value={l.stock_item_id}
-                            onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: e.target.value } : r)))}
-                          >
-                            {lotItemOptions.map(([v, lb]) => <option key={v} value={v}>{lb}</option>)}
-                          </select>
+                          <div className="sm:col-span-4">
+                            <SearchSelect
+                              value={l.stock_item_id}
+                              options={lotItemOptions}
+                              placeholder="— select item —"
+                              searchPlaceholder="Search item code or description…"
+                              onChange={(v) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: v } : r)))}
+                            />
+                          </div>
                           <Input className="sm:col-span-3" placeholder="DN / invoice" value={l.reference}
                             onChange={(e) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, reference: e.target.value } : r)))} />
                           <Input className="sm:col-span-1" placeholder="Qty" value={l.quantity}
@@ -709,18 +712,20 @@ function InventoryPage() {
                     <div className="space-y-2">
                       {lines.map((l, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
-                          <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-4"
-                            value={l.stock_item_id}
-                            onChange={(e) => {
-                              const picked = ((stock as any[]) ?? []).find((s) => s.id === e.target.value);
-                              setLines(lines.map((r, i) => (i === idx
-                                ? { ...r, stock_item_id: e.target.value, description: picked?.description ?? r.description, unit: picked?.unit ?? r.unit, unit_cost: String(picked?.unit_cost ?? r.unit_cost) }
-                                : r)));
-                            }}
-                          >
-                            {stockOptions.map(([v, lb]) => <option key={v} value={v}>{lb}</option>)}
-                          </select>
+                          <div className="sm:col-span-4">
+                            <SearchSelect
+                              value={l.stock_item_id}
+                              options={stockOptions}
+                              placeholder="— free text —"
+                              searchPlaceholder="Search item code or description…"
+                              onChange={(value) => {
+                                const picked = ((stock as any[]) ?? []).find((s) => s.id === value);
+                                setLines(lines.map((r, i) => (i === idx
+                                  ? { ...r, stock_item_id: value, description: picked?.description ?? r.description, unit: picked?.unit ?? r.unit, unit_cost: String(picked?.unit_cost ?? r.unit_cost) }
+                                  : r)));
+                              }}
+                            />
+                          </div>
                           <Input className="sm:col-span-3" placeholder="Description" value={l.description}
                             onChange={(e) => setLines(lines.map((r, i) => (i === idx ? { ...r, description: e.target.value } : r)))} />
                           <div className="sm:col-span-1">
@@ -755,8 +760,18 @@ function InventoryPage() {
                 <DialogContent className="max-h-[85vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>Record stock movement</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Select label="Stock item" value={moveForm.stock_item_id} onChange={(v) => setMoveForm({ ...moveForm, stock_item_id: v })}
-                      options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string])} />
+                    <div>
+                      <Label className="text-xs">Stock item</Label>
+                      <div className="mt-1">
+                        <SearchSelect
+                          value={moveForm.stock_item_id}
+                          placeholder="— select item —"
+                          searchPlaceholder="Search item code or description…"
+                          options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string])}
+                          onChange={(v) => setMoveForm({ ...moveForm, stock_item_id: v })}
+                        />
+                      </div>
+                    </div>
                     <Select label="Type" value={moveForm.movement_type} onChange={(v) => setMoveForm({ ...moveForm, movement_type: v })}
                       options={[["receipt", "Receipt (in)"], ["return", "Site return (in)"], ["adjustment", "Adjustment (in)"], ["issue", "Manual issue (out)"]]} />
                     <Field label="Quantity" value={moveForm.quantity} onChange={(v) => setMoveForm({ ...moveForm, quantity: v })} />

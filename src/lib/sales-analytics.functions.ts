@@ -99,8 +99,21 @@ export const getSalesAnalytics = createServerFn({ method: "GET" })
     const withPo = new Set(pos.map((p: any) => p.quotation_id).filter(Boolean));
     const cutoff = new Date();
     cutoff.setUTCMonth(cutoff.getUTCMonth() - data.potentialMonths);
+    // A quotation that turned into an order is business already won, so it is
+    // never counted as potential business any more.
+    const CONVERTED_STAGES = [
+      "customer_accepted",
+      "accepted",
+      "won",
+      "order",
+      "order_received",
+      "closed",
+    ];
     const openQuotes = sent.filter(
-      (q: any) => !withPo.has(q.id) && sentDate(q).getTime() >= cutoff.getTime(),
+      (q: any) =>
+        !withPo.has(q.id) &&
+        !CONVERTED_STAGES.includes(q.stage) &&
+        sentDate(q).getTime() >= cutoff.getTime(),
     );
 
     return {

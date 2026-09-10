@@ -7,6 +7,7 @@ import { ClipboardList, Plus, Pencil, Trash2, ShieldCheck, Package, Send } from 
 import { useProfile } from "@/hooks/use-profile";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { SearchSelect } from "@/components/SearchSelect";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -292,28 +293,32 @@ function EngineeringPage() {
                     <div className="space-y-2">
                       {items.map((it, idx) => (
                         <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
-                          <select
-                            className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-3"
-                            value={it.stock_item_id}
-                            onChange={(e) => {
-                              const picked = approvedItems.find((s: any) => s.id === e.target.value);
-                              setItems(items.map((r, i) => (i === idx
-                                ? {
-                                    ...r,
-                                    stock_item_id: e.target.value,
-                                    description: picked ? picked.description : r.description,
-                                    category: picked ? (picked.category ?? r.category) : r.category,
-                                    unit: picked ? (picked.unit ?? r.unit) : r.unit,
-                                    unit_cost: picked ? String(picked.unit_cost ?? r.unit_cost) : r.unit_cost,
-                                  }
-                                : r)));
-                            }}
-                          >
-                            <option value="">— item code —</option>
-                            {approvedItems.map((s: any) => (
-                              <option key={s.id} value={s.id}>{s.item_code} — {s.description}</option>
-                            ))}
-                          </select>
+                          <div className="sm:col-span-3">
+                            <SearchSelect
+                              value={it.stock_item_id}
+                              placeholder="— item code —"
+                              searchPlaceholder="Search item code or description…"
+                              options={[
+                                ["", "— item code —"] as [string, string],
+                                ...approvedItems.map(
+                                  (s: any) => [s.id, `${s.item_code} — ${s.description}`] as [string, string],
+                                ),
+                              ]}
+                              onChange={(value) => {
+                                const picked = approvedItems.find((s: any) => s.id === value);
+                                setItems(items.map((r, i) => (i === idx
+                                  ? {
+                                      ...r,
+                                      stock_item_id: value,
+                                      description: picked ? picked.description : r.description,
+                                      category: picked ? (picked.category ?? r.category) : r.category,
+                                      unit: picked ? (picked.unit ?? r.unit) : r.unit,
+                                      unit_cost: picked ? String(picked.unit_cost ?? r.unit_cost) : r.unit_cost,
+                                    }
+                                  : r)));
+                              }}
+                            />
+                          </div>
                           <Input className="sm:col-span-3" placeholder="Description" value={it.description}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, description: e.target.value } : r)))} />
                           <div className="sm:col-span-2">
