@@ -331,13 +331,15 @@ function ReleasesPage() {
                 <div className="space-y-2">
                   {freeRows.map((r, idx) => (
                     <div key={idx} className="grid gap-2 rounded-md border p-2 sm:grid-cols-12">
-                      <select
-                        className="h-9 rounded-md border bg-background px-2 text-sm sm:col-span-6"
-                        value={r.stock_item_id}
-                        onChange={(e) => setFreeRows(freeRows.map((x, i) => (i === idx ? { ...x, stock_item_id: e.target.value } : x)))}
-                      >
-                        {stockOptions.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      </select>
+                      <div className="sm:col-span-6">
+                        <SearchSelect
+                          value={r.stock_item_id}
+                          options={stockOptions}
+                          placeholder="— select item —"
+                          searchPlaceholder="Search item code or description…"
+                          onChange={(v) => setFreeRows(freeRows.map((x, i) => (i === idx ? { ...x, stock_item_id: v } : x)))}
+                        />
+                      </div>
                       <Input className="sm:col-span-2" placeholder="Qty" value={r.quantity}
                         onChange={(e) => setFreeRows(freeRows.map((x, i) => (i === idx ? { ...x, quantity: e.target.value } : x)))} />
                       <Input className="sm:col-span-3" placeholder="Remarks" value={r.remarks}
