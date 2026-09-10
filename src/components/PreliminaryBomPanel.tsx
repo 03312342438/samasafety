@@ -260,6 +260,8 @@ export function PreliminaryBomPanel() {
                       className="col-span-2"
                       placeholder="Unit price"
                       value={l.unit_cost}
+                      readOnly={Boolean(l.stock_item_id)}
+                      title={l.stock_item_id ? "Latest store price from the most recent approved lot" : undefined}
                       onChange={(e) => patch(idx, { unit_cost: e.target.value })}
                     />
                     <div className="col-span-1 text-right text-xs tabular-nums">
