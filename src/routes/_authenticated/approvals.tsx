@@ -116,7 +116,18 @@ function ApprovalsPage() {
   });
 
   const accountsStore = isAccountsStore(profile?.roles, isAdmin);
-  const gates = isSales ? SALES_GATES : accountsStore ? ACCOUNTS_STORE_GATES : APPROVAL_TYPE_LABELS;
+  // Sales staff who also carry store / finance duties additionally raise payments.
+  const salesFinance =
+    !isAdmin &&
+    isSales &&
+    (hasDept(profile?.roles, "accounts") || hasDept(profile?.roles, "inventory"));
+  const gates = salesFinance
+    ? SALES_FINANCE_GATES
+    : isSales
+      ? SALES_GATES
+      : accountsStore
+        ? ACCOUNTS_STORE_GATES
+        : APPROVAL_TYPE_LABELS;
   const defaultGate = Object.keys(gates)[0] ?? "quotation_commercial";
 
 
