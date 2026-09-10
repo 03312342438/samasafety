@@ -760,8 +760,18 @@ function InventoryPage() {
                 <DialogContent className="max-h-[85vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>Record stock movement</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Select label="Stock item" value={moveForm.stock_item_id} onChange={(v) => setMoveForm({ ...moveForm, stock_item_id: v })}
-                      options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string])} />
+                    <div>
+                      <Label className="text-xs">Stock item</Label>
+                      <div className="mt-1">
+                        <SearchSelect
+                          value={moveForm.stock_item_id}
+                          placeholder="— select item —"
+                          searchPlaceholder="Search item code or description…"
+                          options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string])}
+                          onChange={(v) => setMoveForm({ ...moveForm, stock_item_id: v })}
+                        />
+                      </div>
+                    </div>
                     <Select label="Type" value={moveForm.movement_type} onChange={(v) => setMoveForm({ ...moveForm, movement_type: v })}
                       options={[["receipt", "Receipt (in)"], ["return", "Site return (in)"], ["adjustment", "Adjustment (in)"], ["issue", "Manual issue (out)"]]} />
                     <Field label="Quantity" value={moveForm.quantity} onChange={(v) => setMoveForm({ ...moveForm, quantity: v })} />
