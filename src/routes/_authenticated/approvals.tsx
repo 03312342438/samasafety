@@ -61,6 +61,14 @@ const ACCOUNTS_STORE_GATES: Record<string, string> = {
   payment_received: "Customer payment approval",
 };
 
+/** Combined Sales + Store + Accounts accounts raise these four requests. */
+const SALES_FINANCE_GATES: Record<string, string> = {
+  payment_received: "Payment approval",
+  quotation_commercial: "Quotation approval",
+  customer_po: "Purchase Order approval",
+  commercial_review: "Commercial review",
+};
+
 
 const money = (v: unknown) => Number(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3 });
 
