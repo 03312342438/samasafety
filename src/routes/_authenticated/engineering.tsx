@@ -328,6 +328,8 @@ function EngineeringPage() {
                           <Input className="sm:col-span-1" placeholder="Qty" value={it.quantity}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, quantity: e.target.value } : r)))} />
                           <Input className="sm:col-span-2" placeholder="Unit cost" value={it.unit_cost}
+                            readOnly={Boolean(it.stock_item_id)}
+                            title={it.stock_item_id ? "Latest store price from the most recent approved lot" : undefined}
                             onChange={(e) => setItems(items.map((r, i) => (i === idx ? { ...r, unit_cost: e.target.value } : r)))} />
                           <Button variant="ghost" size="sm" className="sm:col-span-1"
                             onClick={() => setItems(items.length > 1 ? items.filter((_, i) => i !== idx) : items)}>
