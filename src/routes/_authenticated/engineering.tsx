@@ -117,6 +117,19 @@ function EngineeringPage() {
     [items],
   );
 
+  /** Sales-side preliminary BOM/BOS raised against the picked project, shown for reference. */
+  const preliminaryForProject = useMemo(
+    () =>
+      ((boms as any[]) ?? []).filter(
+        (b) =>
+          String(b.reference ?? "").startsWith("PBOM") &&
+          bomForm.project_id &&
+          b.project_id === bomForm.project_id,
+      ),
+    [boms, bomForm.project_id],
+  );
+
+
   const bomList = useMemo(() => {
     const q = query.trim().toLowerCase();
     const rows = ((boms as any[]) ?? []);
