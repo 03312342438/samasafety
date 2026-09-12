@@ -260,6 +260,58 @@ function InventoryPage() {
     }
   };
 
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  /** Items still waiting on Management: pending ones can be routed, any non-approved can be cleared. */
+  const unapprovedItems = useMemo(
+    () => ((stock as any[]) ?? []).filter((s) => (s.approval_status ?? "pending") !== "approved"),
+    [stock],
+  );
+  const pendingItems = useMemo(
+    () => ((stock as any[]) ?? []).filter((s) => (s.approval_status ?? "pending") === "pending"),
+    [stock],
+  );
+
+  const approveAllItems = async () => {
+    setBulkBusy(true);
+    try {
+      for (const item of unapprovedItems) {
+        await approveItem({ data: { id: item.id, approval_status: "approved" } });
+      }
+      toast.success(`${unapprovedItems.length} item(s) approved`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not approve all items");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const sendAllForApproval = async () => {
+    setBulkBusy(true);
+    try {
+      for (const item of pendingItems) {
+        await requestApproval({
+          data: {
+            approval_type: "item_code",
+            title: `Item code approval — ${item.item_code ?? ""}`.trim(),
+            details: item.description ?? "",
+            entity_table: "stock_items",
+            entity_id: item.id,
+          },
+        });
+      }
+      toast.success(`${pendingItems.length} item(s) sent for approval`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send all items");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+
+
   const stockOptions = useMemo(
     () =>
       [["", "— free text —"] as [string, string]].concat(
@@ -551,6 +603,18 @@ function InventoryPage() {
                   onChange={(e) => { importExcel(e.target.files?.[0]); e.target.value = ""; }}
                 />
               </label>
+            )}
+
+            {tab === "stock" && canManageItems && !canApproveItems && pendingItems.length > 0 && (
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={sendAllForApproval}>
+                <Send className="mr-1 h-4 w-4" /> Send all items for approval ({pendingItems.length})
+              </Button>
+            )}
+
+            {tab === "stock" && canApproveItems && unapprovedItems.length > 0 && (
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={approveAllItems}>
+                <PackageCheck className="mr-1 h-4 w-4" /> Approve all ({unapprovedItems.length})
+              </Button>
             )}
 
 

@@ -117,6 +117,19 @@ function EngineeringPage() {
     [items],
   );
 
+  /** Sales-side preliminary BOM/BOS raised against the picked project, shown for reference. */
+  const preliminaryForProject = useMemo(
+    () =>
+      ((boms as any[]) ?? []).filter(
+        (b) =>
+          String(b.reference ?? "").startsWith("PBOM") &&
+          bomForm.project_id &&
+          b.project_id === bomForm.project_id,
+      ),
+    [boms, bomForm.project_id],
+  );
+
+
   const bomList = useMemo(() => {
     const q = query.trim().toLowerCase();
     const rows = ((boms as any[]) ?? []);
@@ -272,16 +285,47 @@ function EngineeringPage() {
                     <Field label="Title" value={bomForm.title} onChange={(v) => setBomForm({ ...bomForm, title: v })} />
                     <Select label="Type" value={bomForm.bom_type} onChange={(v) => setBomForm({ ...bomForm, bom_type: v })}
                       options={[["material", "BOM — Material"], ["service", "BOS — Service"]]} />
-                     <Select label="Project" value={bomForm.project_id} onChange={(v) => setBomForm({ ...bomForm, project_id: v })}
+                     <Select label="Project" value={bomForm.project_id}
+                       onChange={(v) => {
+                         const project = ((projects as any[]) ?? []).find((p) => p.id === v);
+                         setBomForm({ ...bomForm, project_id: v, customer_id: project?.customer_id ?? "" });
+                       }}
                        options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
-                     <Select label="Customer" value={bomForm.customer_id} onChange={(v) => setBomForm({ ...bomForm, customer_id: v })}
-                      options={[["", "— none —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
+                     <Select label="Customer (from project)" value={bomForm.customer_id} disabled onChange={() => {}}
+                      options={[["", "— select a project —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
                     <Field label="Currency" value={bomForm.currency} onChange={(v) => setBomForm({ ...bomForm, currency: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={bomForm.notes} onChange={(e) => setBomForm({ ...bomForm, notes: e.target.value })} />
                     </div>
-                  </div>
+                   </div>
+
+                  {bomForm.project_id && preliminaryForProject.length > 0 && (
+                    <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                      <p className="text-xs font-semibold">
+                        Preliminary BOM/BOS for this project (reference only)
+                      </p>
+                      {preliminaryForProject.map((p: any) => (
+                        <div key={p.id} className="mt-2">
+                          <p className="text-xs font-medium">
+                            {p.reference} — {p.title || "Preliminary"} ·{" "}
+                            {Number(p.estimated_cost ?? 0).toFixed(3)} {p.currency}
+                          </p>
+                          <ul className="mt-1 space-y-0.5">
+                            {[...(p.bom_items ?? [])]
+                              .sort((a: any, b: any) => a.sequence - b.sequence)
+                              .map((i: any) => (
+                                <li key={i.id} className="text-[11px] text-muted-foreground">
+                                  {i.description} — {i.quantity} {i.unit} @ {Number(i.unit_cost ?? 0).toFixed(3)}
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+
 
                   <div className="mt-2">
                     <div className="mb-2 flex items-center justify-between">
@@ -537,14 +581,15 @@ function Field({
 }
 
 function Select({
-  label, value, onChange, options,
-}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  label, value, onChange, options, disabled,
+}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][]; disabled?: boolean }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
       <select
-        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map(([v, l]) => (
