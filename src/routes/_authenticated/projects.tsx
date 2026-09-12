@@ -387,26 +387,47 @@ function ProjectsPage() {
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Project</Label>
                       <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.project_id}
-                        onChange={(e) => setJobForm({ ...jobForm, project_id: e.target.value, bom_id: "", customer_po_id: "" })}>
+                        onChange={(e) => {
+                          const projectId = e.target.value;
+                          const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
+                          // Main BOM/BOS only — preliminary (PBOM) references never drive a job.
+                          const mainBom = ((boms as any[]) ?? []).find(
+                            (b) => b.project_id === projectId && b.status === "approved" &&
+                              !String(b.reference ?? "").startsWith("PBOM"),
+                          );
+                          const po = ((customerPos as any[]) ?? []).find(
+                            (p) => p.project_id === projectId && p.verification_status === "verified",
+                          );
+                          setJobForm({
+                            ...jobForm,
+                            project_id: projectId,
+                            bom_id: mainBom?.id ?? "",
+                            customer_po_id: po?.id ?? "",
+                            site_location: project?.site_location ?? jobForm.site_location,
+                          });
+                          if (projectId && !mainBom) {
+                            toast.error("No approved Main BOM/BOS for this project — create and get the Main BOM/BOS approved first.");
+                          }
+                        }}>
                         <option value="">— select project —</option>
                         {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>)}
                       </select>
                     </div>
                     <div>
-                      <Label className="text-xs">Approved BOM / BOS</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.bom_id}
-                        onChange={(e) => setJobForm({ ...jobForm, bom_id: e.target.value })}>
-                        <option value="">— select approved BOM / BOS —</option>
-                        {((boms as any[]) ?? []).filter((b) => b.status === "approved" && (!jobForm.project_id || b.project_id === jobForm.project_id)).map((b) => (
+                      <Label className="text-xs">Approved Main BOM / BOS (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                        value={jobForm.bom_id} disabled onChange={() => {}}>
+                        <option value="">— no approved Main BOM/BOS —</option>
+                        {((boms as any[]) ?? []).filter((b) => b.status === "approved" && !String(b.reference ?? "").startsWith("PBOM") && (!jobForm.project_id || b.project_id === jobForm.project_id)).map((b) => (
                           <option key={b.id} value={b.id}>{b.reference} — {b.title}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <Label className="text-xs">Verified customer PO</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.customer_po_id}
-                        onChange={(e) => setJobForm({ ...jobForm, customer_po_id: e.target.value })}>
-                        <option value="">— select verified PO —</option>
+                      <Label className="text-xs">Verified customer PO (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                        value={jobForm.customer_po_id} disabled onChange={() => {}}>
+                        <option value="">— no verified PO —</option>
                         {((customerPos as any[]) ?? []).filter((po) => po.verification_status === "verified" && (!jobForm.project_id || po.project_id === jobForm.project_id)).map((po) => (
                           <option key={po.id} value={po.id}>{po.po_number || po.reference} — {po.customers?.name ?? "Customer"}</option>
                         ))}
