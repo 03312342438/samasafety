@@ -272,10 +272,14 @@ function EngineeringPage() {
                     <Field label="Title" value={bomForm.title} onChange={(v) => setBomForm({ ...bomForm, title: v })} />
                     <Select label="Type" value={bomForm.bom_type} onChange={(v) => setBomForm({ ...bomForm, bom_type: v })}
                       options={[["material", "BOM — Material"], ["service", "BOS — Service"]]} />
-                     <Select label="Project" value={bomForm.project_id} onChange={(v) => setBomForm({ ...bomForm, project_id: v })}
+                     <Select label="Project" value={bomForm.project_id}
+                       onChange={(v) => {
+                         const project = ((projects as any[]) ?? []).find((p) => p.id === v);
+                         setBomForm({ ...bomForm, project_id: v, customer_id: project?.customer_id ?? "" });
+                       }}
                        options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
-                     <Select label="Customer" value={bomForm.customer_id} onChange={(v) => setBomForm({ ...bomForm, customer_id: v })}
-                      options={[["", "— none —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
+                     <Select label="Customer (from project)" value={bomForm.customer_id} disabled onChange={() => {}}
+                      options={[["", "— select a project —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
                     <Field label="Currency" value={bomForm.currency} onChange={(v) => setBomForm({ ...bomForm, currency: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
@@ -537,14 +541,15 @@ function Field({
 }
 
 function Select({
-  label, value, onChange, options,
-}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  label, value, onChange, options, disabled,
+}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][]; disabled?: boolean }) {
   return (
     <div>
       <Label className="text-xs">{label}</Label>
       <select
-        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map(([v, l]) => (
