@@ -285,7 +285,34 @@ function EngineeringPage() {
                       <Label className="text-xs">Notes</Label>
                       <Textarea rows={2} value={bomForm.notes} onChange={(e) => setBomForm({ ...bomForm, notes: e.target.value })} />
                     </div>
-                  </div>
+                   </div>
+
+                  {bomForm.project_id && preliminaryForProject.length > 0 && (
+                    <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                      <p className="text-xs font-semibold">
+                        Preliminary BOM/BOS for this project (reference only)
+                      </p>
+                      {preliminaryForProject.map((p: any) => (
+                        <div key={p.id} className="mt-2">
+                          <p className="text-xs font-medium">
+                            {p.reference} — {p.title || "Preliminary"} ·{" "}
+                            {Number(p.estimated_cost ?? 0).toFixed(3)} {p.currency}
+                          </p>
+                          <ul className="mt-1 space-y-0.5">
+                            {[...(p.bom_items ?? [])]
+                              .sort((a: any, b: any) => a.sequence - b.sequence)
+                              .map((i: any) => (
+                                <li key={i.id} className="text-[11px] text-muted-foreground">
+                                  {i.description} — {i.quantity} {i.unit} @ {Number(i.unit_cost ?? 0).toFixed(3)}
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+
 
                   <div className="mt-2">
                     <div className="mb-2 flex items-center justify-between">
