@@ -553,6 +553,18 @@ function InventoryPage() {
               </label>
             )}
 
+            {tab === "stock" && canManageItems && !canApproveItems && pendingItems.length > 0 && (
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={sendAllForApproval}>
+                <Send className="mr-1 h-4 w-4" /> Send all items for approval ({pendingItems.length})
+              </Button>
+            )}
+
+            {tab === "stock" && canApproveItems && unapprovedItems.length > 0 && (
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={approveAllItems}>
+                <PackageCheck className="mr-1 h-4 w-4" /> Approve all ({unapprovedItems.length})
+              </Button>
+            )}
+
 
             {tab === "stock" && canManageItems && (
               <Dialog open={stockOpen} onOpenChange={(o) => { setStockOpen(o); if (!o) setStockForm(emptyStock); }}>
