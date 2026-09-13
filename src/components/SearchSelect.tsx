@@ -47,7 +47,7 @@ export function SearchSelect({
           <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[min(28rem,90vw)] p-0" align="start">
+      <PopoverContent className="w-[min(46rem,92vw)] p-0" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
@@ -62,8 +62,8 @@ export function SearchSelect({
                     setOpen(false);
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", v === value ? "opacity-100" : "opacity-0")} />
-                  <span className="truncate">{label}</span>
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", v === value ? "opacity-100" : "opacity-0")} />
+                  <span className="whitespace-normal break-words">{label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

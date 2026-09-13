@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bell, Check } from "lucide-react";
@@ -28,17 +28,9 @@ export function NotificationBell() {
   const pending = items.filter((n) => !n.read_at);
   const earlier = items.filter((n) => n.read_at);
 
-  // Anything unread the user has not been shown yet pops the window open —
-  // at sign-in for notifications that arrived while offline, and live after that.
-  const shown = useRef<Set<string>>(new Set());
-  const pendingKey = pending.map((n) => n.id).join(",");
-  useEffect(() => {
-    if (!pending.length) return;
-    const unseen = pending.filter((n) => !shown.current.has(n.id));
-    if (!unseen.length) return;
-    unseen.forEach((n) => shown.current.add(n.id));
-    setOpen(true);
-  }, [pendingKey]);
+  // The notification window only opens when the user clicks the bell.
+
+
 
   const clearAll = async () => {
     await markRead({ data: {} });

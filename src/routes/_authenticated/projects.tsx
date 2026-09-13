@@ -24,7 +24,8 @@ import {
   listJobNumbers, saveJobNumber, deleteJobNumber,
   listInstallationSteps, setInstallationStepStatus,
 } from "@/lib/projects.functions";
-import { listBoms } from "@/lib/engineering.functions";
+import { listBoms, saveBom } from "@/lib/engineering.functions";
+import { PreliminaryBomFields, emptyPrelimLine, type PrelimLine } from "@/components/PreliminaryBomFields";
 import { listCustomerPos } from "@/lib/sales.functions";
 
 import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly, isAccountsStore } from "@/lib/workflow";
@@ -119,6 +120,32 @@ function ProjectsPage() {
   const [form, setForm] = useState<any>(emptyProject);
   const [jobOpen, setJobOpen] = useState(false);
   const [jobForm, setJobForm] = useState<any>(emptyJob);
+  // Preliminary BOM/BOS is captured with the project itself.
+  const [prelimLines, setPrelimLines] = useState<PrelimLine[]>([{ ...emptyPrelimLine }]);
+  const [prelimBomId, setPrelimBomId] = useState<string | undefined>(undefined);
+  const savePrelimBom = useServerFn(saveBom);
+
+  useEffect(() => {
+    if (!open) return;
+    const existing = ((boms as any[]) ?? []).find(
+      (b) => b.project_id === form.id && String(b.reference ?? "").startsWith("PBOM"),
+    );
+    setPrelimBomId(existing?.id);
+    setPrelimLines(
+      existing
+        ? ((existing.bom_items ?? []) as any[])
+            .slice()
+            .sort((a, z) => a.sequence - z.sequence)
+            .map((it) => ({
+              stock_item_id: it.stock_item_id ?? "",
+              description: it.description ?? "",
+              unit: it.unit ?? "",
+              quantity: String(it.quantity ?? 1),
+              unit_cost: String(it.unit_cost ?? 0),
+            }))
+        : [{ ...emptyPrelimLine }],
+    );
+  }, [open, form.id, boms]);
 
   // ---- payment milestones -------------------------------------------------
   const fetchTerms = useServerFn(listProjectPaymentTerms);
@@ -139,6 +166,11 @@ function ProjectsPage() {
       })),
     }));
   }, [savedTerms]);
+
+  // The job-step count only opens once the project has been quoted.
+  const usedInQuotation = Boolean(
+    form.id && ((projects as any[]) ?? []).find((p) => p.id === form.id)?.values_from_quotation,
+  );
 
   const termsTotal =
     Math.round(form.payment_terms.reduce((s: number, t: any) => s + Number(t.percent || 0), 0) * 100) / 100;
@@ -166,7 +198,7 @@ function ProjectsPage() {
 
   const submitProject = async () => {
     try {
-      await save({
+      const saved: any = await save({
         data: {
           ...form,
           id: form.id || undefined,
@@ -184,9 +216,35 @@ function ProjectsPage() {
             .filter((t: any) => t.percent > 0 || t.milestone.trim()),
         },
       });
+      // The preliminary BOM/BOS is saved with the project it belongs to.
+      const projectId = form.id || saved?.id;
+      const prelim = prelimLines.filter((l) => l.stock_item_id || l.description.trim());
+      if (projectId && (prelim.length || prelimBomId)) {
+        await savePrelimBom({
+          data: {
+            id: prelimBomId,
+            project_id: projectId,
+            customer_id: form.customer_id || null,
+            title: form.name || "Preliminary BOM/BOS",
+            kind: "preliminary",
+            bom_type: "material",
+            currency: CURRENCY,
+            items: prelim.map((l) => ({
+              stock_item_id: l.stock_item_id || null,
+              description: l.description,
+              unit: l.unit || "pcs",
+              quantity: Number(l.quantity || 0),
+              unit_cost: Number(l.unit_cost || 0),
+            })),
+          } as any,
+        });
+      }
       toast.success(form.id ? "Project updated" : "Project created");
       setOpen(false);
       setForm(emptyProject);
+      setPrelimLines([{ ...emptyPrelimLine }]);
+      setPrelimBomId(undefined);
+      qc.invalidateQueries({ queryKey: ["boms"] });
       refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save project");
@@ -254,7 +312,7 @@ function ProjectsPage() {
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
                 </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto">
                   <DialogHeader><DialogTitle>{form.id ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Project name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
@@ -348,7 +406,12 @@ function ProjectsPage() {
                           </select>
                           <Input
                             placeholder="Steps"
-                            disabled={t.trigger_type !== "steps_completed"}
+                            disabled={t.trigger_type !== "steps_completed" || !usedInQuotation}
+                            title={
+                              t.trigger_type === "steps_completed" && !usedInQuotation
+                                ? "The job step count can be set once this project has been used in a quotation."
+                                : undefined
+                            }
                             value={t.trigger_steps}
                             onChange={(e) => updateTerm(i, { trigger_steps: e.target.value })}
                           />
@@ -362,8 +425,14 @@ function ProjectsPage() {
                       </Button>
                       <p className="text-[11px] text-muted-foreground">
                         Accounts are notified automatically when a milestone is reached.
+                        {!usedInQuotation && " The job step count opens once this project is used in a quotation."}
                       </p>
                     </div>
+
+                    <div className="sm:col-span-2">
+                      <PreliminaryBomFields lines={prelimLines} setLines={setPrelimLines} />
+                    </div>
+
 
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
@@ -385,31 +454,50 @@ function ProjectsPage() {
                   <DialogHeader><DialogTitle>{jobForm.id ? "Edit job number" : "New job number"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
-                      <Label className="text-xs">Project</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.project_id}
+                      <Label className="text-xs">Purchase order number</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.customer_po_id}
                         onChange={(e) => {
-                          const projectId = e.target.value;
+                          const poId = e.target.value;
+                          const po = availablePos.find((p: any) => p.id === poId);
+                          const projectId = po?.project_id ?? "";
                           const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
                           // Main BOM/BOS only — preliminary (PBOM) references never drive a job.
                           const mainBom = ((boms as any[]) ?? []).find(
                             (b) => b.project_id === projectId && b.status === "approved" &&
                               !String(b.reference ?? "").startsWith("PBOM"),
                           );
-                          const po = ((customerPos as any[]) ?? []).find(
-                            (p) => p.project_id === projectId && p.verification_status === "verified",
-                          );
+                          const kind = project?.project_type === "maintenance" ? "maintenance" : "installation";
                           setJobForm({
                             ...jobForm,
+                            customer_po_id: poId,
                             project_id: projectId,
                             bom_id: mainBom?.id ?? "",
-                            customer_po_id: po?.id ?? "",
-                            site_location: project?.site_location ?? jobForm.site_location,
+                            job_kind: kind,
+                            scope_type: kind,
+                            site_location: project?.site_location ?? "",
                           });
-                          if (projectId && !mainBom) {
+                          if (poId && !projectId) {
+                            toast.error("This purchase order is not linked to a project yet.");
+                          } else if (projectId && !mainBom) {
                             toast.error("No approved Main BOM/BOS for this project — create and get the Main BOM/BOS approved first.");
                           }
                         }}>
-                        <option value="">— select project —</option>
+                        <option value="">— select purchase order —</option>
+                        {availablePos.map((po: any) => (
+                          <option key={po.id} value={po.id}>
+                            {po.po_number || po.reference} — {po.customers?.name ?? "Customer"}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Only verified purchase orders that are not yet used against a job number appear here.
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Project (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                        value={jobForm.project_id} disabled onChange={() => {}}>
+                        <option value="">— select a purchase order first —</option>
                         {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>)}
                       </select>
                     </div>
@@ -423,22 +511,16 @@ function ProjectsPage() {
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <Label className="text-xs">Verified customer PO (auto)</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-                        value={jobForm.customer_po_id} disabled onChange={() => {}}>
-                        <option value="">— no verified PO —</option>
-                        {((customerPos as any[]) ?? []).filter((po) => po.verification_status === "verified" && (!jobForm.project_id || po.project_id === jobForm.project_id)).map((po) => (
-                          <option key={po.id} value={po.id}>{po.po_number || po.reference} — {po.customers?.name ?? "Customer"}</option>
-                        ))}
-                      </select>
-                    </div>
                     <Field label="Description" value={jobForm.description} onChange={(v) => setJobForm({ ...jobForm, description: v })} />
-                    <Field label="Site location" value={jobForm.site_location} onChange={(v) => setJobForm({ ...jobForm, site_location: v })} />
                     <div>
-                      <Label className="text-xs">Job type</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.job_kind}
-                        onChange={(e) => setJobForm({ ...jobForm, job_kind: e.target.value, scope_type: e.target.value })}>
+                      <Label className="text-xs">Site location (auto)</Label>
+                      <Input className="mt-1 disabled:cursor-not-allowed disabled:opacity-60" value={jobForm.site_location} disabled readOnly />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Job type (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60" value={jobForm.job_kind}
+                        disabled
+                        onChange={() => {}}>
                         <option value="installation">Installation</option><option value="maintenance">Maintenance</option>
                       </select>
                     </div>

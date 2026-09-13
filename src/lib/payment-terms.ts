@@ -20,8 +20,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Default milestone set offered when a project is created. */
 export const DEFAULT_PAYMENT_TERMS = [
-  { percent: "30", milestone: "Project initiation", trigger_type: "project_start", trigger_steps: "0" },
-  { percent: "50", milestone: "Mid-project", trigger_type: "steps_completed", trigger_steps: "3" },
+  { percent: "50", milestone: "Project initiation", trigger_type: "project_start", trigger_steps: "0" },
+  { percent: "30", milestone: "Job number steps completed", trigger_type: "steps_completed", trigger_steps: "3" },
   { percent: "20", milestone: "Project finalization", trigger_type: "project_completed", trigger_steps: "0" },
 ];
 
