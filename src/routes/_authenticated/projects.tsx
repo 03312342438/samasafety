@@ -454,31 +454,50 @@ function ProjectsPage() {
                   <DialogHeader><DialogTitle>{jobForm.id ? "Edit job number" : "New job number"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
-                      <Label className="text-xs">Project</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.project_id}
+                      <Label className="text-xs">Purchase order number</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.customer_po_id}
                         onChange={(e) => {
-                          const projectId = e.target.value;
+                          const poId = e.target.value;
+                          const po = availablePos.find((p: any) => p.id === poId);
+                          const projectId = po?.project_id ?? "";
                           const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
                           // Main BOM/BOS only — preliminary (PBOM) references never drive a job.
                           const mainBom = ((boms as any[]) ?? []).find(
                             (b) => b.project_id === projectId && b.status === "approved" &&
                               !String(b.reference ?? "").startsWith("PBOM"),
                           );
-                          const po = ((customerPos as any[]) ?? []).find(
-                            (p) => p.project_id === projectId && p.verification_status === "verified",
-                          );
+                          const kind = project?.project_type === "maintenance" ? "maintenance" : "installation";
                           setJobForm({
                             ...jobForm,
+                            customer_po_id: poId,
                             project_id: projectId,
                             bom_id: mainBom?.id ?? "",
-                            customer_po_id: po?.id ?? "",
-                            site_location: project?.site_location ?? jobForm.site_location,
+                            job_kind: kind,
+                            scope_type: kind,
+                            site_location: project?.site_location ?? "",
                           });
-                          if (projectId && !mainBom) {
+                          if (poId && !projectId) {
+                            toast.error("This purchase order is not linked to a project yet.");
+                          } else if (projectId && !mainBom) {
                             toast.error("No approved Main BOM/BOS for this project — create and get the Main BOM/BOS approved first.");
                           }
                         }}>
-                        <option value="">— select project —</option>
+                        <option value="">— select purchase order —</option>
+                        {availablePos.map((po: any) => (
+                          <option key={po.id} value={po.id}>
+                            {po.po_number || po.reference} — {po.customers?.name ?? "Customer"}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Only verified purchase orders that are not yet used against a job number appear here.
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Project (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                        value={jobForm.project_id} disabled onChange={() => {}}>
+                        <option value="">— select a purchase order first —</option>
                         {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>)}
                       </select>
                     </div>
@@ -492,22 +511,16 @@ function ProjectsPage() {
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <Label className="text-xs">Verified customer PO (auto)</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-                        value={jobForm.customer_po_id} disabled onChange={() => {}}>
-                        <option value="">— no verified PO —</option>
-                        {((customerPos as any[]) ?? []).filter((po) => po.verification_status === "verified" && (!jobForm.project_id || po.project_id === jobForm.project_id)).map((po) => (
-                          <option key={po.id} value={po.id}>{po.po_number || po.reference} — {po.customers?.name ?? "Customer"}</option>
-                        ))}
-                      </select>
-                    </div>
                     <Field label="Description" value={jobForm.description} onChange={(v) => setJobForm({ ...jobForm, description: v })} />
-                    <Field label="Site location" value={jobForm.site_location} onChange={(v) => setJobForm({ ...jobForm, site_location: v })} />
                     <div>
-                      <Label className="text-xs">Job type</Label>
-                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm" value={jobForm.job_kind}
-                        onChange={(e) => setJobForm({ ...jobForm, job_kind: e.target.value, scope_type: e.target.value })}>
+                      <Label className="text-xs">Site location (auto)</Label>
+                      <Input className="mt-1 disabled:cursor-not-allowed disabled:opacity-60" value={jobForm.site_location} disabled readOnly />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Job type (auto)</Label>
+                      <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60" value={jobForm.job_kind}
+                        disabled
+                        onChange={() => {}}>
                         <option value="installation">Installation</option><option value="maintenance">Maintenance</option>
                       </select>
                     </div>
