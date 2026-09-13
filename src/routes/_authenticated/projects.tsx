@@ -24,7 +24,8 @@ import {
   listJobNumbers, saveJobNumber, deleteJobNumber,
   listInstallationSteps, setInstallationStepStatus,
 } from "@/lib/projects.functions";
-import { listBoms } from "@/lib/engineering.functions";
+import { listBoms, saveBom } from "@/lib/engineering.functions";
+import { PreliminaryBomFields, emptyPrelimLine, type PrelimLine } from "@/components/PreliminaryBomFields";
 import { listCustomerPos } from "@/lib/sales.functions";
 
 import { LIFECYCLE_STAGES, humanize, statusBadgeClass, hasDept, CURRENCY, isAccountsOnly, isAccountsStore } from "@/lib/workflow";
