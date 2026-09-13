@@ -193,7 +193,7 @@ function ProjectsPage() {
 
   const submitProject = async () => {
     try {
-      await save({
+      const saved: any = await save({
         data: {
           ...form,
           id: form.id || undefined,
@@ -211,9 +211,35 @@ function ProjectsPage() {
             .filter((t: any) => t.percent > 0 || t.milestone.trim()),
         },
       });
+      // The preliminary BOM/BOS is saved with the project it belongs to.
+      const projectId = form.id || saved?.id;
+      const prelim = prelimLines.filter((l) => l.stock_item_id || l.description.trim());
+      if (projectId && (prelim.length || prelimBomId)) {
+        await savePrelimBom({
+          data: {
+            id: prelimBomId,
+            project_id: projectId,
+            customer_id: form.customer_id || null,
+            title: form.name || "Preliminary BOM/BOS",
+            kind: "preliminary",
+            bom_type: "material",
+            currency: CURRENCY,
+            items: prelim.map((l) => ({
+              stock_item_id: l.stock_item_id || null,
+              description: l.description,
+              unit: l.unit || "pcs",
+              quantity: Number(l.quantity || 0),
+              unit_cost: Number(l.unit_cost || 0),
+            })),
+          } as any,
+        });
+      }
       toast.success(form.id ? "Project updated" : "Project created");
       setOpen(false);
       setForm(emptyProject);
+      setPrelimLines([{ ...emptyPrelimLine }]);
+      setPrelimBomId(undefined);
+      qc.invalidateQueries({ queryKey: ["boms"] });
       refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save project");
