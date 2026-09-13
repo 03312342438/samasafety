@@ -420,8 +420,14 @@ function ProjectsPage() {
                       </Button>
                       <p className="text-[11px] text-muted-foreground">
                         Accounts are notified automatically when a milestone is reached.
+                        {!usedInQuotation && " The job step count opens once this project is used in a quotation."}
                       </p>
                     </div>
+
+                    <div className="sm:col-span-2">
+                      <PreliminaryBomFields lines={prelimLines} setLines={setPrelimLines} />
+                    </div>
+
 
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
