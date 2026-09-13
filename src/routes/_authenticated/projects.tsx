@@ -291,7 +291,12 @@ function ProjectsPage() {
   const jobList = ((jobs as any[]) ?? []).filter(
     (j) => !q || [j.job_number, j.projects?.project_number, j.description, j.site_location].join(" ").toLowerCase().includes(q),
   );
-
+const usedPoIds = new Set(
+  ((jobs as any[]) ?? []).map((j) => j.customer_po_id).filter(Boolean)
+);
+const availablePos = ((customerPos as any[]) ?? []).filter(
+  (po) => po.verification_status === "verified" && !usedPoIds.has(po.id)
+);
   return (
     <div className="min-h-screen bg-secondary/40">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
