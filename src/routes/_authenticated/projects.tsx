@@ -401,7 +401,12 @@ function ProjectsPage() {
                           </select>
                           <Input
                             placeholder="Steps"
-                            disabled={t.trigger_type !== "steps_completed"}
+                            disabled={t.trigger_type !== "steps_completed" || !usedInQuotation}
+                            title={
+                              t.trigger_type === "steps_completed" && !usedInQuotation
+                                ? "The job step count can be set once this project has been used in a quotation."
+                                : undefined
+                            }
                             value={t.trigger_steps}
                             onChange={(e) => updateTerm(i, { trigger_steps: e.target.value })}
                           />
