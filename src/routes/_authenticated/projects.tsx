@@ -167,6 +167,11 @@ function ProjectsPage() {
     }));
   }, [savedTerms]);
 
+  // The job-step count only opens once the project has been quoted.
+  const usedInQuotation = Boolean(
+    form.id && ((projects as any[]) ?? []).find((p) => p.id === form.id)?.values_from_quotation,
+  );
+
   const termsTotal =
     Math.round(form.payment_terms.reduce((s: number, t: any) => s + Number(t.percent || 0), 0) * 100) / 100;
   const updateTerm = (i: number, patch: any) =>
