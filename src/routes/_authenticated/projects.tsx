@@ -312,7 +312,7 @@ function ProjectsPage() {
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add project</Button>
                 </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto">
                   <DialogHeader><DialogTitle>{form.id ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Project name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
