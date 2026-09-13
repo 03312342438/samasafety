@@ -120,6 +120,32 @@ function ProjectsPage() {
   const [form, setForm] = useState<any>(emptyProject);
   const [jobOpen, setJobOpen] = useState(false);
   const [jobForm, setJobForm] = useState<any>(emptyJob);
+  // Preliminary BOM/BOS is captured with the project itself.
+  const [prelimLines, setPrelimLines] = useState<PrelimLine[]>([{ ...emptyPrelimLine }]);
+  const [prelimBomId, setPrelimBomId] = useState<string | undefined>(undefined);
+  const savePrelimBom = useServerFn(saveBom);
+
+  useEffect(() => {
+    if (!open) return;
+    const existing = ((boms as any[]) ?? []).find(
+      (b) => b.project_id === form.id && String(b.reference ?? "").startsWith("PBOM"),
+    );
+    setPrelimBomId(existing?.id);
+    setPrelimLines(
+      existing
+        ? ((existing.bom_items ?? []) as any[])
+            .slice()
+            .sort((a, z) => a.sequence - z.sequence)
+            .map((it) => ({
+              stock_item_id: it.stock_item_id ?? "",
+              description: it.description ?? "",
+              unit: it.unit ?? "",
+              quantity: String(it.quantity ?? 1),
+              unit_cost: String(it.unit_cost ?? 0),
+            }))
+        : [{ ...emptyPrelimLine }],
+    );
+  }, [open, form.id, boms]);
 
   // ---- payment milestones -------------------------------------------------
   const fetchTerms = useServerFn(listProjectPaymentTerms);
