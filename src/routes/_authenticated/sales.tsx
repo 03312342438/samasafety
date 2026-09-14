@@ -451,7 +451,6 @@ function SalesPage() {
 
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
-          {tab === "bom" && <PreliminaryBomPanel />}
           {tab === "quotations" && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Filter:</span>
