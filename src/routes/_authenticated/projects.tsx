@@ -464,7 +464,8 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                         onChange={(e) => {
                           const poId = e.target.value;
                           const po = availablePos.find((p: any) => p.id === poId);
-                          const projectId = po?.project_id ?? "";
+                          // A PO links to a project directly, or through the quotation it came from.
+                          const projectId = po?.project_id ?? po?.quotations?.project_id ?? "";
                           const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
                           // Main BOM/BOS only — preliminary (PBOM) references never drive a job.
                           const mainBom = ((boms as any[]) ?? []).find(

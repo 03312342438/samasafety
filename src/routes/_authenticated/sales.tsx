@@ -442,7 +442,6 @@ function SalesPage() {
           value={tab}
           onChange={setTab}
           tabs={[
-            
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
             { value: "analytics", label: "Analytics" },
