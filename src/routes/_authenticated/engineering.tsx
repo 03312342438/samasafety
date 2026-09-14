@@ -18,6 +18,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { listCustomers } from "@/lib/crm.functions";
+import { listCustomerPos } from "@/lib/sales.functions";
 import { listProjects, listJobNumbers } from "@/lib/projects.functions";
 import {
   listBoms, saveBom, deleteBom, setBomStage,
@@ -74,6 +75,7 @@ function EngineeringPage() {
   const fetchProjects = useServerFn(listProjects);
   const fetchJobs = useServerFn(listJobNumbers);
   const fetchCustomers = useServerFn(listCustomers);
+  const fetchCustomerPos = useServerFn(listCustomerPos);
   const fetchStockItems = useServerFn(listStockItems);
 
   const { data: stockItems } = useQuery({
@@ -180,6 +182,8 @@ function EngineeringPage() {
       toast.success(bomForm.id ? "BOM updated" : `BOM ${res?.reference ?? ""} created`);
       setBomOpen(false);
       setBomForm(emptyBom);
+      setBomPoId("");
+      setBomSite("");
       setItems([{ ...emptyItem }]);
       refresh();
     } catch (e) {
@@ -279,7 +283,7 @@ function EngineeringPage() {
                 open={bomOpen}
                 onOpenChange={(o) => {
                   setBomOpen(o);
-                  if (!o) { setBomForm(emptyBom); setItems([{ ...emptyItem }]); }
+                  if (!o) { setBomForm(emptyBom); setItems([{ ...emptyItem }]); setBomPoId(""); setBomSite(""); }
                 }}
               >
                 <DialogTrigger asChild>
@@ -293,14 +297,36 @@ function EngineeringPage() {
                     <Field label="Title" value={bomForm.title} onChange={(v) => setBomForm({ ...bomForm, title: v })} />
                     <Select label="Type" value={bomForm.bom_type} onChange={(v) => setBomForm({ ...bomForm, bom_type: v })}
                       options={[["material", "BOM — Material"], ["service", "BOS — Service"]]} />
-                     <Select label="Project" value={bomForm.project_id}
+                     <div className="sm:col-span-2">
+                       <Select label="Purchase order number" value={bomPoId}
+                         onChange={(v) => {
+                           setBomPoId(v);
+                           const po = poOptions.find((p: any) => p.id === v);
+                           const projectId = po?.project_id ?? po?.quotations?.project_id ?? "";
+                           const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
+                           setBomForm({
+                             ...bomForm,
+                             project_id: projectId,
+                             customer_id: project?.customer_id ?? po?.customer_id ?? "",
+                           });
+                           setBomSite(project?.site_location ?? po?.quotations?.site_location ?? "");
+                           if (v && !projectId) toast.error("This purchase order is not linked to a project yet.");
+                         }}
+                         options={[["", "— select purchase order —"], ...poOptions.map((po: any) => [po.id, `${po.po_number || po.reference} — ${po.customers?.name ?? "Customer"}`] as [string, string])]} />
+                     </div>
+                     <Select label="Project (from PO)" value={bomForm.project_id} disabled={Boolean(bomPoId)}
                        onChange={(v) => {
                          const project = ((projects as any[]) ?? []).find((p) => p.id === v);
                          setBomForm({ ...bomForm, project_id: v, customer_id: project?.customer_id ?? "" });
+                         setBomSite(project?.site_location ?? "");
                        }}
                        options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
                      <Select label="Customer (from project)" value={bomForm.customer_id} disabled onChange={() => {}}
                       options={[["", "— select a project —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
+                    <div>
+                      <Label className="text-xs">Site (auto)</Label>
+                      <Input className="mt-1 disabled:cursor-not-allowed disabled:opacity-60" value={bomSite} disabled readOnly />
+                    </div>
                     <Field label="Currency" value={bomForm.currency} onChange={(v) => setBomForm({ ...bomForm, currency: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
