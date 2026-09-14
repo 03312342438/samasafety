@@ -98,9 +98,17 @@ function EngineeringPage() {
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => fetchProjects() });
   const { data: jobs } = useQuery({ queryKey: ["job-numbers"], queryFn: () => fetchJobs() });
   const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => fetchCustomers() });
+  const { data: customerPos } = useQuery({ queryKey: ["customer-pos"], queryFn: () => fetchCustomerPos() });
+
+  /** Verified customer POs a main BOM/BOS can be raised against. */
+  const poOptions = ((customerPos as any[]) ?? []).filter(
+    (po) => po.verification_status === "verified",
+  );
 
   const [bomOpen, setBomOpen] = useState(false);
   const [bomForm, setBomForm] = useState<any>(emptyBom);
+  const [bomPoId, setBomPoId] = useState("");
+  const [bomSite, setBomSite] = useState("");
   const [items, setItems] = useState<ItemRow[]>([{ ...emptyItem }]);
   const [taskOpen, setTaskOpen] = useState(false);
   const [taskForm, setTaskForm] = useState<any>(emptyTask);
