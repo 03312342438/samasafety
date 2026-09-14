@@ -27,7 +27,6 @@ import { humanize, statusBadgeClass, CURRENCY } from "@/lib/workflow";
 import { listBoms } from "@/lib/engineering.functions";
 import { listProjects } from "@/lib/projects.functions";
 import { QuotationPdfButton } from "@/components/QuotationPdfButton";
-import { PreliminaryBomPanel } from "@/components/PreliminaryBomPanel";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   component: SalesPage,
@@ -443,7 +442,7 @@ function SalesPage() {
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: "bom", label: `Preliminary BOM/BOS (${bomList.length})` },
+            
             { value: "quotations", label: `Quotations (${quotationList.length})` },
             { value: "orders", label: `Customer POs (${poList.length})` },
             { value: "analytics", label: "Analytics" },
@@ -452,7 +451,6 @@ function SalesPage() {
 
         <div className="mt-4 space-y-3">
           {tab === "analytics" && <AnalyticsCharts />}
-          {tab === "bom" && <PreliminaryBomPanel />}
           {tab === "quotations" && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Filter:</span>

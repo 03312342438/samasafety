@@ -294,6 +294,28 @@ async function applyDecisionEffects(
       } as any)
       .eq("id", approval.entity_id);
   }
+  if (approval.entity_table === "customer_pos" && approval.entity_id && approved) {
+    const { data: po } = await supabase
+      .from("customer_pos")
+      .select("po_number, reference, verification_status")
+      .eq("id", approval.entity_id)
+      .maybeSingle();
+    if (po?.verification_status !== "verified") {
+      await supabase
+        .from("customer_pos")
+        .update({ verification_status: "verified", verified_by: userId, verified_at: now })
+        .eq("id", approval.entity_id);
+    }
+    // Everyone who acts on a confirmed order is told straight away.
+    await notifyDepartments(supabase, ["project_manager", "accounts", "maintenance"], {
+      title: "Customer purchase order approved",
+      message: `PO ${po?.po_number || po?.reference || ""} has been approved by Management — a job number can now be raised.`,
+      category: "order",
+      link: "/sales",
+      entity_table: "customer_pos",
+      entity_id: approval.entity_id,
+    });
+  }
   if (approval.entity_table === "stock_items" && approval.entity_id) {
     await supabase
       .from("stock_items")
