@@ -106,7 +106,9 @@ export const createReport = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    await regenerateTasks(supabase, row.id, userId, data);
+    // Visits filed against a maintenance contract are tracked by the contract
+    // itself, so they don't create their own reminder schedule.
+    if (!data.job_number_id) await regenerateTasks(supabase, row.id, userId, data);
     return { id: row.id };
   });
 
