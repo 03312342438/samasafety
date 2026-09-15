@@ -184,7 +184,7 @@ export const updateReport = createServerFn({ method: "POST" })
       })
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if (existing?.created_by) {
+    if (existing?.created_by && !fields.job_number_id) {
       await regenerateTasks(supabase, id, existing.created_by, fields);
     }
     return { ok: true };
