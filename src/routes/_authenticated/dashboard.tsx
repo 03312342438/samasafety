@@ -10,6 +10,7 @@ import {
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
 import { MaintenanceTaskList } from "@/components/MaintenanceTaskList";
+import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
 import { AppHeader } from "@/components/AppHeader";
@@ -23,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet, LayoutDashboard } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, CalendarClock, FileSpreadsheet, LayoutDashboard, ClipboardList } from "lucide-react";
 import type { ReportRecord } from "@/lib/report-constants";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, REPORT_SEARCH_FIELDS, TASK_SEARCH_FIELDS } from "@/lib/search";
@@ -152,7 +153,7 @@ function Dashboard() {
     <div className="min-h-screen bg-secondary/40">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
 
-      <main className={isAdmin ? "mx-auto max-w-7xl px-4 py-6" : "mx-auto max-w-5xl px-4 py-6"}>
+      <main className={isAdmin || activeTab === "contracts" ? "mx-auto max-w-7xl px-4 py-6" : "mx-auto max-w-5xl px-4 py-6"}>
         {profileError && (
           <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
             <p className="font-semibold">Server configuration problem</p>
@@ -191,6 +192,7 @@ function Dashboard() {
                   { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
                   { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
+                  { value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) },
                 ]
               : []),
           ]}
@@ -212,6 +214,12 @@ function Dashboard() {
         {activeTab === "history" && canFillReport && !isAdmin && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
+          </div>
+        )}
+
+        {activeTab === "contracts" && canFillReport && !isAdmin && (
+          <div className="mt-5">
+            <MaintenanceContracts />
           </div>
         )}
 

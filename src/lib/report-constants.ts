@@ -52,6 +52,9 @@ export type ReportData = {
   client_sign_name: string;
   client_designation: string;
   date_completed: string;
+  job_number_id: string;
+  customer_id: string;
+  project_id: string;
 };
 
 export type ReportRecord = ReportData & {
@@ -91,6 +94,9 @@ export function recordToForm(r: ReportRecord): ReportData {
     client_sign_name: r.client_sign_name ?? "",
     client_designation: r.client_designation ?? "",
     date_completed: r.date_completed ?? "",
+    job_number_id: (r as any).job_number_id ?? "",
+    customer_id: (r as any).customer_id ?? "",
+    project_id: (r as any).project_id ?? "",
   };
 }
 
@@ -120,5 +126,8 @@ export function emptyReport(): ReportData {
     client_sign_name: "",
     client_designation: "",
     date_completed: "",
+    job_number_id: "",
+    customer_id: "",
+    project_id: "",
   };
 }

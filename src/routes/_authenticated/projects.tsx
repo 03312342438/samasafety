@@ -62,7 +62,8 @@ const emptyProject = {
 const emptyJob = {
   project_id: "", job_kind: "installation", scope_type: "installation", description: "",
   site_location: "", start_date: "", target_date: "",
-  maintenance_interval_months: "", bom_id: "", customer_po_id: "",
+  maintenance_interval_months: "", maintenance_type: "", maintenance_total_count: "",
+  maintenance_start_date: "", bom_id: "", customer_po_id: "",
   steps: [] as { title: string; expected_date: string }[],
 };
 
@@ -264,6 +265,11 @@ function ProjectsPage() {
           project_id: jobForm.project_id,
           bom_id: jobForm.bom_id,
           customer_po_id: jobForm.customer_po_id,
+          maintenance_type: jobForm.maintenance_type,
+          maintenance_total_count: jobForm.maintenance_total_count
+            ? Number(jobForm.maintenance_total_count)
+            : null,
+          maintenance_start_date: jobForm.maintenance_start_date || null,
           maintenance_interval_months: jobForm.maintenance_interval_months
             ? Number(jobForm.maintenance_interval_months)
             : null,
@@ -533,6 +539,9 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                     <Field label="Start date" type="date" value={jobForm.start_date} onChange={(v) => setJobForm({ ...jobForm, start_date: v })} />
                     <Field label="Target date" type="date" value={jobForm.target_date} onChange={(v) => setJobForm({ ...jobForm, target_date: v })} />
                     {jobForm.job_kind === "maintenance" && <Field label="Maintenance interval (months)" value={jobForm.maintenance_interval_months} onChange={(v) => setJobForm({ ...jobForm, maintenance_interval_months: v })} />}
+                    {jobForm.job_kind === "maintenance" && <Field label="Type of maintenance" value={jobForm.maintenance_type} onChange={(v) => setJobForm({ ...jobForm, maintenance_type: v })} />}
+                    {jobForm.job_kind === "maintenance" && <Field label="Number of maintenances" value={jobForm.maintenance_total_count} onChange={(v) => setJobForm({ ...jobForm, maintenance_total_count: v })} />}
+                    {jobForm.job_kind === "maintenance" && <Field label="Maintenance start date" type="date" value={jobForm.maintenance_start_date} onChange={(v) => setJobForm({ ...jobForm, maintenance_start_date: v })} />}
                   </div>
                   {jobForm.job_kind === "installation" && (
                     <div className="mt-4 space-y-2">

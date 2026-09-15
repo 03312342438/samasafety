@@ -35,6 +35,10 @@ const reportSchema = z.object({
   client_sign_name: z.string().max(200).default(""),
   client_designation: z.string().max(200).default(""),
   date_completed: z.string().max(40).default(""),
+  // Optional link to the maintenance contract (job number) this visit belongs to.
+  job_number_id: z.string().uuid().nullable().default(null),
+  customer_id: z.string().uuid().nullable().default(null),
+  project_id: z.string().uuid().nullable().default(null),
 });
 
 type ReportFields = z.infer<typeof reportSchema>;
@@ -102,7 +106,9 @@ export const createReport = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    await regenerateTasks(supabase, row.id, userId, data);
+    // Visits filed against a maintenance contract are tracked by the contract
+    // itself, so they don't create their own reminder schedule.
+    if (!data.job_number_id) await regenerateTasks(supabase, row.id, userId, data);
     return { id: row.id };
   });
 
@@ -178,7 +184,7 @@ export const updateReport = createServerFn({ method: "POST" })
       })
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if (existing?.created_by) {
+    if (existing?.created_by && !fields.job_number_id) {
       await regenerateTasks(supabase, id, existing.created_by, fields);
     }
     return { ok: true };
