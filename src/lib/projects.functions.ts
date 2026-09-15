@@ -280,10 +280,18 @@ export const saveJobNumber = createServerFn({ method: "POST" })
         raw.job_kind === "maintenance" ? raw.maintenance_interval_months : null,
       start_date: raw.start_date || null,
       target_date: raw.target_date || null,
+      maintenance_type: raw.job_kind === "maintenance" ? raw.maintenance_type : "",
+      maintenance_total_count:
+        raw.job_kind === "maintenance" ? raw.maintenance_total_count : null,
+      maintenance_start_date:
+        raw.job_kind === "maintenance" ? raw.maintenance_start_date || null : null,
     };
 
     if (fields.job_kind === "maintenance" && !fields.maintenance_interval_months) {
       throw new Error("Select the maintenance interval (in months).");
+    }
+    if (fields.job_kind === "maintenance" && !fields.maintenance_total_count) {
+      throw new Error("Enter how many maintenance visits are covered by this contract.");
     }
     if (fields.job_kind === "installation" && steps.length === 0) {
       throw new Error("Add at least one project step with a description and expected completion date.");
