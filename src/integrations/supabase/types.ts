@@ -1033,6 +1033,9 @@ export type Database = {
           job_kind: string
           job_number: string
           maintenance_interval_months: number | null
+          maintenance_start_date: string | null
+          maintenance_total_count: number | null
+          maintenance_type: string
           pm_approved_at: string | null
           pm_approved_by: string | null
           progress_percent: number
@@ -1058,6 +1061,9 @@ export type Database = {
           job_kind?: string
           job_number: string
           maintenance_interval_months?: number | null
+          maintenance_start_date?: string | null
+          maintenance_total_count?: number | null
+          maintenance_type?: string
           pm_approved_at?: string | null
           pm_approved_by?: string | null
           progress_percent?: number
@@ -1083,6 +1089,9 @@ export type Database = {
           job_kind?: string
           job_number?: string
           maintenance_interval_months?: number | null
+          maintenance_start_date?: string | null
+          maintenance_total_count?: number | null
+          maintenance_type?: string
           pm_approved_at?: string | null
           pm_approved_by?: string | null
           progress_percent?: number
