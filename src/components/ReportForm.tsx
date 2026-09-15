@@ -12,6 +12,8 @@ import {
   type SparePart,
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
+import { listMaintenanceContracts } from "@/lib/maintenance.functions";
+import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
 import { elementToPdfBase64 } from "@/lib/generate-pdf";
@@ -33,6 +35,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+// The server expects real UUIDs or nulls for the contract links.
+function toPayload(form: ReportData) {
+  return {
+    ...form,
+    job_number_id: form.job_number_id || null,
+    customer_id: form.customer_id || null,
+    project_id: form.project_id || null,
+  };
 }
 
 function prettyScheduleDate(s: string) {
@@ -61,6 +73,40 @@ export function ReportForm({
   const [saving, setSaving] = useState(false);
   const [savedData, setSavedData] = useState<ReportData | null>(null);
   const save = useServerFn(createReport);
+  const fetchContracts = useServerFn(listMaintenanceContracts);
+  const { data: contracts } = useQuery({
+    queryKey: ["maintenance-contracts"],
+    queryFn: () => fetchContracts(),
+  });
+  const contractList = ((contracts as any[]) ?? []).filter(
+    (c) => c.remaining_count > 0 || c.id === form.job_number_id,
+  );
+  const contract = ((contracts as any[]) ?? []).find((c) => c.id === form.job_number_id);
+
+  // Picking a contract fills in everything known about the site and locks the
+  // visit to the next maintenance still outstanding.
+  const pickContract = (id: string) => {
+    const c = ((contracts as any[]) ?? []).find((x) => x.id === id);
+    if (!c) {
+      setForm((f) => ({ ...f, job_number_id: "", customer_id: "", project_id: "" }));
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      job_number_id: c.id,
+      customer_id: c.customer_id ?? "",
+      project_id: c.project_id ?? "",
+      client_name: c.customer_name === "—" ? f.client_name : c.customer_name,
+      project: c.project_label || c.project_name,
+      site_location: c.site_location === "—" ? "" : c.site_location,
+      contract: c.job_number,
+      report_date: c.next_due || f.report_date,
+      date_completed: c.next_due || f.date_completed,
+      maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
+      maintenance_interval_unit: "months",
+      maintenance_count: String(c.remaining_count ?? ""),
+    }));
+  };
   const update = useServerFn(updateReport);
   const sendEmail = useServerFn(emailReport);
   const docRef = useRef<HTMLDivElement>(null);
@@ -104,13 +150,13 @@ export function ReportForm({
     setSaving(true);
     try {
       if (isEdit && initial) {
-        await update({ data: { ...form, id: initial.id } });
+        await update({ data: { ...toPayload(form), id: initial.id } });
         qc.invalidateQueries({ queryKey: ["my-reports"] });
         qc.invalidateQueries({ queryKey: ["all-reports"] });
         toast.success("Report updated");
         onSaved?.();
       } else {
-        await save({ data: form });
+        await save({ data: toPayload(form) });
         // Generate the PDF while the offscreen document is still rendered.
         let pdfBase64 = "";
         if (docRef.current) {
@@ -123,6 +169,7 @@ export function ReportForm({
         setSavedData(form);
         qc.invalidateQueries({ queryKey: ["my-reports"] });
         qc.invalidateQueries({ queryKey: ["all-reports"] });
+        qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
         toast.success("Report submitted");
         onSaved?.();
         if (pdfBase64) void emailToRecipients(form, pdfBase64);
@@ -203,6 +250,30 @@ export function ReportForm({
           <CardTitle>Report Details</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Field label="Maintenance contract (site)">
+              <select
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={form.job_number_id}
+                onChange={(e) => pickContract(e.target.value)}
+              >
+                <option value="">— not linked to a contract —</option>
+                {contractList.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.customer_name} — {c.project_label || c.project_name} — {c.site_location} (
+                    {c.remaining_count} left)
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {contract && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {contract.maintenance_type} · every {contract.interval_months} month(s) ·
+                visit {contract.next_sequence ?? "—"} of {contract.total_count} · due{" "}
+                {contract.next_due ? prettyScheduleDate(contract.next_due) : "—"}
+              </p>
+            )}
+          </div>
           <Field label="Client Name">
             <Input value={form.client_name} onChange={(e) => set("client_name", e.target.value)} />
           </Field>
