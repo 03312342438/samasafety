@@ -35,6 +35,10 @@ const reportSchema = z.object({
   client_sign_name: z.string().max(200).default(""),
   client_designation: z.string().max(200).default(""),
   date_completed: z.string().max(40).default(""),
+  // Optional link to the maintenance contract (job number) this visit belongs to.
+  job_number_id: z.string().uuid().nullable().default(null),
+  customer_id: z.string().uuid().nullable().default(null),
+  project_id: z.string().uuid().nullable().default(null),
 });
 
 type ReportFields = z.infer<typeof reportSchema>;
