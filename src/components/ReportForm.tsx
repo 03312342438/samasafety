@@ -254,23 +254,23 @@ export function ReportForm({
             <Field label="Maintenance contract (site)">
               <select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={form.job_number_id}
+                value={contractId}
                 onChange={(e) => pickContract(e.target.value)}
               >
                 <option value="">— not linked to a contract —</option>
-                {contractList.map((c) => (
+                {contractList.map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    {c.customer_name} — {c.project_label || c.project_name} — {c.site_location} (
-                    {c.remaining_count} left)
+                    {c.msr_no || "MSR —"} · {c.customer_name} — {c.project_name} —{" "}
+                    {c.site_location} ({c.remaining_count} left)
                   </option>
                 ))}
               </select>
             </Field>
             {contract && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                {contract.maintenance_type} · every {contract.interval_months} month(s) ·
-                visit {contract.next_sequence ?? "—"} of {contract.total_count} · due{" "}
-                {contract.next_due ? prettyScheduleDate(contract.next_due) : "—"}
+                {contract.system_type} · every {contract.interval_months} month(s) · visit{" "}
+                {contract.completed_count + 1} of {contract.total_visits} · due{" "}
+                {contract.upcoming_visit ? prettyDate(contract.upcoming_visit) : "—"}
               </p>
             )}
           </div>
