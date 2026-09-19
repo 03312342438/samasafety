@@ -12,7 +12,8 @@ import {
   type SparePart,
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
-import { listMaintenanceContracts } from "@/lib/maintenance.functions";
+import { listContracts } from "@/lib/maintenance-contracts.functions";
+import { prettyDate } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
@@ -73,38 +74,35 @@ export function ReportForm({
   const [saving, setSaving] = useState(false);
   const [savedData, setSavedData] = useState<ReportData | null>(null);
   const save = useServerFn(createReport);
-  const fetchContracts = useServerFn(listMaintenanceContracts);
+  const fetchContracts = useServerFn(listContracts);
   const { data: contracts } = useQuery({
     queryKey: ["maintenance-contracts"],
     queryFn: () => fetchContracts(),
   });
+  const [contractId, setContractId] = useState("");
   const contractList = ((contracts as any[]) ?? []).filter(
-    (c) => c.remaining_count > 0 || c.id === form.job_number_id,
+    (c) => c.remaining_count > 0 || c.id === contractId,
   );
-  const contract = ((contracts as any[]) ?? []).find((c) => c.id === form.job_number_id);
+  const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
 
-  // Picking a contract fills in everything known about the site and locks the
-  // visit to the next maintenance still outstanding.
+  // Picking a contract fills in everything known about the site and schedules
+  // the visit on the next maintenance still outstanding.
   const pickContract = (id: string) => {
+    setContractId(id);
     const c = ((contracts as any[]) ?? []).find((x) => x.id === id);
-    if (!c) {
-      setForm((f) => ({ ...f, job_number_id: "", customer_id: "", project_id: "" }));
-      return;
-    }
+    if (!c) return;
     setForm((f) => ({
       ...f,
-      job_number_id: c.id,
-      customer_id: c.customer_id ?? "",
-      project_id: c.project_id ?? "",
-      client_name: c.customer_name === "—" ? f.client_name : c.customer_name,
-      project: c.project_label || c.project_name,
-      site_location: c.site_location === "—" ? "" : c.site_location,
-      contract: c.job_number,
-      report_date: c.next_due || f.report_date,
-      date_completed: c.next_due || f.date_completed,
+      client_name: c.customer_name || f.client_name,
+      project: c.project_name || f.project,
+      site_location: c.site_location || f.site_location,
+      contract: c.contract_no || f.contract,
+      msr_no: c.msr_no || f.msr_no,
+      report_date: c.upcoming_visit || f.report_date,
+      date_completed: c.upcoming_visit || f.date_completed,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
       maintenance_interval_unit: "months",
-      maintenance_count: String(c.remaining_count ?? ""),
+      maintenance_count: "",
     }));
   };
   const update = useServerFn(updateReport);
@@ -254,23 +252,23 @@ export function ReportForm({
             <Field label="Maintenance contract (site)">
               <select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={form.job_number_id}
+                value={contractId}
                 onChange={(e) => pickContract(e.target.value)}
               >
                 <option value="">— not linked to a contract —</option>
-                {contractList.map((c) => (
+                {contractList.map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    {c.customer_name} — {c.project_label || c.project_name} — {c.site_location} (
-                    {c.remaining_count} left)
+                    {c.msr_no || "MSR —"} · {c.customer_name} — {c.project_name} —{" "}
+                    {c.site_location} ({c.remaining_count} left)
                   </option>
                 ))}
               </select>
             </Field>
             {contract && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                {contract.maintenance_type} · every {contract.interval_months} month(s) ·
-                visit {contract.next_sequence ?? "—"} of {contract.total_count} · due{" "}
-                {contract.next_due ? prettyScheduleDate(contract.next_due) : "—"}
+                {contract.system_type} · every {contract.interval_months} month(s) · visit{" "}
+                {contract.completed_count + 1} of {contract.total_visits} · due{" "}
+                {contract.upcoming_visit ? prettyDate(contract.upcoming_visit) : "—"}
               </p>
             )}
           </div>
