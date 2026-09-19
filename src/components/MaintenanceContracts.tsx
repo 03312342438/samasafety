@@ -1,101 +1,323 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listMaintenanceContracts } from "@/lib/maintenance.functions";
+import {
+  listContracts,
+  saveContract,
+  deleteContract,
+} from "@/lib/maintenance-contracts.functions";
+import {
+  SYSTEM_TYPES,
+  SYSTEM_LABELS,
+  SYSTEM_INTERVAL,
+  defaultEndDate,
+  prettyDate,
+  type SystemType,
+} from "@/lib/maintenance-contracts";
+import { FilterTable, type Column } from "@/components/FilterTable";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
-function pretty(d: string) {
-  if (!d) return "—";
-  const dt = new Date(`${d}T00:00:00`);
-  if (Number.isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
+type Row = Record<string, any>;
+
+const emptyForm = () => ({
+  id: null as string | null,
+  msr_no: "",
+  contract_no: "",
+  customer_name: "",
+  project_name: "",
+  site_location: "",
+  start_date: "",
+  end_date: "",
+  system_type: "FF" as SystemType,
+  interval_months: SYSTEM_INTERVAL.FF,
+  notes: "",
+});
+
+const statusClass = (s: string) =>
+  s === "Overdue" || s === "Expired"
+    ? "bg-destructive/10 text-destructive"
+    : s === "Due soon"
+      ? "bg-amber-100 text-amber-700"
+      : s === "Completed"
+        ? "bg-emerald-100 text-emerald-700"
+        : "bg-muted text-muted-foreground";
 
 export function MaintenanceContracts() {
-  const fetchContracts = useServerFn(listMaintenanceContracts);
+  const qc = useQueryClient();
+  const fetchContracts = useServerFn(listContracts);
+  const save = useServerFn(saveContract);
+  const remove = useServerFn(deleteContract);
+
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-contracts"],
     queryFn: () => fetchContracts(),
   });
-  const rows = (data as any[]) ?? [];
+  const rows = ((data as Row[]) ?? []) as Row[];
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          Loading maintenance contracts…
-        </CardContent>
-      </Card>
-    );
-  }
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm());
+  const [saving, setSaving] = useState(false);
 
-  if (!rows.length) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          No maintenance contracts yet. They are created from maintenance job numbers.
-        </CardContent>
-      </Card>
-    );
-  }
+  const set = (patch: Partial<ReturnType<typeof emptyForm>>) =>
+    setForm((f) => ({ ...f, ...patch }));
+
+  const openNew = () => {
+    setForm(emptyForm());
+    setOpen(true);
+  };
+
+  const openEdit = (r: Row) => {
+    setForm({
+      id: r.id,
+      msr_no: r.msr_no ?? "",
+      contract_no: r.contract_no ?? "",
+      customer_name: r.customer_name ?? "",
+      project_name: r.project_name ?? "",
+      site_location: r.site_location ?? "",
+      start_date: r.start_date ?? "",
+      end_date: r.end_date ?? "",
+      system_type: (r.system_type ?? "FF") as SystemType,
+      interval_months: r.interval_months ?? 6,
+      notes: r.notes ?? "",
+    });
+    setOpen(true);
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await save({ data: form });
+      qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      toast.success(form.id ? "Contract updated" : "Contract added");
+      setOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save contract");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDelete = async (id: string) => {
+    if (!confirm("Remove this contract from the list?")) return;
+    try {
+      await remove({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      toast.success("Contract removed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not remove contract");
+    }
+  };
+
+  const columns: Column<Row>[] = [
+    { key: "msr_no", header: "MSR No.", value: (r) => r.msr_no },
+    { key: "contract_no", header: "Contract No.", value: (r) => r.contract_no },
+    { key: "customer_name", header: "Customer / Client", value: (r) => r.customer_name },
+    { key: "project_name", header: "Project Name", value: (r) => r.project_name },
+    { key: "site_location", header: "Site Location", value: (r) => r.site_location },
+    {
+      key: "start_date",
+      header: "Contract Start",
+      value: (r) => r.start_date,
+      cell: (r) => prettyDate(r.start_date) || "—",
+    },
+    {
+      key: "end_date",
+      header: "Contract End",
+      value: (r) => r.end_date,
+      cell: (r) => prettyDate(r.end_date) || "—",
+    },
+    { key: "system_type", header: "System", value: (r) => r.system_type },
+    {
+      key: "interval_months",
+      header: "Visit Interval",
+      value: (r) => r.interval_months,
+      cell: (r) => `${r.interval_months} month(s)`,
+    },
+    {
+      key: "last_visit",
+      header: "Last Visit",
+      value: (r) => r.last_visit,
+      cell: (r) => prettyDate(r.last_visit) || "—",
+    },
+    {
+      key: "upcoming_visit",
+      header: "Upcoming Visit",
+      value: (r) => r.upcoming_visit,
+      cell: (r) => prettyDate(r.upcoming_visit) || "—",
+    },
+    {
+      key: "remaining_count",
+      header: "Visits Remaining",
+      value: (r) => r.remaining_count,
+      cell: (r) => `${r.remaining_count} of ${r.total_visits}`,
+    },
+    {
+      key: "status",
+      header: "Status",
+      value: (r) => r.status,
+      cell: (r) => (
+        <span className={`rounded px-2 py-0.5 text-xs font-medium ${statusClass(r.status)}`}>
+          {r.status}
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <Card>
-      <CardContent className="overflow-x-auto p-0">
-        <table className="w-full min-w-[1000px] text-sm">
-          <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Project</th>
-              <th className="px-3 py-2">Site</th>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Every</th>
-              <th className="px-3 py-2">Total</th>
-              <th className="px-3 py-2">Completed</th>
-              <th className="px-3 py-2">Remaining</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => (
-              <tr key={c.id} className="border-t align-top">
-                <td className="px-3 py-3 font-medium">{c.customer_name}</td>
-                <td className="px-3 py-3">
-                  {c.project_name}
-                  <div className="text-xs text-muted-foreground">{c.job_number}</div>
-                </td>
-                <td className="px-3 py-3">{c.site_location}</td>
-                <td className="px-3 py-3">{c.maintenance_type}</td>
-                <td className="px-3 py-3">{c.interval_months} month(s)</td>
-                <td className="px-3 py-3">{c.total_count}</td>
-                <td className="px-3 py-3">
-                  <span className="font-medium text-emerald-700">{c.completed_count}</span>
-                  {c.completed.length > 0 && (
-                    <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                      {c.completed.map((v: any) => (
-                        <li key={v.sequence}>
-                          #{v.sequence} · {pretty(v.completed_date)}
-                          {v.msr_no ? ` · MSR ${v.msr_no}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </td>
-                <td className="px-3 py-3">
-                  <span className="font-medium">{c.remaining_count}</span>
-                  {c.remaining.length > 0 && (
-                    <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                      {c.remaining.map((v: any) => (
-                        <li key={v.sequence}>
-                          #{v.sequence} · due {pretty(v.due_date)}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Maintenance contracts are added manually. Visits, due dates and status update
+          automatically from the reports filed against each MSR number.
+        </p>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={openNew}>
+              <Plus className="mr-1 h-4 w-4" /> Add contract
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{form.id ? "Edit contract" : "New maintenance contract"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>MSR No.</Label>
+                <Input
+                  value={form.msr_no}
+                  onChange={(e) => set({ msr_no: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Contract No.</Label>
+                <Input
+                  value={form.contract_no}
+                  onChange={(e) => set({ contract_no: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Customer / Client name</Label>
+                <Input
+                  value={form.customer_name}
+                  onChange={(e) => set({ customer_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Project name</Label>
+                <Input
+                  value={form.project_name}
+                  onChange={(e) => set({ project_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Site location</Label>
+                <Input
+                  value={form.site_location}
+                  onChange={(e) => set({ site_location: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Contract start date</Label>
+                <Input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) =>
+                    set({ start_date: e.target.value, end_date: defaultEndDate(e.target.value) })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Contract end date</Label>
+                <Input
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => set({ end_date: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Filled automatically one year after the start date.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>System</Label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={form.system_type}
+                  onChange={(e) => {
+                    const t = e.target.value as SystemType;
+                    set({ system_type: t, interval_months: SYSTEM_INTERVAL[t] });
+                  }}
+                >
+                  {SYSTEM_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {SYSTEM_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Visit interval (months)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.interval_months}
+                  onChange={(e) => set({ interval_months: Number(e.target.value) || 1 })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Set automatically from the system type.
+                </p>
+              </div>
+              <DialogFooter className="sm:col-span-2">
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving…" : form.id ? "Save changes" : "Add contract"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            Loading maintenance contracts…
+          </CardContent>
+        </Card>
+      ) : (
+        <FilterTable
+          columns={columns}
+          rows={rows}
+          empty="No maintenance contracts yet. Use “Add contract” to build the list."
+          actions={(r) => (
+            <div className="flex justify-end gap-1">
+              <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={() => onDelete(r.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        />
+      )}
+    </div>
   );
 }
