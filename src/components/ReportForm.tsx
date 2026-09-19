@@ -12,7 +12,8 @@ import {
   type SparePart,
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
-import { listMaintenanceContracts } from "@/lib/maintenance.functions";
+import { listContracts } from "@/lib/maintenance-contracts.functions";
+import { prettyDate } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
