@@ -1134,6 +1134,57 @@ export type Database = {
           },
         ]
       }
+      maintenance_contracts: {
+        Row: {
+          contract_no: string
+          created_at: string
+          created_by: string
+          customer_name: string
+          end_date: string | null
+          id: string
+          interval_months: number
+          msr_no: string
+          notes: string
+          project_name: string
+          site_location: string
+          start_date: string | null
+          system_type: string
+          updated_at: string
+        }
+        Insert: {
+          contract_no?: string
+          created_at?: string
+          created_by: string
+          customer_name?: string
+          end_date?: string | null
+          id?: string
+          interval_months?: number
+          msr_no?: string
+          notes?: string
+          project_name?: string
+          site_location?: string
+          start_date?: string | null
+          system_type?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_no?: string
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          end_date?: string | null
+          id?: string
+          interval_months?: number
+          msr_no?: string
+          notes?: string
+          project_name?: string
+          site_location?: string
+          start_date?: string | null
+          system_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenance_reminder_emails: {
         Row: {
           created_at: string
