@@ -123,10 +123,12 @@ export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    // Own report schedules plus every visit scheduled from a maintenance
+    // contract, so contract visits are pending for whoever does them.
     const { data, error } = await supabase
       .from("maintenance_tasks")
       .select("*")
-      .eq("created_by", userId)
+      .or(`created_by.eq.${userId},contract_id.not.is.null`)
       .order("due_date", { ascending: true });
     if (error) throw new Error(error.message);
     return await attachReportFields(supabase, data ?? []);
