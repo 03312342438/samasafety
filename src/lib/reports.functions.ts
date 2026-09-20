@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
+import { syncContractTasksForMsr } from "@/lib/maintenance-contracts.functions";
 
 const sparePartSchema = z.object({
   spare_no: z.string().max(100).default(""),
