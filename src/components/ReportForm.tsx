@@ -148,6 +148,26 @@ export function ReportForm({
       return { ...f, spare_parts: parts };
     });
 
+  // Choosing a store item fills the part number, description and unit price.
+  const pickStockItem = (i: number, code: string) =>
+    setForm((f) => {
+      const item = stockList.find((s) => s.item_code === code);
+      const parts = f.spare_parts.map((p, idx) => {
+        if (idx !== i) return p;
+        const unit_price = item?.unit_cost != null ? String(item.unit_cost) : p.unit_price;
+        const q = parseFloat(p.qty);
+        const u = parseFloat(unit_price);
+        return {
+          ...p,
+          spare_no: code,
+          description: item?.description ?? p.description,
+          unit_price,
+          total: !isNaN(q) && !isNaN(u) ? String(+(q * u).toFixed(2)) : p.total,
+        };
+      });
+      return { ...f, spare_parts: parts };
+    });
+
   const addSpare = () =>
     setForm((f) => ({
       ...f,
