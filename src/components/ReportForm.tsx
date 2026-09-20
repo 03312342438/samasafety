@@ -381,8 +381,21 @@ export function ReportForm({
         <CardContent className="space-y-3">
           {form.spare_parts.map((p, i) => (
             <div key={i} className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-12">
-              <Input className="sm:col-span-2" placeholder="Spare No." value={p.spare_no} onChange={(e) => setSpare(i, "spare_no", e.target.value)} />
-              <Input className="sm:col-span-4" placeholder="Description" value={p.description} onChange={(e) => setSpare(i, "description", e.target.value)} />
+              <div className="sm:col-span-6">
+                <SearchSelect
+                  value={p.spare_no}
+                  onChange={(code) => pickStockItem(i, code)}
+                  options={stockOptions}
+                  placeholder="— select item from store —"
+                  searchPlaceholder="Search store items…"
+                />
+              </div>
+              <Input
+                className="sm:col-span-6 sm:col-start-1"
+                placeholder="Description"
+                value={p.description}
+                onChange={(e) => setSpare(i, "description", e.target.value)}
+              />
               <Input className="sm:col-span-2" placeholder="Qty" value={p.qty} onChange={(e) => setSpare(i, "qty", e.target.value)} />
               <Input className="sm:col-span-2" placeholder="Unit Price" value={p.unit_price} onChange={(e) => setSpare(i, "unit_price", e.target.value)} />
               <div className="flex gap-2 sm:col-span-2">
