@@ -109,6 +109,8 @@ export const createReport = createServerFn({ method: "POST" })
     // Visits filed against a maintenance contract are tracked by the contract
     // itself, so they don't create their own reminder schedule.
     if (!data.job_number_id) await regenerateTasks(supabase, row.id, userId, data);
+    // A visit filed against a contract removes one pending visit from it.
+    await syncContractTasksForMsr(supabase, data.msr_no);
     return { id: row.id };
   });
 
