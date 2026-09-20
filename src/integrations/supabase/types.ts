@@ -1211,6 +1211,7 @@ export type Database = {
           asset_id: string | null
           client_name: string
           completed_at: string | null
+          contract_id: string | null
           created_at: string
           created_by: string
           customer_id: string | null
@@ -1221,7 +1222,7 @@ export type Database = {
           project_id: string | null
           reminder_2day_sent_at: string | null
           reminder_due_sent_at: string | null
-          report_id: string
+          report_id: string | null
           sequence: number
           site_location: string
           status: string
@@ -1230,6 +1231,7 @@ export type Database = {
           asset_id?: string | null
           client_name?: string
           completed_at?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by: string
           customer_id?: string | null
@@ -1240,7 +1242,7 @@ export type Database = {
           project_id?: string | null
           reminder_2day_sent_at?: string | null
           reminder_due_sent_at?: string | null
-          report_id: string
+          report_id?: string | null
           sequence: number
           site_location?: string
           status?: string
@@ -1249,6 +1251,7 @@ export type Database = {
           asset_id?: string | null
           client_name?: string
           completed_at?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string
           customer_id?: string | null
@@ -1259,7 +1262,7 @@ export type Database = {
           project_id?: string | null
           reminder_2day_sent_at?: string | null
           reminder_due_sent_at?: string | null
-          report_id?: string
+          report_id?: string | null
           sequence?: number
           site_location?: string
           status?: string
@@ -1270,6 +1273,13 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_contracts"
             referencedColumns: ["id"]
           },
           {
