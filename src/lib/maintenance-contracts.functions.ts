@@ -3,9 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   SYSTEM_TYPES,
-  addMonths,
   contractStatus,
   countVisits,
+  visitDate,
   type SystemType,
 } from "@/lib/maintenance-contracts";
 
