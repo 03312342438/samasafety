@@ -87,6 +87,18 @@ export function ReportForm({
   );
   const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
 
+  // Store catalogue, used to pick spare parts instead of typing them.
+  const fetchStock = useServerFn(listStockItems);
+  const { data: stock } = useQuery({
+    queryKey: ["stock-items"],
+    queryFn: () => fetchStock(),
+  });
+  const stockList = (stock as any[]) ?? [];
+  const stockOptions: [string, string][] = stockList.map((s) => [
+    s.item_code,
+    `${s.item_code} — ${s.description}${s.unit ? ` (${s.unit})` : ""}`,
+  ]);
+
   // Picking a contract fills in everything known about the site and schedules
   // the visit on the next maintenance still outstanding.
   const pickContract = (id: string) => {
