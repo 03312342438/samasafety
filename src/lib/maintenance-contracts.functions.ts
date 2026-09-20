@@ -9,6 +9,62 @@ import {
   type SystemType,
 } from "@/lib/maintenance-contracts";
 
+/**
+ * Keeps the pending maintenance visits of a contract in sync so every upcoming
+ * visit shows up in "Maintenance Pending" and gets a reminder when it is due.
+ */
+export async function syncContractTasks(supabase: any, contractId: string) {
+  const { data: c } = await supabase
+    .from("maintenance_contracts")
+    .select("*")
+    .eq("id", contractId)
+    .maybeSingle();
+  if (!c || !c.start_date || !c.interval_months) return;
+
+  const total = countVisits(c.start_date, c.end_date, c.interval_months);
+  let done = 0;
+  const msr = (c.msr_no || "").trim();
+  if (msr) {
+    const { count } = await supabase
+      .from("reports")
+      .select("id", { count: "exact", head: true })
+      .eq("msr_no", msr);
+    done = count ?? 0;
+  }
+
+  await supabase
+    .from("maintenance_tasks")
+    .delete()
+    .eq("contract_id", contractId)
+    .eq("status", "pending");
+
+  const rows = [];
+  for (let n = done + 1; n <= total; n++) {
+    rows.push({
+      contract_id: contractId,
+      created_by: c.created_by,
+      sequence: n,
+      due_date: visitDate(c.start_date, c.interval_months, n),
+      status: "pending",
+      client_name: c.customer_name || "",
+      project: c.project_name || "",
+      site_location: c.site_location || "",
+    });
+  }
+  if (rows.length) await supabase.from("maintenance_tasks").insert(rows);
+}
+
+/** Refresh the pending visits of every contract sharing an MSR number. */
+export async function syncContractTasksForMsr(supabase: any, msrNo: string) {
+  const msr = (msrNo || "").trim();
+  if (!msr) return;
+  const { data } = await supabase
+    .from("maintenance_contracts")
+    .select("id")
+    .eq("msr_no", msr);
+  for (const c of data ?? []) await syncContractTasks(supabase, c.id);
+}
+
 const contractSchema = z.object({
   msr_no: z.string().trim().max(100).default(""),
   contract_no: z.string().trim().max(100).default(""),
