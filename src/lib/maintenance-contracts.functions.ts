@@ -154,6 +154,7 @@ export const saveContract = createServerFn({ method: "POST" })
         .update(payload)
         .eq("id", id);
       if (error) throw new Error(error.message);
+      await syncContractTasks(supabase, id);
       return { id };
     }
     const { data: row, error } = await supabase
@@ -162,6 +163,7 @@ export const saveContract = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    await syncContractTasks(supabase, row.id);
     return { id: row.id };
   });
 
