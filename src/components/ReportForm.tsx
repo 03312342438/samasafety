@@ -13,6 +13,8 @@ import {
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
 import { listContracts } from "@/lib/maintenance-contracts.functions";
+import { listStockItems } from "@/lib/inventory.functions";
+import { SearchSelect } from "@/components/SearchSelect";
 import { prettyDate } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
