@@ -61,10 +61,9 @@ export const listContracts = createServerFn({ method: "GET" })
       const total = countVisits(c.start_date, c.end_date, c.interval_months);
       const done = Math.min(visits.length, total || visits.length);
       const remaining = Math.max(total - done, 0);
+      // The first visit falls on the contract start date itself.
       const upcoming =
-        remaining > 0 && c.start_date
-          ? addMonths(c.start_date, c.interval_months * (done + 1))
-          : "";
+        remaining > 0 && c.start_date ? visitDate(c.start_date, c.interval_months, done + 1) : "";
       return {
         ...c,
         last_visit: visits.length ? visits[visits.length - 1] : "",
