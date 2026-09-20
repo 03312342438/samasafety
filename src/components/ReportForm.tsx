@@ -13,6 +13,8 @@ import {
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
 import { listContracts } from "@/lib/maintenance-contracts.functions";
+import { listStockItems } from "@/lib/inventory.functions";
+import { SearchSelect } from "@/components/SearchSelect";
 import { prettyDate } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
@@ -85,6 +87,18 @@ export function ReportForm({
   );
   const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
 
+  // Store catalogue, used to pick spare parts instead of typing them.
+  const fetchStock = useServerFn(listStockItems);
+  const { data: stock } = useQuery({
+    queryKey: ["stock-items"],
+    queryFn: () => fetchStock(),
+  });
+  const stockList = (stock as any[]) ?? [];
+  const stockOptions: [string, string][] = stockList.map((s) => [
+    s.item_code,
+    `${s.item_code} — ${s.description}${s.unit ? ` (${s.unit})` : ""}`,
+  ]);
+
   // Picking a contract fills in everything known about the site and schedules
   // the visit on the next maintenance still outstanding.
   const pickContract = (id: string) => {
@@ -131,6 +145,26 @@ export function ReportForm({
         const u = parseFloat(parts[i].unit_price);
         if (!isNaN(q) && !isNaN(u)) parts[i].total = String(+(q * u).toFixed(2));
       }
+      return { ...f, spare_parts: parts };
+    });
+
+  // Choosing a store item fills the part number, description and unit price.
+  const pickStockItem = (i: number, code: string) =>
+    setForm((f) => {
+      const item = stockList.find((s) => s.item_code === code);
+      const parts = f.spare_parts.map((p, idx) => {
+        if (idx !== i) return p;
+        const unit_price = item?.unit_cost != null ? String(item.unit_cost) : p.unit_price;
+        const q = parseFloat(p.qty);
+        const u = parseFloat(unit_price);
+        return {
+          ...p,
+          spare_no: code,
+          description: item?.description ?? p.description,
+          unit_price,
+          total: !isNaN(q) && !isNaN(u) ? String(+(q * u).toFixed(2)) : p.total,
+        };
+      });
       return { ...f, spare_parts: parts };
     });
 
@@ -347,8 +381,21 @@ export function ReportForm({
         <CardContent className="space-y-3">
           {form.spare_parts.map((p, i) => (
             <div key={i} className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-12">
-              <Input className="sm:col-span-2" placeholder="Spare No." value={p.spare_no} onChange={(e) => setSpare(i, "spare_no", e.target.value)} />
-              <Input className="sm:col-span-4" placeholder="Description" value={p.description} onChange={(e) => setSpare(i, "description", e.target.value)} />
+              <div className="sm:col-span-6">
+                <SearchSelect
+                  value={p.spare_no}
+                  onChange={(code) => pickStockItem(i, code)}
+                  options={stockOptions}
+                  placeholder="— select item from store —"
+                  searchPlaceholder="Search store items…"
+                />
+              </div>
+              <Input
+                className="sm:col-span-6 sm:col-start-1"
+                placeholder="Description"
+                value={p.description}
+                onChange={(e) => setSpare(i, "description", e.target.value)}
+              />
               <Input className="sm:col-span-2" placeholder="Qty" value={p.qty} onChange={(e) => setSpare(i, "qty", e.target.value)} />
               <Input className="sm:col-span-2" placeholder="Unit Price" value={p.unit_price} onChange={(e) => setSpare(i, "unit_price", e.target.value)} />
               <div className="flex gap-2 sm:col-span-2">

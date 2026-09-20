@@ -35,6 +35,11 @@ export function defaultEndDate(start: string): string {
   return addMonths(start, 12);
 }
 
+/**
+ * Visits run from the contract start date itself and then every interval,
+ * never counting a visit on the contract end date.
+ * e.g. start 1 Jan, 3-month interval, 1-year contract -> Jan, Apr, Jul, Oct = 4.
+ */
 export function countVisits(
   start: string | null,
   end: string | null,
@@ -48,7 +53,14 @@ export function countVisits(
     (e.getFullYear() - s.getFullYear()) * 12 +
     (e.getMonth() - s.getMonth()) +
     (e.getDate() >= s.getDate() ? 0 : -1);
-  return Math.max(Math.floor(months / intervalMonths), 0);
+  if (months <= 0) return 0;
+  return Math.max(Math.ceil(months / intervalMonths), 0);
+}
+
+/** Due date of visit number `n` (1-based); the first visit is the start date. */
+export function visitDate(start: string | null, intervalMonths: number, n: number): string {
+  if (!start || n < 1) return "";
+  return addMonths(String(start).slice(0, 10), intervalMonths * (n - 1));
 }
 
 export function contractStatus(opts: {
