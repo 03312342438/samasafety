@@ -108,6 +108,7 @@ export function ReportForm({
     setForm((f) => ({
       ...f,
       client_name: c.customer_name || f.client_name,
+      client_email: c.customer_email || f.client_email,
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
@@ -204,7 +205,9 @@ export function ReportForm({
         qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
         toast.success("Report submitted");
         onSaved?.();
-        if (pdfBase64) void emailToRecipients(form, pdfBase64);
+        // Send even when the PDF could not be produced, so the client and the
+        // recipient list still get the report notification.
+        void emailToRecipients(form, pdfBase64);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save report");
@@ -234,6 +237,15 @@ export function ReportForm({
         toast.success("Report emailed", {
           description: res.to?.length ? `Sent to: ${res.to.join(", ")}` : undefined,
         });
+      }
+      // Show any address that was rejected, instead of failing silently.
+      if (res.failed?.length) {
+        toast.error("Some addresses did not receive the report", {
+          description: res.failed.join(" | "),
+        });
+      }
+      if (!res.sent && !res.failed?.length) {
+        toast.error("The report was not emailed: no recipient address is set.");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not email the report");
