@@ -238,6 +238,15 @@ export function ReportForm({
           description: res.to?.length ? `Sent to: ${res.to.join(", ")}` : undefined,
         });
       }
+      // Show any address that was rejected, instead of failing silently.
+      if (res.failed?.length) {
+        toast.error("Some addresses did not receive the report", {
+          description: res.failed.join(" | "),
+        });
+      }
+      if (!res.sent && !res.failed?.length) {
+        toast.error("The report was not emailed: no recipient address is set.");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not email the report");
     }
