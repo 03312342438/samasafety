@@ -60,7 +60,13 @@ export const emailReport = createServerFn({ method: "POST" })
     });
 
     if (to.length === 0) {
-      return { sent: false, count: 0, reason: "no_recipients" };
+      return {
+        sent: false,
+        count: 0,
+        to: [] as string[],
+        failed: [] as string[],
+        reason: "no_recipients",
+      };
     }
 
     const lovableKey = process.env.LOVABLE_API_KEY;
