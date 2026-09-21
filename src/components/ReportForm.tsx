@@ -108,6 +108,7 @@ export function ReportForm({
     setForm((f) => ({
       ...f,
       client_name: c.customer_name || f.client_name,
+      client_email: c.customer_email || f.client_email,
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
