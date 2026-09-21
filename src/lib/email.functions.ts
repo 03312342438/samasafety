@@ -159,6 +159,7 @@ export const emailReport = createServerFn({ method: "POST" })
       count: delivered.length,
       to: delivered,
       failed: failures,
+      reason: "",
     };
   });
 
