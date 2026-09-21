@@ -131,6 +131,8 @@ export const listContracts = createServerFn({ method: "GET" })
         remaining > 0 && c.start_date ? visitDate(c.start_date, c.interval_months, done + 1) : "";
       return {
         ...c,
+        customer_email:
+          emailByCustomer[String(c.customer_name ?? "").trim().toLowerCase()] ?? "",
         last_visit: visits.length ? visits[visits.length - 1] : "",
         completed_count: done,
         total_visits: total,
