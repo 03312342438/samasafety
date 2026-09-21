@@ -205,7 +205,9 @@ export function ReportForm({
         qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
         toast.success("Report submitted");
         onSaved?.();
-        if (pdfBase64) void emailToRecipients(form, pdfBase64);
+        // Send even when the PDF could not be produced, so the client and the
+        // recipient list still get the report notification.
+        void emailToRecipients(form, pdfBase64);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save report");
