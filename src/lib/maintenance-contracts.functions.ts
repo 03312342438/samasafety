@@ -103,6 +103,15 @@ export const listContracts = createServerFn({ method: "GET" })
       reports = reps ?? [];
     }
 
+    // Client email comes from the customer record, so the maintenance report
+    // can be emailed to the client without anyone retyping the address.
+    const { data: customers } = await supabase.from("customers").select("name, email");
+    const emailByCustomer: Record<string, string> = {};
+    for (const cu of customers ?? []) {
+      const key = String(cu.name ?? "").trim().toLowerCase();
+      if (key && cu.email) emailByCustomer[key] = String(cu.email).trim();
+    }
+
     const visitsByMsr: Record<string, string[]> = {};
     for (const r of reports) {
       const key = (r.msr_no || "").trim();
