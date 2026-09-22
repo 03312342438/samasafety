@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
+import { ensureAllContractTasks } from "@/lib/maintenance-contracts.functions";
 
 // ---------- Maintenance contracts ----------
 // A maintenance contract is a maintenance job number: it carries the type of
@@ -125,6 +126,7 @@ export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     // Own report schedules plus every visit scheduled from a maintenance
     // contract, so contract visits are pending for whoever does them.
+    await ensureAllContractTasks(supabase);
     const { data, error } = await supabase
       .from("maintenance_tasks")
       .select("*")
@@ -139,6 +141,7 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
+    await ensureAllContractTasks(supabase);
     const { data, error } = await supabase
       .from("maintenance_tasks")
       .select("*")
