@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
+import { ensureAllContractTasks } from "@/lib/maintenance-contracts.functions";
 
 // ---------- Maintenance contracts ----------
 // A maintenance contract is a maintenance job number: it carries the type of
