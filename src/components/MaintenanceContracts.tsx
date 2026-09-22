@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listContracts,
   saveContract,
   deleteContract,
+  importContracts,
 } from "@/lib/maintenance-contracts.functions";
+import {
+  downloadContractTemplate,
+  parseContractWorkbook,
+} from "@/lib/maintenance-contract-template";
 import {
   SYSTEM_TYPES,
   SYSTEM_LABELS,
@@ -23,7 +28,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Download, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 type Row = Record<string, any>;
 
@@ -65,6 +70,32 @@ export function MaintenanceContracts() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
+  const bulkImport = useServerFn(importContracts);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImporting(true);
+    try {
+      const parsed = await parseContractWorkbook(file);
+      if (!parsed.length) {
+        toast.error("No contract rows found in that file");
+        return;
+      }
+      const res: any = await bulkImport({ data: { rows: parsed } });
+      qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      qc.invalidateQueries({ queryKey: ["my-maintenance-tasks"] });
+      qc.invalidateQueries({ queryKey: ["all-maintenance-tasks"] });
+      toast.success(`${res?.added ?? parsed.length} contract(s) added from the file`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that file");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const set = (patch: Partial<ReturnType<typeof emptyForm>>) =>
     setForm((f) => ({ ...f, ...patch }));

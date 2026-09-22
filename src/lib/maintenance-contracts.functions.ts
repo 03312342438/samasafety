@@ -208,6 +208,41 @@ export const saveContract = createServerFn({ method: "POST" })
     return { id: row.id };
   });
 
+/** Bulk-add contracts coming from the filled-in Excel template. */
+export const importContracts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ rows: z.array(contractSchema).max(1000) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const payload = data.rows
+      .filter((r) => r.msr_no || r.customer_name || r.project_name)
+      .map((r) => ({
+        ...r,
+        system_type: (SYSTEM_TYPES as readonly string[]).includes(r.system_type)
+          ? (r.system_type as SystemType)
+          : "FF",
+        start_date: r.start_date || null,
+        end_date: r.end_date || null,
+        created_by: userId,
+      }));
+    if (!payload.length) return { added: 0 };
+    const { data: inserted, error } = await supabase
+      .from("maintenance_contracts")
+      .insert(payload)
+      .select("id");
+    if (error) throw new Error(error.message);
+    for (const c of inserted ?? []) {
+      try {
+        await syncContractTasks(supabase, c.id);
+      } catch {
+        /* keep importing the rest */
+      }
+    }
+    return { added: (inserted ?? []).length };
+  });
+
 export const deleteContract = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
