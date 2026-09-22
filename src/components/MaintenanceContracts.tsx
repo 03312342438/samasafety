@@ -97,6 +97,8 @@ export function MaintenanceContracts() {
     try {
       await save({ data: form });
       qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      qc.invalidateQueries({ queryKey: ["my-maintenance-tasks"] });
+      qc.invalidateQueries({ queryKey: ["all-maintenance-tasks"] });
       toast.success(form.id ? "Contract updated" : "Contract added");
       setOpen(false);
     } catch (err) {
@@ -111,6 +113,8 @@ export function MaintenanceContracts() {
     try {
       await remove({ data: { id } });
       qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      qc.invalidateQueries({ queryKey: ["my-maintenance-tasks"] });
+      qc.invalidateQueries({ queryKey: ["all-maintenance-tasks"] });
       toast.success("Contract removed");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not remove contract");
