@@ -22,6 +22,8 @@ export async function syncContractTasks(supabase: any, contractId: string) {
   if (!c || !c.start_date || !c.interval_months) return;
 
   const total = countVisits(c.start_date, c.end_date, c.interval_months);
+  if (!total) return;
+
   let done = 0;
   const msr = (c.msr_no || "").trim();
   if (msr) {
@@ -32,14 +34,24 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     done = count ?? 0;
   }
 
-  await supabase
+  // Existing rows for this contract (any status) so completed history is kept.
+  const { data: existing } = await supabase
     .from("maintenance_tasks")
-    .delete()
-    .eq("contract_id", contractId)
-    .eq("status", "pending");
+    .select("id, sequence, status")
+    .eq("contract_id", contractId);
+  const rowsBySeq = new Map<number, any>();
+  for (const t of existing ?? []) rowsBySeq.set(t.sequence, t);
+
+  // Drop pending rows that fall outside the contract's visit plan.
+  const stale = (existing ?? [])
+    .filter((t: any) => t.status === "pending" && (t.sequence > total || t.sequence <= done))
+    .map((t: any) => t.id);
+  if (stale.length)
+    await supabase.from("maintenance_tasks").delete().in("id", stale);
 
   const rows = [];
   for (let n = done + 1; n <= total; n++) {
+    if (rowsBySeq.has(n)) continue; // keep what is already there
     rows.push({
       contract_id: contractId,
       created_by: c.created_by,
@@ -51,7 +63,10 @@ export async function syncContractTasks(supabase: any, contractId: string) {
       site_location: c.site_location || "",
     });
   }
-  if (rows.length) await supabase.from("maintenance_tasks").insert(rows);
+  if (rows.length) {
+    const { error } = await supabase.from("maintenance_tasks").insert(rows);
+    if (error) throw new Error(error.message);
+  }
 }
 
 /** Refresh the pending visits of every contract sharing an MSR number. */
@@ -63,6 +78,21 @@ export async function syncContractTasksForMsr(supabase: any, msrNo: string) {
     .select("id")
     .eq("msr_no", msr);
   for (const c of data ?? []) await syncContractTasks(supabase, c.id);
+}
+
+/**
+ * Self-healing: make sure every contract has its scheduled visits so the
+ * "Maintenance Pending" list always reflects the contract list.
+ */
+export async function ensureAllContractTasks(supabase: any) {
+  const { data } = await supabase.from("maintenance_contracts").select("id");
+  for (const c of data ?? []) {
+    try {
+      await syncContractTasks(supabase, c.id);
+    } catch {
+      /* one bad contract must not break the list */
+    }
+  }
 }
 
 const contractSchema = z.object({
