@@ -74,6 +74,15 @@ export function MaintenanceContracts() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
+  const onDownloadTemplate = async () => {
+    try {
+      await downloadContractTemplate();
+      toast.success("Maintenance contract template downloaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create the template");
+    }
+  };
+
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -209,120 +218,141 @@ export function MaintenanceContracts() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-sm text-muted-foreground">
           Maintenance contracts are added manually. Visits, due dates and status update
           automatically from the reports filed against each MSR number.
         </p>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew}>
-              <Plus className="mr-1 h-4 w-4" /> Add contract
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{form.id ? "Edit contract" : "New maintenance contract"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>MSR No.</Label>
-                <Input
-                  value={form.msr_no}
-                  onChange={(e) => set({ msr_no: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contract No.</Label>
-                <Input
-                  value={form.contract_no}
-                  onChange={(e) => set({ contract_no: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Customer / Client name</Label>
-                <Input
-                  value={form.customer_name}
-                  onChange={(e) => set({ customer_name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Project name</Label>
-                <Input
-                  value={form.project_name}
-                  onChange={(e) => set({ project_name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Site location</Label>
-                <Input
-                  value={form.site_location}
-                  onChange={(e) => set({ site_location: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contract start date</Label>
-                <Input
-                  type="date"
-                  value={form.start_date}
-                  onChange={(e) =>
-                    set({ start_date: e.target.value, end_date: defaultEndDate(e.target.value) })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contract end date</Label>
-                <Input
-                  type="date"
-                  value={form.end_date}
-                  onChange={(e) => set({ end_date: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Filled automatically one year after the start date.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <Label>System</Label>
-                <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  value={form.system_type}
-                  onChange={(e) => {
-                    const t = e.target.value as SystemType;
-                    set({ system_type: t, interval_months: SYSTEM_INTERVAL[t] });
-                  }}
-                >
-                  {SYSTEM_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {SYSTEM_LABELS[t]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Visit interval (months)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={form.interval_months}
-                  onChange={(e) => set({ interval_months: Number(e.target.value) || 1 })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Set automatically from the system type.
-                </p>
-              </div>
-              <DialogFooter className="sm:col-span-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Saving…" : form.id ? "Save changes" : "Add contract"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className="hidden"
+            onChange={onUpload}
+          />
+          <Button type="button" variant="outline" onClick={onDownloadTemplate}>
+            <Download className="mr-1 h-4 w-4" /> Template
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={importing}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="mr-1 h-4 w-4" />
+            {importing ? "Uploading…" : "Upload Excel"}
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNew}>
+                <Plus className="mr-1 h-4 w-4" /> Add contract
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{form.id ? "Edit contract" : "New maintenance contract"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>MSR No.</Label>
+                  <Input
+                    value={form.msr_no}
+                    onChange={(e) => set({ msr_no: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Contract No.</Label>
+                  <Input
+                    value={form.contract_no}
+                    onChange={(e) => set({ contract_no: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Customer / Client name</Label>
+                  <Input
+                    value={form.customer_name}
+                    onChange={(e) => set({ customer_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Project name</Label>
+                  <Input
+                    value={form.project_name}
+                    onChange={(e) => set({ project_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Site location</Label>
+                  <Input
+                    value={form.site_location}
+                    onChange={(e) => set({ site_location: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Contract start date</Label>
+                  <Input
+                    type="date"
+                    value={form.start_date}
+                    onChange={(e) =>
+                      set({ start_date: e.target.value, end_date: defaultEndDate(e.target.value) })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Contract end date</Label>
+                  <Input
+                    type="date"
+                    value={form.end_date}
+                    onChange={(e) => set({ end_date: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Filled automatically one year after the start date.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>System</Label>
+                  <select
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={form.system_type}
+                    onChange={(e) => {
+                      const t = e.target.value as SystemType;
+                      set({ system_type: t, interval_months: SYSTEM_INTERVAL[t] });
+                    }}
+                  >
+                    {SYSTEM_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {SYSTEM_LABELS[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Visit interval (months)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.interval_months}
+                    onChange={(e) => set({ interval_months: Number(e.target.value) || 1 })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Set automatically from the system type.
+                  </p>
+                </div>
+                <DialogFooter className="sm:col-span-2">
+                  <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={saving}>
+                    {saving ? "Saving…" : form.id ? "Save changes" : "Add contract"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
