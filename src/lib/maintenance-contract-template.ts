@@ -44,8 +44,7 @@ export async function downloadContractTemplate() {
   ws.views = [{ state: "frozen", ySplit: 1 }];
 
   const sample = ws.addRow([
-    "MSR-0001",
-    "CN-2026-001",
+    "CN-2026-0001",
     "Example Customer",
     "Example Project",
     "Manama, Bahrain",
@@ -58,7 +57,7 @@ export async function downloadContractTemplate() {
   sample.font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF6B7280" } };
 
   for (let r = 2; r <= 500; r++) {
-    ws.getCell(r, 8).dataValidation = {
+    ws.getCell(r, 7).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: [`"${SYSTEM_TYPES.join(",")}"`],
