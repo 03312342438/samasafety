@@ -2089,6 +2089,7 @@ export type Database = {
           client_sign_name: string | null
           client_signature: string | null
           contract: string | null
+          contract_id: string | null
           created_at: string
           created_by: string
           customer_id: string | null
@@ -2121,6 +2122,7 @@ export type Database = {
           client_sign_name?: string | null
           client_signature?: string | null
           contract?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by: string
           customer_id?: string | null
@@ -2153,6 +2155,7 @@ export type Database = {
           client_sign_name?: string | null
           client_signature?: string | null
           contract?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string
           customer_id?: string | null
@@ -2182,6 +2185,13 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_contracts"
             referencedColumns: ["id"]
           },
           {
