@@ -21,14 +21,13 @@ export async function downloadContractTemplate() {
   const ws = wb.addWorksheet("Contracts");
 
   ws.columns = [
-    { width: 16 },
-    { width: 18 },
+    { width: 26 },
     { width: 28 },
     { width: 28 },
     { width: 28 },
     { width: 24 },
     { width: 24 },
-    { width: 24 },
+    { width: 26 },
     { width: 20 },
     { width: 34 },
   ];
