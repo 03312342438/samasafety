@@ -1,14 +1,13 @@
 import { SYSTEM_TYPES, SYSTEM_INTERVAL, defaultEndDate, type SystemType } from "@/lib/maintenance-contracts";
 
 const HEADERS = [
-  "MSR No.",
-  "Contract No.",
+  "Contract No. (leave blank to auto-generate)",
   "Customer / Client",
   "Project Name",
   "Site Location",
   "Contract Start (YYYY-MM-DD)",
   "Contract End (YYYY-MM-DD)",
-  "System (FF/FA/CCTV/GAS/FS)",
+  "System (FF/FA/CCTV/GAS/FS/FE)",
   "Visit Interval (months)",
   "Notes",
 ];

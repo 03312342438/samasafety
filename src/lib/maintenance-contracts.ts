@@ -1,6 +1,6 @@
 // Pure helpers for the manually-kept maintenance contract list.
 
-export const SYSTEM_TYPES = ["FF", "FA", "CCTV", "GAS", "FS"] as const;
+export const SYSTEM_TYPES = ["FF", "FA", "CCTV", "GAS", "FS", "FE"] as const;
 export type SystemType = (typeof SYSTEM_TYPES)[number];
 
 export const SYSTEM_LABELS: Record<SystemType, string> = {
@@ -9,6 +9,7 @@ export const SYSTEM_LABELS: Record<SystemType, string> = {
   CCTV: "CCTV",
   GAS: "GAS Suppression",
   FS: "FS — Fire Safety",
+  FE: "FE — Fire Extinguisher",
 };
 
 /** Default months between two visits for each system. */
@@ -18,6 +19,7 @@ export const SYSTEM_INTERVAL: Record<SystemType, number> = {
   CCTV: 3,
   GAS: 3,
   FS: 6,
+  FE: 12,
 };
 
 export function addMonths(date: string, months: number): string {
