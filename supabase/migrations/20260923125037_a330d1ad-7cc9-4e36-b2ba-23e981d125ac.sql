@@ -1,0 +1,2 @@
+ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS contract_id uuid REFERENCES public.maintenance_contracts(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS reports_contract_id_idx ON public.reports (contract_id);
