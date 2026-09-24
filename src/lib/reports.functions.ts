@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
-import { syncContractTasksForMsr } from "@/lib/maintenance-contracts.functions";
+import { syncContractTasks } from "@/lib/maintenance-contracts.functions";
 
 const sparePartSchema = z.object({
   spare_no: z.string().max(100).default(""),
@@ -40,7 +40,19 @@ const reportSchema = z.object({
   job_number_id: z.string().uuid().nullable().default(null),
   customer_id: z.string().uuid().nullable().default(null),
   project_id: z.string().uuid().nullable().default(null),
+  contract_id: z.string().uuid().nullable().default(null),
 });
+
+/** Next MSR number: running number starting at 1183. */
+async function nextMsrNo(supabase: any): Promise<string> {
+  const { data } = await supabase.from("reports").select("msr_no");
+  let max = 1182;
+  for (const r of data ?? []) {
+    const n = parseInt(String(r.msr_no ?? "").replace(/\D/g, ""), 10);
+    if (Number.isFinite(n) && n > max && n < 10_000_000) max = n;
+  }
+  return String(max + 1);
+}
 
 type ReportFields = z.infer<typeof reportSchema>;
 
@@ -94,6 +106,7 @@ export const createReport = createServerFn({ method: "POST" })
   .inputValidator((input) => reportSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    data.msr_no = await nextMsrNo(supabase);
     const { data: row, error } = await supabase
       .from("reports")
       .insert({
@@ -109,10 +122,11 @@ export const createReport = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     // Visits filed against a maintenance contract are tracked by the contract
     // itself, so they don't create their own reminder schedule.
-    if (!data.job_number_id) await regenerateTasks(supabase, row.id, userId, data);
+    if (!data.job_number_id && !data.contract_id)
+      await regenerateTasks(supabase, row.id, userId, data);
     // A visit filed against a contract removes one pending visit from it.
-    await syncContractTasksForMsr(supabase, data.msr_no);
-    return { id: row.id };
+    if (data.contract_id) await syncContractTasks(supabase, data.contract_id);
+    return { id: row.id, msr_no: data.msr_no };
   });
 
 

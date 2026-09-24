@@ -162,7 +162,6 @@ export function MaintenanceContracts() {
   };
 
   const columns: Column<Row>[] = [
-    { key: "msr_no", header: "MSR No.", value: (r) => r.msr_no },
     { key: "contract_no", header: "Contract No.", value: (r) => r.contract_no },
     { key: "customer_name", header: "Customer / Client", value: (r) => r.customer_name },
     { key: "project_name", header: "Project Name", value: (r) => r.project_name },
@@ -221,7 +220,7 @@ export function MaintenanceContracts() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-sm text-muted-foreground">
           Maintenance contracts are added manually. Visits, due dates and status update
-          automatically from the reports filed against each MSR number.
+          automatically from the reports filed against each contract.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -255,17 +254,10 @@ export function MaintenanceContracts() {
               </DialogHeader>
               <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>MSR No.</Label>
-                  <Input
-                    value={form.msr_no}
-                    onChange={(e) => set({ msr_no: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label>Contract No.</Label>
                   <Input
                     value={form.contract_no}
+                    placeholder="Leave blank to auto-generate"
                     onChange={(e) => set({ contract_no: e.target.value })}
                   />
                 </div>

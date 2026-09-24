@@ -127,27 +127,26 @@ export async function parseContractWorkbook(file: File): Promise<ParsedContract[
   ws.eachRow((row, idx) => {
     if (idx === 1) return; // header
     const c = (n: number) => toText(row.getCell(n).value);
-    const msr = c(1);
-    const customer = c(3);
-    const project = c(4);
-    const start = toDate(row.getCell(6).value);
-    if (!msr && !customer && !project && !start) return; // blank row
-    const rawType = c(8).toUpperCase();
+    const customer = c(2);
+    const project = c(3);
+    const start = toDate(row.getCell(5).value);
+    if (!c(1) && !customer && !project && !start) return; // blank row
+    const rawType = c(7).toUpperCase();
     const system_type = ((SYSTEM_TYPES as readonly string[]).includes(rawType)
       ? rawType
       : "FF") as SystemType;
-    const interval = Number(c(9)) || SYSTEM_INTERVAL[system_type];
+    const interval = Number(c(8)) || SYSTEM_INTERVAL[system_type];
     out.push({
-      msr_no: msr,
-      contract_no: c(2),
+      msr_no: "",
+      contract_no: c(1),
       customer_name: customer,
       project_name: project,
-      site_location: c(5),
+      site_location: c(4),
       start_date: start,
-      end_date: toDate(row.getCell(7).value) || (start ? defaultEndDate(start) : ""),
+      end_date: toDate(row.getCell(6).value) || (start ? defaultEndDate(start) : ""),
       system_type,
       interval_months: Math.min(Math.max(Math.round(interval), 1), 60),
-      notes: c(10),
+      notes: c(9),
     });
   });
   return out;
