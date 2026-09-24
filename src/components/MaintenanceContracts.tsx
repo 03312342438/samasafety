@@ -28,7 +28,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Download, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Download, RefreshCw, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
 type Row = Record<string, any>;
 
@@ -111,10 +111,12 @@ export function MaintenanceContracts() {
 
   const openNew = () => {
     setForm(emptyForm());
+    setRenewOf("");
     setOpen(true);
   };
 
   const openEdit = (r: Row) => {
+    setRenewOf("");
     setForm({
       id: r.id,
       msr_no: r.msr_no ?? "",
@@ -127,6 +129,25 @@ export function MaintenanceContracts() {
       system_type: (r.system_type ?? "FF") as SystemType,
       interval_months: r.interval_months ?? 6,
       notes: r.notes ?? "",
+    });
+    setOpen(true);
+  };
+
+  // Renewal: a new contract for the next period with the same site details.
+  const [renewOf, setRenewOf] = useState<string>("");
+  const openRenew = (r: Row) => {
+    const start = r.end_date || r.start_date || new Date().toISOString().slice(0, 10);
+    setRenewOf(r.contract_no || "");
+    setForm({
+      ...emptyForm(),
+      customer_name: r.customer_name ?? "",
+      project_name: r.project_name ?? "",
+      site_location: r.site_location ?? "",
+      start_date: start,
+      end_date: defaultEndDate(start),
+      system_type: (r.system_type ?? "FF") as SystemType,
+      interval_months: r.interval_months ?? 6,
+      notes: r.contract_no ? `Renewal of ${r.contract_no}` : "Renewal",
     });
     setOpen(true);
   };
@@ -250,7 +271,11 @@ export function MaintenanceContracts() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{form.id ? "Edit contract" : "New maintenance contract"}</DialogTitle>
+                <DialogTitle>{form.id
+                    ? "Edit contract"
+                    : renewOf
+                      ? `Renew contract ${renewOf}`
+                      : "New maintenance contract"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -360,6 +385,14 @@ export function MaintenanceContracts() {
           empty="No maintenance contracts yet. Use “Add contract” to build the list."
           actions={(r) => (
             <div className="flex justify-end gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                title="Renew contract for the next period"
+                onClick={() => openRenew(r)}
+              >
+                <RefreshCw className="mr-1 h-4 w-4" /> Renew
+              </Button>
               <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
                 <Pencil className="h-4 w-4" />
               </Button>
