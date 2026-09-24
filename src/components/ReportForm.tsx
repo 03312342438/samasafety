@@ -112,7 +112,6 @@ export function ReportForm({
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
-      msr_no: c.msr_no || f.msr_no,
       report_date: c.upcoming_visit || f.report_date,
       date_completed: c.upcoming_visit || f.date_completed,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
@@ -189,7 +188,12 @@ export function ReportForm({
         toast.success("Report updated");
         onSaved?.();
       } else {
-        await save({ data: toPayload(form) });
+        const res: any = await save({
+          data: { ...toPayload(form), contract_id: contractId || null } as any,
+        });
+        const saved = { ...form, msr_no: res?.msr_no || form.msr_no };
+        setForm(saved);
+        await new Promise((r) => setTimeout(r, 80));
         // Generate the PDF while the offscreen document is still rendered.
         let pdfBase64 = "";
         if (docRef.current) {
@@ -199,7 +203,7 @@ export function ReportForm({
             /* ignore PDF errors; the report is still saved */
           }
         }
-        setSavedData(form);
+        setSavedData(saved);
         qc.invalidateQueries({ queryKey: ["my-reports"] });
         qc.invalidateQueries({ queryKey: ["all-reports"] });
         qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
@@ -207,7 +211,7 @@ export function ReportForm({
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
         // recipient list still get the report notification.
-        void emailToRecipients(form, pdfBase64);
+        void emailToRecipients(saved, pdfBase64);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save report");
@@ -296,19 +300,20 @@ export function ReportForm({
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Field label="Maintenance contract (site)">
-              <select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              <SearchSelect
+                className="h-10"
                 value={contractId}
-                onChange={(e) => pickContract(e.target.value)}
-              >
-                <option value="">— not linked to a contract —</option>
-                {contractList.map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.msr_no || "MSR —"} · {c.customer_name} — {c.project_name} —{" "}
-                    {c.site_location} ({c.remaining_count} left)
-                  </option>
-                ))}
-              </select>
+                onChange={pickContract}
+                placeholder="— not linked to a contract —"
+                searchPlaceholder="Search contract, customer, project, site…"
+                options={[
+                  ["", "— not linked to a contract —"],
+                  ...contractList.map((c: any): [string, string] => [
+                    c.id,
+                    `${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} (${c.remaining_count} left)`,
+                  ]),
+                ]}
+              />
             </Field>
             {contract && (
               <p className="mt-1.5 text-xs text-muted-foreground">
@@ -342,7 +347,12 @@ export function ReportForm({
             <Input value={form.site_location} onChange={(e) => set("site_location", e.target.value)} />
           </Field>
           <Field label="M.S.R No.">
-            <Input value={form.msr_no} onChange={(e) => set("msr_no", e.target.value)} />
+            <Input
+              value={form.msr_no}
+              readOnly={!isEdit}
+              placeholder="Auto-generated on submit"
+              onChange={(e) => set("msr_no", e.target.value)}
+            />
           </Field>
           <Field label="Our Ref No.">
             <Input value={form.our_ref_no} onChange={(e) => set("our_ref_no", e.target.value)} />
