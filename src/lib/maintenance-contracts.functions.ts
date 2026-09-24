@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { nextSequence } from "@/lib/sequence";
 import {
   SYSTEM_TYPES,
   contractStatus,
@@ -24,15 +25,11 @@ export async function syncContractTasks(supabase: any, contractId: string) {
   const total = countVisits(c.start_date, c.end_date, c.interval_months);
   if (!total) return;
 
-  let done = 0;
-  const msr = (c.msr_no || "").trim();
-  if (msr) {
-    const { count } = await supabase
-      .from("reports")
-      .select("id", { count: "exact", head: true })
-      .eq("msr_no", msr);
-    done = count ?? 0;
-  }
+  const { count } = await supabase
+    .from("reports")
+    .select("id", { count: "exact", head: true })
+    .eq("contract_id", contractId);
+  const done = count ?? 0;
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
@@ -121,17 +118,11 @@ export const listContracts = createServerFn({ method: "GET" })
     const rows = data ?? [];
     if (!rows.length) return [];
 
-    const msrs = Array.from(
-      new Set(rows.map((r: any) => (r.msr_no || "").trim()).filter(Boolean)),
-    );
-    let reports: any[] = [];
-    if (msrs.length) {
-      const { data: reps } = await supabase
-        .from("reports")
-        .select("id, msr_no, report_date, date_completed, created_at")
-        .in("msr_no", msrs);
-      reports = reps ?? [];
-    }
+    const { data: reps } = await supabase
+      .from("reports")
+      .select("id, contract_id, report_date, date_completed, created_at")
+      .in("contract_id", rows.map((r: any) => r.id));
+    const reports: any[] = reps ?? [];
 
     // Client email comes from the customer record, so the maintenance report
     // can be emailed to the client without anyone retyping the address.
@@ -144,7 +135,7 @@ export const listContracts = createServerFn({ method: "GET" })
 
     const visitsByMsr: Record<string, string[]> = {};
     for (const r of reports) {
-      const key = (r.msr_no || "").trim();
+      const key = r.contract_id;
       if (!key) continue;
       const d = r.date_completed || r.report_date || String(r.created_at).slice(0, 10);
       (visitsByMsr[key] ??= []).push(String(d).slice(0, 10));
@@ -152,7 +143,7 @@ export const listContracts = createServerFn({ method: "GET" })
     for (const k of Object.keys(visitsByMsr)) visitsByMsr[k].sort();
 
     return rows.map((c: any) => {
-      const visits = visitsByMsr[(c.msr_no || "").trim()] ?? [];
+      const visits = visitsByMsr[c.id] ?? [];
       const total = countVisits(c.start_date, c.end_date, c.interval_months);
       const done = Math.min(visits.length, total || visits.length);
       const remaining = Math.max(total - done, 0);
@@ -181,6 +172,8 @@ export const saveContract = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { id, ...fields } = data;
+    if (!fields.contract_no)
+      fields.contract_no = await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN");
     const payload = {
       ...fields,
       system_type: (SYSTEM_TYPES as readonly string[]).includes(fields.system_type)
@@ -217,7 +210,7 @@ export const importContracts = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const payload = data.rows
-      .filter((r) => r.msr_no || r.customer_name || r.project_name)
+      .filter((r) => r.contract_no || r.customer_name || r.project_name)
       .map((r) => ({
         ...r,
         system_type: (SYSTEM_TYPES as readonly string[]).includes(r.system_type)
@@ -228,6 +221,16 @@ export const importContracts = createServerFn({ method: "POST" })
         created_by: userId,
       }));
     if (!payload.length) return { added: 0 };
+    let nextNo = 0;
+    const prefix = `CN-${new Date().getFullYear()}-`;
+    for (const r of payload) {
+      if (r.contract_no) continue;
+      if (!nextNo) {
+        const first = await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN");
+        nextNo = parseInt(first.split("-").pop() ?? "1", 10);
+      }
+      r.contract_no = `${prefix}${String(nextNo++).padStart(4, "0")}`;
+    }
     const { data: inserted, error } = await supabase
       .from("maintenance_contracts")
       .insert(payload)
