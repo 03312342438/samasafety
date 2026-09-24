@@ -82,8 +82,11 @@ export function ReportForm({
     queryFn: () => fetchContracts(),
   });
   const [contractId, setContractId] = useState("");
+  const today = new Date().toISOString().slice(0, 10);
   const contractList = ((contracts as any[]) ?? []).filter(
-    (c) => c.remaining_count > 0 || c.id === contractId,
+    (c) =>
+      c.id === contractId ||
+      ((!c.end_date || c.end_date >= today) && c.remaining_count > 0),
   );
   const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
 
