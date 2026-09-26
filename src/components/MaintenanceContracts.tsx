@@ -266,6 +266,33 @@ export function MaintenanceContracts() {
             <Upload className="mr-1 h-4 w-4" />
             {importing ? "Uploading…" : "Upload Excel"}
           </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={deletingAll || rows.length === 0}
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  `Delete ALL ${rows.length} maintenance contracts? Their pending visits will also be removed. This cannot be undone.`,
+                )
+              )
+                return;
+              setDeletingAll(true);
+              try {
+                const res: any = await removeAll({});
+                toast.success(`Deleted ${res?.deleted ?? 0} contracts`);
+                qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+                qc.invalidateQueries({ queryKey: ["maintenance-tasks"] });
+              } catch (e: any) {
+                toast.error(e?.message || "Delete all failed");
+              } finally {
+                setDeletingAll(false);
+              }
+            }}
+          >
+            <Trash2 className="mr-1 h-4 w-4" />
+            {deletingAll ? "Deleting…" : "Delete all"}
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={openNew}>
