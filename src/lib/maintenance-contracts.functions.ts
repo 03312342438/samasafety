@@ -103,8 +103,8 @@ const contractSchema = z.object({
   system_type: z.string().max(20).default("FF"),
   interval_months: z.number().int().min(1).max(60).default(6),
   notes: z.string().trim().max(1000).default(""),
-  prior_visits_done: z.number().int().min(0).max(1000).default(0),
-  prior_last_visit: z.string().max(40).default(""),
+  prior_visits_done: z.number().int().min(0).max(1000).optional(),
+  prior_last_visit: z.string().max(40).optional(),
 });
 
 /** Contracts with every derived column (last visit, upcoming, remaining, status). */
@@ -224,6 +224,7 @@ export const importContracts = createServerFn({ method: "POST" })
         system_type: (SYSTEM_TYPES as readonly string[]).includes(r.system_type)
           ? (r.system_type as SystemType)
           : "FF",
+        prior_visits_done: r.prior_visits_done ?? 0,
         prior_last_visit: r.prior_last_visit || null,
         start_date: r.start_date || null,
         end_date: r.end_date || null,
