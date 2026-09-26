@@ -267,3 +267,17 @@ export const deleteContract = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deleteAllContracts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // RLS limits this to contracts the caller is allowed to delete
+    // (own contracts, or any contract for Management/admin).
+    const { data: deleted, error } = await context.supabase
+      .from("maintenance_contracts")
+      .delete()
+      .not("id", "is", null)
+      .select("id");
+    if (error) throw new Error(error.message);
+    return { deleted: (deleted ?? []).length };
+  });
