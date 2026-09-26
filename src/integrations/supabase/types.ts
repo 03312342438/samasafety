@@ -1145,6 +1145,8 @@ export type Database = {
           interval_months: number
           msr_no: string
           notes: string
+          prior_last_visit: string | null
+          prior_visits_done: number
           project_name: string
           site_location: string
           start_date: string | null
@@ -1161,6 +1163,8 @@ export type Database = {
           interval_months?: number
           msr_no?: string
           notes?: string
+          prior_last_visit?: string | null
+          prior_visits_done?: number
           project_name?: string
           site_location?: string
           start_date?: string | null
@@ -1177,6 +1181,8 @@ export type Database = {
           interval_months?: number
           msr_no?: string
           notes?: string
+          prior_last_visit?: string | null
+          prior_visits_done?: number
           project_name?: string
           site_location?: string
           start_date?: string | null

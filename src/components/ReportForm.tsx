@@ -313,7 +313,7 @@ export function ReportForm({
                   ["", "— not linked to a contract —"],
                   ...contractList.map((c: any): [string, string] => [
                     c.id,
-                    `${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} (${c.remaining_count} left)`,
+                    `[${c.system_type || "—"}] ${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} (${c.remaining_count} left)`,
                   ]),
                 ]}
               />
