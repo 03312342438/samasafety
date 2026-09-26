@@ -5,6 +5,7 @@ import {
   listContracts,
   saveContract,
   deleteContract,
+  deleteAllContracts,
   importContracts,
 } from "@/lib/maintenance-contracts.functions";
 import {
@@ -60,6 +61,8 @@ export function MaintenanceContracts() {
   const fetchContracts = useServerFn(listContracts);
   const save = useServerFn(saveContract);
   const remove = useServerFn(deleteContract);
+  const removeAll = useServerFn(deleteAllContracts);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-contracts"],
