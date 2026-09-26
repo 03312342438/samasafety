@@ -1,0 +1,1 @@
+ALTER TABLE public.maintenance_contracts ADD COLUMN IF NOT EXISTS prior_visits_done integer NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS prior_last_visit date;

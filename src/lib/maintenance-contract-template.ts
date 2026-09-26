@@ -10,6 +10,8 @@ const HEADERS = [
   "System (FF/FA/CCTV/GAS/FS/FE)",
   "Visit Interval (months)",
   "Notes",
+  "Total Visits Done",
+  "Last Visit Date (YYYY-MM-DD)",
 ];
 
 /** Download a ready-to-fill Excel template for bulk contract upload. */
@@ -30,6 +32,8 @@ export async function downloadContractTemplate() {
     { width: 26 },
     { width: 20 },
     { width: 34 },
+    { width: 18 },
+    { width: 26 },
   ];
 
   const header = ws.getRow(1);
@@ -53,6 +57,8 @@ export async function downloadContractTemplate() {
     "FF",
     6,
     "Leave Contract End blank to use one year after the start date.",
+    1,
+    "2026-01-01",
   ]);
   sample.font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF6B7280" } };
 
@@ -113,6 +119,8 @@ export type ParsedContract = {
   system_type: SystemType;
   interval_months: number;
   notes: string;
+  prior_visits_done: number;
+  prior_last_visit: string;
 };
 
 /** Read a filled-in template back into contract rows. */
@@ -147,6 +155,8 @@ export async function parseContractWorkbook(file: File): Promise<ParsedContract[
       system_type,
       interval_months: Math.min(Math.max(Math.round(interval), 1), 60),
       notes: c(9),
+      prior_visits_done: Math.max(0, Math.round(Number(c(10)) || 0)),
+      prior_last_visit: toDate(row.getCell(11).value),
     });
   });
   return out;
