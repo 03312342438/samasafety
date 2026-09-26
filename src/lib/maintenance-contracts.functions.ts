@@ -29,7 +29,7 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     .from("reports")
     .select("id", { count: "exact", head: true })
     .eq("contract_id", contractId);
-  const done = count ?? 0;
+  const done = (count ?? 0) + (Number(c.prior_visits_done) || 0);
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
@@ -103,6 +103,8 @@ const contractSchema = z.object({
   system_type: z.string().max(20).default("FF"),
   interval_months: z.number().int().min(1).max(60).default(6),
   notes: z.string().trim().max(1000).default(""),
+  prior_visits_done: z.number().int().min(0).max(1000).default(0),
+  prior_last_visit: z.string().max(40).default(""),
 });
 
 /** Contracts with every derived column (last visit, upcoming, remaining, status). */
@@ -144,8 +146,13 @@ export const listContracts = createServerFn({ method: "GET" })
 
     return rows.map((c: any) => {
       const visits = visitsByMsr[c.id] ?? [];
+      const prior = Number(c.prior_visits_done) || 0;
       const total = countVisits(c.start_date, c.end_date, c.interval_months);
-      const done = Math.min(visits.length, total || visits.length);
+      const doneRaw = visits.length + prior;
+      const done = Math.min(doneRaw, total || doneRaw);
+      const lastVisit = visits.length
+        ? visits[visits.length - 1]
+        : c.prior_last_visit ? String(c.prior_last_visit).slice(0, 10) : "";
       const remaining = Math.max(total - done, 0);
       // The first visit falls on the contract start date itself.
       const upcoming =
@@ -154,7 +161,7 @@ export const listContracts = createServerFn({ method: "GET" })
         ...c,
         customer_email:
           emailByCustomer[String(c.customer_name ?? "").trim().toLowerCase()] ?? "",
-        last_visit: visits.length ? visits[visits.length - 1] : "",
+        last_visit: lastVisit,
         completed_count: done,
         total_visits: total,
         remaining_count: remaining,
@@ -179,6 +186,7 @@ export const saveContract = createServerFn({ method: "POST" })
       system_type: (SYSTEM_TYPES as readonly string[]).includes(fields.system_type)
         ? (fields.system_type as SystemType)
         : "FF",
+      prior_last_visit: fields.prior_last_visit || null,
       start_date: fields.start_date || null,
       end_date: fields.end_date || null,
     };
@@ -216,6 +224,7 @@ export const importContracts = createServerFn({ method: "POST" })
         system_type: (SYSTEM_TYPES as readonly string[]).includes(r.system_type)
           ? (r.system_type as SystemType)
           : "FF",
+        prior_last_visit: r.prior_last_visit || null,
         start_date: r.start_date || null,
         end_date: r.end_date || null,
         created_by: userId,
