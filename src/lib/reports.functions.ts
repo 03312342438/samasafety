@@ -44,10 +44,10 @@ const reportSchema = z.object({
   contract_id: z.string().uuid().nullable().default(null),
 });
 
-/** Next MSR number: running number starting at 1183. */
+/** Next MSR number: running number starting at 12000. */
 async function nextMsrNo(supabase: any): Promise<string> {
   const { data } = await supabase.from("reports").select("msr_no");
-  let max = 1182;
+  let max = 11999;
   for (const r of data ?? []) {
     const n = parseInt(String(r.msr_no ?? "").replace(/\D/g, ""), 10);
     if (Number.isFinite(n) && n > max && n < 10_000_000) max = n;
