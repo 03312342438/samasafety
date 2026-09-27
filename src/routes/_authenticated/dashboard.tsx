@@ -256,6 +256,8 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
   const [query, setQuery] = useState("");
   const qc = useQueryClient();
   const remove = useServerFn(deleteReport);
+  const { data: myProfile } = useProfile();
+  const noDelete = isMaintenanceOnly((myProfile as any)?.roles, (myProfile as any)?.isAdmin);
 
   const del = async (id: string) => {
     try {
@@ -349,7 +351,7 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
               <Button variant="outline" size="sm" onClick={() => setEditing(r)}>
                 <Pencil className="mr-1 h-4 w-4" /> Edit
               </Button>
-              <AlertDialog>
+              {!noDelete && <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm">
                     <Trash2 className="mr-1 h-4 w-4" /> Delete
@@ -368,7 +370,7 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
                     <AlertDialogAction onClick={() => del(r.id)}>Delete</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
-              </AlertDialog>
+              </AlertDialog>}
             </div>
           </CardContent>
         </Card>
