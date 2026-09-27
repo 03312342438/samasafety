@@ -358,7 +358,12 @@ export function ReportForm({
             />
           </Field>
           <Field label="Our Ref No.">
-            <Input value={form.our_ref_no} onChange={(e) => set("our_ref_no", e.target.value)} />
+            <Input
+              value={form.our_ref_no}
+              readOnly={!isEdit}
+              placeholder="Auto-generated per project"
+              onChange={(e) => set("our_ref_no", e.target.value)}
+            />
           </Field>
           <Field label="Date">
             <Input type="date" value={form.report_date} onChange={(e) => set("report_date", e.target.value)} />
