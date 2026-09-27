@@ -192,7 +192,10 @@ function Dashboard() {
                   { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
                   { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
-                  { value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) },
+                  // Maintenance-only logins don't manage contracts.
+                  ...(!maintenanceOnly
+                    ? [{ value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) }]
+                    : []),
                 ]
               : []),
           ]}
@@ -217,7 +220,7 @@ function Dashboard() {
           </div>
         )}
 
-        {activeTab === "contracts" && canFillReport && !isAdmin && (
+        {activeTab === "contracts" && canFillReport && !isAdmin && !maintenanceOnly && (
           <div className="mt-5">
             <MaintenanceContracts />
           </div>

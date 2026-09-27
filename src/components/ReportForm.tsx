@@ -180,8 +180,14 @@ export function ReportForm({
   const removeSpare = (i: number) =>
     setForm((f) => ({ ...f, spare_parts: f.spare_parts.filter((_, idx) => idx !== i) }));
 
+  // Blocks a second submit while the first one is still running, so a
+  // double-click can never file the same report twice.
+  const submittingRef = useRef(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
     try {
       if (isEdit && initial) {
@@ -211,6 +217,9 @@ export function ReportForm({
         qc.invalidateQueries({ queryKey: ["all-reports"] });
         qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
         toast.success("Report submitted");
+        // Empty the sheet so the same report can't be submitted twice.
+        setForm({ ...emptyReport(), performed_by: defaultPerformedBy ?? "" });
+        setContractId("");
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
         // recipient list still get the report notification.
@@ -219,6 +228,7 @@ export function ReportForm({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save report");
     } finally {
+      submittingRef.current = false;
       setSaving(false);
     }
   };
