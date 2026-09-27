@@ -265,7 +265,7 @@ export const setUserDepartments = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         departments: z
-          .array(z.enum(["sales", "project_manager", "inventory", "technician", "accounts"]))
+          .array(z.enum(["sales", "project_manager", "inventory", "technician", "accounts", "maintenance"]))
           .max(5),
       })
       .parse(input),
@@ -278,7 +278,7 @@ export const setUserDepartments = createServerFn({ method: "POST" })
       .from("user_roles")
       .delete()
       .eq("user_id", data.id)
-      .in("role", ["sales", "project_manager", "inventory", "technician", "accounts"]);
+      .in("role", ["sales", "project_manager", "inventory", "technician", "accounts", "maintenance"]);
     if (delErr) throw new Error(delErr.message);
 
     if (data.departments.length > 0) {

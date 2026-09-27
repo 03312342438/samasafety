@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
+import { isMaintenanceOnly } from "@/lib/workflow";
 import { syncContractTasks } from "@/lib/maintenance-contracts.functions";
 
 const sparePartSchema = z.object({
@@ -228,7 +229,11 @@ export const deleteReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { data: rr } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (isMaintenanceOnly((rr ?? []).map((r: any) => r.role))) {
+      throw new Error("Maintenance accounts cannot delete reports.");
+    }
     const { error } = await supabase.from("reports").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
