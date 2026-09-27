@@ -180,8 +180,14 @@ export function ReportForm({
   const removeSpare = (i: number) =>
     setForm((f) => ({ ...f, spare_parts: f.spare_parts.filter((_, idx) => idx !== i) }));
 
+  // Blocks a second submit while the first one is still running, so a
+  // double-click can never file the same report twice.
+  const submittingRef = useRef(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
     try {
       if (isEdit && initial) {
