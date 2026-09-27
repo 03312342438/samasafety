@@ -54,6 +54,21 @@ async function nextMsrNo(supabase: any): Promise<string> {
   return String(max + 1);
 }
 
+/** Our Ref No.: one unique reference per project name (reused for the same project). */
+async function ourRefForProject(supabase: any, project: string): Promise<string> {
+  const key = (project || "").trim().toLowerCase();
+  const { data } = await supabase.from("reports").select("project, our_ref_no");
+  let max = 0;
+  for (const r of data ?? []) {
+    const ref = String(r.our_ref_no ?? "");
+    if (key && String(r.project ?? "").trim().toLowerCase() === key && ref.startsWith("SMR-"))
+      return ref;
+    const m = /^SMR-(\d+)$/.exec(ref);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `SMR-${String(max + 1).padStart(4, "0")}`;
+}
+
 type ReportFields = z.infer<typeof reportSchema>;
 
 // Turn the form's string interval fields into a DB-ready integer (or null).
@@ -107,6 +122,7 @@ export const createReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     data.msr_no = await nextMsrNo(supabase);
+    data.our_ref_no = await ourRefForProject(supabase, data.project);
     const { data: row, error } = await supabase
       .from("reports")
       .insert({
