@@ -199,7 +199,11 @@ export const updateReport = createServerFn({ method: "POST" })
     reportSchema.extend({ id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { data: rr } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (isMaintenanceOnly((rr ?? []).map((r: any) => r.role))) {
+      throw new Error("Maintenance accounts cannot edit submitted reports.");
+    }
     const { id, ...fields } = data;
     // Determine the responsible employee (the report's original creator).
     const { data: existing } = await supabase

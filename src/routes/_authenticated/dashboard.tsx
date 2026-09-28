@@ -351,9 +351,9 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
                 variant="outline"
                 size="sm"
               />
-              <Button variant="outline" size="sm" onClick={() => setEditing(r)}>
+              {!noDelete && <Button variant="outline" size="sm" onClick={() => setEditing(r)}>
                 <Pencil className="mr-1 h-4 w-4" /> Edit
-              </Button>
+              </Button>}
               {!noDelete && <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm">

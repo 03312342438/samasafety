@@ -479,10 +479,13 @@ export function ReportForm({
                   min="1"
                   placeholder="e.g. 3"
                   value={form.maintenance_interval_value}
+                  readOnly
+                  className="bg-muted"
                   onChange={(e) => set("maintenance_interval_value", e.target.value)}
                 />
                 <select
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 rounded-md border border-input bg-muted px-3 text-sm"
+                  disabled
                   value={form.maintenance_interval_unit}
                   onChange={(e) => set("maintenance_interval_unit", e.target.value)}
                 >
@@ -500,6 +503,8 @@ export function ReportForm({
                 min="0"
                 placeholder="e.g. 4"
                 value={form.maintenance_count}
+                readOnly
+                className="bg-muted"
                 onChange={(e) => set("maintenance_count", e.target.value)}
               />
             </Field>
@@ -508,6 +513,8 @@ export function ReportForm({
             <Input
               placeholder="e.g. Quarterly visits, coordinate with site team"
               value={form.next_maintenance}
+              readOnly
+              className="bg-muted"
               onChange={(e) => set("next_maintenance", e.target.value)}
             />
           </Field>
