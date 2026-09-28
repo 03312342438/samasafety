@@ -107,6 +107,9 @@ async function contractNoForProject(supabase: any, projectName: string): Promise
 }
 
 const normKey = (s: string) => (s || "").trim().toLowerCase();
+/** Same contract number only when project, customer and site all match. */
+const contractKey = (c: { project_name?: string; customer_name?: string; site_location?: string }) =>
+  [c.project_name, c.customer_name, c.site_location].map((v) => normKey(v ?? "")).join("|");
 
 /**
  * One contract number per project name: the same project always reuses its
@@ -114,17 +117,17 @@ const normKey = (s: string) => (s || "").trim().toLowerCase();
  */
 async function assignContractNo(
   supabase: any,
-  projectName: string,
+  target: { project_name: string; customer_name: string; site_location: string },
   requested: string,
   excludeId: string | null,
 ): Promise<string> {
   const { data } = await supabase
     .from("maintenance_contracts")
-    .select("id, project_name, contract_no")
+    .select("id, project_name, customer_name, site_location, contract_no")
     .order("created_at", { ascending: true });
   const rows = ((data ?? []) as any[]).filter((c) => c.id !== excludeId && c.contract_no);
-  const key = normKey(projectName);
-  const own = key ? rows.find((c) => normKey(c.project_name) === key) : undefined;
+  const key = contractKey(target);
+  const own = key.replace(/\|/g, "") ? rows.find((c) => contractKey(c) === key) : undefined;
   if (own) return own.contract_no;
   const req = (requested || "").trim();
   if (req && !rows.some((c) => normKey(c.contract_no) === normKey(req))) return req;
@@ -225,7 +228,7 @@ export const saveContract = createServerFn({ method: "POST" })
     const { id, ...fields } = data;
     fields.contract_no = await assignContractNo(
       supabase,
-      fields.project_name,
+      fields,
       fields.contract_no,
       id,
     );
@@ -282,22 +285,22 @@ export const importContracts = createServerFn({ method: "POST" })
     // Existing numbers: project -> number, and number -> project.
     const { data: existingRows } = await supabase
       .from("maintenance_contracts")
-      .select("project_name, contract_no")
+      .select("project_name, customer_name, site_location, contract_no")
       .order("created_at", { ascending: true });
     const byProject = new Map<string, string>();
     const usedBy = new Map<string, string>();
     let maxNo = 0;
-    const remember = (proj: string, no: string) => {
-      const pk = normKey(proj);
+    const remember = (row: any, no: string) => {
+      const pk = contractKey(row).replace(/^\|+$/, "");
       if (pk && !byProject.has(pk)) byProject.set(pk, no);
       if (!usedBy.has(normKey(no))) usedBy.set(normKey(no), pk);
       const m = /^CN-\d{4}-(\d+)$/i.exec(no);
       if (m) maxNo = Math.max(maxNo, parseInt(m[1], 10));
     };
-    for (const c of existingRows ?? []) if (c.contract_no) remember(c.project_name, c.contract_no);
+    for (const c of existingRows ?? []) if (c.contract_no) remember(c, c.contract_no);
     const prefix = `CN-${new Date().getFullYear()}-`;
     for (const r of payload) {
-      const key = normKey(r.project_name);
+      const key = contractKey(r).replace(/^\|+$/, "");
       if (key && byProject.has(key)) {
         r.contract_no = byProject.get(key)!;
       } else {
@@ -308,7 +311,7 @@ export const importContracts = createServerFn({ method: "POST" })
             ? req
             : `${prefix}${String(++maxNo).padStart(4, "0")}`;
       }
-      remember(r.project_name, r.contract_no);
+      remember(r, r.contract_no);
     }
     const { data: inserted, error } = await supabase
       .from("maintenance_contracts")
