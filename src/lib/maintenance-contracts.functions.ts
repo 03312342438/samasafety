@@ -106,6 +106,36 @@ async function contractNoForProject(supabase: any, projectName: string): Promise
   return hit?.contract_no ?? "";
 }
 
+const normKey = (s: string) => (s || "").trim().toLowerCase();
+
+/**
+ * One contract number per project name: the same project always reuses its
+ * number, and a number already used by a different project is never reused.
+ */
+async function assignContractNo(
+  supabase: any,
+  projectName: string,
+  requested: string,
+  excludeId: string | null,
+): Promise<string> {
+  const { data } = await supabase
+    .from("maintenance_contracts")
+    .select("id, project_name, contract_no")
+    .order("created_at", { ascending: true });
+  const rows = ((data ?? []) as any[]).filter((c) => c.id !== excludeId && c.contract_no);
+  const key = normKey(projectName);
+  const own = key ? rows.find((c) => normKey(c.project_name) === key) : undefined;
+  if (own) return own.contract_no;
+  const req = (requested || "").trim();
+  if (req && !rows.some((c) => normKey(c.contract_no) === normKey(req))) return req;
+  let max = 0;
+  for (const c of rows) {
+    const m = /^CN-\d{4}-(\d+)$/i.exec(String(c.contract_no));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `CN-${new Date().getFullYear()}-${String(max + 1).padStart(4, "0")}`;
+}
+
 const contractSchema = z.object({
   msr_no: z.string().trim().max(100).default(""),
   contract_no: z.string().trim().max(100).default(""),
