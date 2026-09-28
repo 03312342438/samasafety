@@ -223,10 +223,12 @@ export const saveContract = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { id, ...fields } = data;
-    if (!fields.contract_no)
-      fields.contract_no =
-        (await contractNoForProject(supabase, fields.project_name)) ||
-        (await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN"));
+    fields.contract_no = await assignContractNo(
+      supabase,
+      fields.project_name,
+      fields.contract_no,
+      id,
+    );
     const payload = {
       ...fields,
       system_type: (SYSTEM_TYPES as readonly string[]).includes(fields.system_type)
