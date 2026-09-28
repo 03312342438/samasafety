@@ -279,27 +279,36 @@ export const importContracts = createServerFn({ method: "POST" })
         created_by: userId,
       }));
     if (!payload.length) return { added: 0 };
-    let nextNo = 0;
-    const prefix = `CN-${new Date().getFullYear()}-`;
+    // Existing numbers: project -> number, and number -> project.
+    const { data: existingRows } = await supabase
+      .from("maintenance_contracts")
+      .select("project_name, contract_no")
+      .order("created_at", { ascending: true });
     const byProject = new Map<string, string>();
+    const usedBy = new Map<string, string>();
+    let maxNo = 0;
+    const remember = (proj: string, no: string) => {
+      const pk = normKey(proj);
+      if (pk && !byProject.has(pk)) byProject.set(pk, no);
+      if (!usedBy.has(normKey(no))) usedBy.set(normKey(no), pk);
+      const m = /^CN-\d{4}-(\d+)$/i.exec(no);
+      if (m) maxNo = Math.max(maxNo, parseInt(m[1], 10));
+    };
+    for (const c of existingRows ?? []) if (c.contract_no) remember(c.project_name, c.contract_no);
+    const prefix = `CN-${new Date().getFullYear()}-`;
     for (const r of payload) {
-      const key = (r.project_name || "").trim().toLowerCase();
-      if (r.contract_no) {
-        if (key && !byProject.has(key)) byProject.set(key, r.contract_no);
-        continue;
-      }
-      if (key && byProject.has(key)) { r.contract_no = byProject.get(key)!; continue; }
-      const existing = await contractNoForProject(supabase, r.project_name);
-      if (existing) {
-        r.contract_no = existing;
+      const key = normKey(r.project_name);
+      if (key && byProject.has(key)) {
+        r.contract_no = byProject.get(key)!;
       } else {
-        if (!nextNo) {
-          const first = await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN");
-          nextNo = parseInt(first.split("-").pop() ?? "1", 10);
-        }
-        r.contract_no = `${prefix}${String(nextNo++).padStart(4, "0")}`;
+        const req = (r.contract_no || "").trim();
+        const owner = req ? usedBy.get(normKey(req)) : undefined;
+        r.contract_no =
+          req && (owner === undefined || owner === key)
+            ? req
+            : `${prefix}${String(++maxNo).padStart(4, "0")}`;
       }
-      if (key) byProject.set(key, r.contract_no);
+      remember(r.project_name, r.contract_no);
     }
     const { data: inserted, error } = await supabase
       .from("maintenance_contracts")
