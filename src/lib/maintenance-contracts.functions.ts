@@ -106,6 +106,36 @@ async function contractNoForProject(supabase: any, projectName: string): Promise
   return hit?.contract_no ?? "";
 }
 
+const normKey = (s: string) => (s || "").trim().toLowerCase();
+
+/**
+ * One contract number per project name: the same project always reuses its
+ * number, and a number already used by a different project is never reused.
+ */
+async function assignContractNo(
+  supabase: any,
+  projectName: string,
+  requested: string,
+  excludeId: string | null,
+): Promise<string> {
+  const { data } = await supabase
+    .from("maintenance_contracts")
+    .select("id, project_name, contract_no")
+    .order("created_at", { ascending: true });
+  const rows = ((data ?? []) as any[]).filter((c) => c.id !== excludeId && c.contract_no);
+  const key = normKey(projectName);
+  const own = key ? rows.find((c) => normKey(c.project_name) === key) : undefined;
+  if (own) return own.contract_no;
+  const req = (requested || "").trim();
+  if (req && !rows.some((c) => normKey(c.contract_no) === normKey(req))) return req;
+  let max = 0;
+  for (const c of rows) {
+    const m = /^CN-\d{4}-(\d+)$/i.exec(String(c.contract_no));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `CN-${new Date().getFullYear()}-${String(max + 1).padStart(4, "0")}`;
+}
+
 const contractSchema = z.object({
   msr_no: z.string().trim().max(100).default(""),
   contract_no: z.string().trim().max(100).default(""),
@@ -193,10 +223,12 @@ export const saveContract = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { id, ...fields } = data;
-    if (!fields.contract_no)
-      fields.contract_no =
-        (await contractNoForProject(supabase, fields.project_name)) ||
-        (await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN"));
+    fields.contract_no = await assignContractNo(
+      supabase,
+      fields.project_name,
+      fields.contract_no,
+      id,
+    );
     const payload = {
       ...fields,
       system_type: (SYSTEM_TYPES as readonly string[]).includes(fields.system_type)
@@ -247,27 +279,36 @@ export const importContracts = createServerFn({ method: "POST" })
         created_by: userId,
       }));
     if (!payload.length) return { added: 0 };
-    let nextNo = 0;
-    const prefix = `CN-${new Date().getFullYear()}-`;
+    // Existing numbers: project -> number, and number -> project.
+    const { data: existingRows } = await supabase
+      .from("maintenance_contracts")
+      .select("project_name, contract_no")
+      .order("created_at", { ascending: true });
     const byProject = new Map<string, string>();
+    const usedBy = new Map<string, string>();
+    let maxNo = 0;
+    const remember = (proj: string, no: string) => {
+      const pk = normKey(proj);
+      if (pk && !byProject.has(pk)) byProject.set(pk, no);
+      if (!usedBy.has(normKey(no))) usedBy.set(normKey(no), pk);
+      const m = /^CN-\d{4}-(\d+)$/i.exec(no);
+      if (m) maxNo = Math.max(maxNo, parseInt(m[1], 10));
+    };
+    for (const c of existingRows ?? []) if (c.contract_no) remember(c.project_name, c.contract_no);
+    const prefix = `CN-${new Date().getFullYear()}-`;
     for (const r of payload) {
-      const key = (r.project_name || "").trim().toLowerCase();
-      if (r.contract_no) {
-        if (key && !byProject.has(key)) byProject.set(key, r.contract_no);
-        continue;
-      }
-      if (key && byProject.has(key)) { r.contract_no = byProject.get(key)!; continue; }
-      const existing = await contractNoForProject(supabase, r.project_name);
-      if (existing) {
-        r.contract_no = existing;
+      const key = normKey(r.project_name);
+      if (key && byProject.has(key)) {
+        r.contract_no = byProject.get(key)!;
       } else {
-        if (!nextNo) {
-          const first = await nextSequence(supabase, "maintenance_contracts", "contract_no", "CN");
-          nextNo = parseInt(first.split("-").pop() ?? "1", 10);
-        }
-        r.contract_no = `${prefix}${String(nextNo++).padStart(4, "0")}`;
+        const req = (r.contract_no || "").trim();
+        const owner = req ? usedBy.get(normKey(req)) : undefined;
+        r.contract_no =
+          req && (owner === undefined || owner === key)
+            ? req
+            : `${prefix}${String(++maxNo).padStart(4, "0")}`;
       }
-      if (key) byProject.set(key, r.contract_no);
+      remember(r.project_name, r.contract_no);
     }
     const { data: inserted, error } = await supabase
       .from("maintenance_contracts")
