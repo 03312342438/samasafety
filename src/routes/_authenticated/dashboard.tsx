@@ -9,7 +9,8 @@ import {
   listAllMaintenanceTasks,
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
-import { MaintenanceTaskList, SiteFilter, filterBySite } from "@/components/MaintenanceTaskList";
+import { MaintenanceTaskList, SiteFilter, filterBySite, splitCarriedOver } from "@/components/MaintenanceTaskList";
+import { History } from "lucide-react";
 import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
@@ -81,7 +82,7 @@ function Dashboard() {
   const taskList = filterBySite(allTasks, siteFilter).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
   );
-  const pending = taskList.filter((t) => t.status === "pending");
+  const { pending, carried } = splitCarriedOver(taskList);
   const done = taskList.filter((t) => t.status === "completed");
 
 
@@ -194,6 +195,7 @@ function Dashboard() {
                   { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
                   { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
+                  { value: "carried", label: (<><History className="mr-1 h-4 w-4" /> Carried Over ({carried.length})</>) },
                   // Maintenance-only logins don't manage contracts.
                   ...(!maintenanceOnly
                     ? [{ value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) }]
