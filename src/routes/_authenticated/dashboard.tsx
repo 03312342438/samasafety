@@ -230,6 +230,24 @@ function Dashboard() {
           </div>
         )}
 
+        {activeTab === "carried" && canFillReport && !isAdmin && (
+          <div className="mt-5 space-y-6">
+            <SearchInput
+              value={taskQuery}
+              onChange={setTaskQuery}
+              placeholder="Search client, contract, project, site, date…"
+            />
+            <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
+            <div>
+              <h2 className="mb-1 text-base font-semibold">Carried Over ({carried.length})</h2>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Visits whose time passed without being done, after the next visit became due.
+              </p>
+              <MaintenanceTaskList tasks={carried} onToggle={toggle} />
+            </div>
+          </div>
+        )}
+
         {activeTab === "maintenance" && canFillReport && !isAdmin && (
           <div className="mt-5 space-y-6">
             <SearchInput
