@@ -9,7 +9,8 @@ import {
   listAllMaintenanceTasks,
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
-import { MaintenanceTaskList, SiteFilter, filterBySite } from "@/components/MaintenanceTaskList";
+import { MaintenanceTaskList, SiteFilter, filterBySite, splitCarriedOver } from "@/components/MaintenanceTaskList";
+import { History } from "lucide-react";
 import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
@@ -81,7 +82,7 @@ function Dashboard() {
   const taskList = filterBySite(allTasks, siteFilter).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
   );
-  const pending = taskList.filter((t) => t.status === "pending");
+  const { pending, carried } = splitCarriedOver(taskList);
   const done = taskList.filter((t) => t.status === "completed");
 
 
@@ -194,6 +195,7 @@ function Dashboard() {
                   { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
                   { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
+                  { value: "carried", label: (<><History className="mr-1 h-4 w-4" /> Carried Over ({carried.length})</>) },
                   // Maintenance-only logins don't manage contracts.
                   ...(!maintenanceOnly
                     ? [{ value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) }]
@@ -225,6 +227,24 @@ function Dashboard() {
         {activeTab === "contracts" && canFillReport && !isAdmin && !maintenanceOnly && (
           <div className="mt-5">
             <MaintenanceContracts />
+          </div>
+        )}
+
+        {activeTab === "carried" && canFillReport && !isAdmin && (
+          <div className="mt-5 space-y-6">
+            <SearchInput
+              value={taskQuery}
+              onChange={setTaskQuery}
+              placeholder="Search client, contract, project, site, date…"
+            />
+            <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
+            <div>
+              <h2 className="mb-1 text-base font-semibold">Carried Over ({carried.length})</h2>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Visits whose time passed without being done, after the next visit became due.
+              </p>
+              <MaintenanceTaskList tasks={carried} onToggle={toggle} />
+            </div>
           </div>
         )}
 

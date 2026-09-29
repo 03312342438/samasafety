@@ -3,7 +3,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, MapPin, RotateCcw, Trash2 } from "lucide-react";
 import { SearchSelect } from "@/components/SearchSelect";
 
-const siteKey = (s: unknown) => String(s ?? "").trim().toLowerCase();
+/**
+ * Split pending visits: a visit is "carried over" once a later visit of the
+ * same contract has already become due (its time passed and it wasn't done).
+ */
+export function splitCarriedOver<T extends { status?: string; contract_id?: string | null; sequence?: number; due_date?: string }>(
+  tasks: T[],
+) {
+  const today = new Date().toISOString().slice(0, 10);
+  const latestDueSeq = new Map<string, number>();
+  for (const t of tasks) {
+    if (t.status !== "pending" || !t.contract_id || !t.due_date || t.due_date > today) continue;
+    latestDueSeq.set(t.contract_id, Math.max(latestDueSeq.get(t.contract_id) ?? 0, Number(t.sequence) || 0));
+  }
+  const pending: T[] = [];
+  const carried: T[] = [];
+  for (const t of tasks) {
+    if (t.status !== "pending") continue;
+    const latest = t.contract_id ? latestDueSeq.get(t.contract_id) : undefined;
+    if (latest !== undefined && (Number(t.sequence) || 0) < latest) carried.push(t);
+    else pending.push(t);
+  }
+  return { pending, carried };
+}
+
+const siteKey =  (s: unknown) => String(s ?? "").trim().toLowerCase();
 
 /** Keep only tasks at the chosen site location ("" = all sites). */
 export function filterBySite<T extends { site_location?: string | null }>(tasks: T[], site: string) {
