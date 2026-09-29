@@ -9,7 +9,7 @@ import {
   listAllMaintenanceTasks,
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
-import { MaintenanceTaskList } from "@/components/MaintenanceTaskList";
+import { MaintenanceTaskList, SiteFilter, filterBySite } from "@/components/MaintenanceTaskList";
 import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
@@ -68,6 +68,7 @@ function Dashboard() {
 
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
+  const [siteFilter, setSiteFilter] = useState("");
   const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
   // Management never fills reports: the report form is hidden and the
   // overview is always the landing tab.
@@ -76,7 +77,8 @@ function Dashboard() {
       ? fallbackTab
       : tab;
 
-  const taskList = ((tasks as any[]) ?? []).filter((t) =>
+  const allTasks = (tasks as any[]) ?? [];
+  const taskList = filterBySite(allTasks, siteFilter).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
   );
   const pending = taskList.filter((t) => t.status === "pending");
@@ -233,6 +235,7 @@ function Dashboard() {
               onChange={setTaskQuery}
               placeholder="Search client, contract, order no, project, site, MSR no, our ref, date…"
             />
+            <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
             <div>
               <h2 className="mb-3 text-base font-semibold">Pending ({pending.length})</h2>
               <MaintenanceTaskList tasks={pending} onToggle={toggle} />

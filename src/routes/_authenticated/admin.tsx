@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import { Loader2, UserPlus, Trash2, ShieldAlert, Mail, ShieldCheck, ShieldMinus, BellRing, CalendarClock, Package, KeyRound, CheckCircle2 } from "lucide-react";
 import type { ReportRecord } from "@/lib/report-constants";
-import { MaintenanceTaskList } from "@/components/MaintenanceTaskList";
+import { MaintenanceTaskList, SiteFilter, filterBySite } from "@/components/MaintenanceTaskList";
 import { SearchInput } from "@/components/SearchInput";
 import { matchesQuery, TASK_SEARCH_FIELDS } from "@/lib/search";
 import {
@@ -468,6 +468,7 @@ function Maintenance() {
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({ email: "", label: "" });
   const [taskQuery, setTaskQuery] = useState("");
+  const [siteFilter, setSiteFilter] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -514,7 +515,8 @@ function Maintenance() {
     }
   };
 
-  const list = ((tasks as any[]) ?? []).filter((t) =>
+  const allTasks = (tasks as any[]) ?? [];
+  const list = filterBySite(allTasks, siteFilter).filter((t) =>
     matchesQuery(t, TASK_SEARCH_FIELDS, taskQuery),
   );
   const pending = list.filter((t) => t.status === "pending");
@@ -578,6 +580,9 @@ function Maintenance() {
           onChange={setTaskQuery}
           placeholder="Search client, contract, order no, project, site, MSR no, our ref, date…"
         />
+        <div className="mt-3">
+          <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
+        </div>
         <h2 className="mb-3 mt-4 flex items-center gap-2 text-base font-semibold">
           <CalendarClock className="h-4 w-4 text-primary" /> Pending Maintenance ({pending.length})
         </h2>
