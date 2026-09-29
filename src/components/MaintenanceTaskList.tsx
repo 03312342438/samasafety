@@ -1,6 +1,50 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, MapPin, RotateCcw, Trash2 } from "lucide-react";
+import { SearchSelect } from "@/components/SearchSelect";
+
+const siteKey = (s: unknown) => String(s ?? "").trim().toLowerCase();
+
+/** Keep only tasks at the chosen site location ("" = all sites). */
+export function filterBySite<T extends { site_location?: string | null }>(tasks: T[], site: string) {
+  if (!site) return tasks;
+  return tasks.filter((t) => siteKey(t.site_location) === site);
+}
+
+/** Searchable dropdown listing every site location found in the tasks. */
+export function SiteFilter({
+  tasks,
+  value,
+  onChange,
+}: {
+  tasks: { site_location?: string | null }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const sites = new Map<string, string>();
+  for (const t of tasks) {
+    const label = String(t.site_location ?? "").trim();
+    if (label && !sites.has(siteKey(label))) sites.set(siteKey(label), label);
+  }
+  const options: [string, string][] = [
+    ["", "All site locations"],
+    ...[...sites.entries()].sort((a, b) => a[1].localeCompare(b[1])),
+  ];
+  return (
+    <div className="flex items-center gap-2">
+      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <SearchSelect
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder="All site locations"
+        searchPlaceholder="Search site location…"
+        className="max-w-sm"
+      />
+    </div>
+  );
+}
+
 
 export function MaintenanceTaskList({
   tasks,
