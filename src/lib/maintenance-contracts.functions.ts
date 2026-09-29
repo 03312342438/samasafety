@@ -139,6 +139,55 @@ async function assignContractNo(
   return `CN-${new Date().getFullYear()}-${String(max + 1).padStart(4, "0")}`;
 }
 
+/**
+ * Repairs old data: one contract number per (project + customer + site).
+ * Rows with the same three values share a number; a number used by more than
+ * one combination is kept only by the earliest one, the others get new numbers.
+ * Mutates `rows` in place and saves the changes. Returns number of rows fixed.
+ */
+async function normalizeContractNumbers(supabase: any, rows: any[]): Promise<number> {
+  const ordered = [...rows].sort((a, b) =>
+    String(a.created_at).localeCompare(String(b.created_at)),
+  );
+  let max = 0;
+  for (const c of ordered) {
+    const m = /^CN-\d{4}-(\d+)$/i.exec(String(c.contract_no ?? ""));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  const prefix = `CN-${new Date().getFullYear()}-`;
+  const numberByKey = new Map<string, string>();
+  const ownerByNumber = new Map<string, string>();
+  const changes = new Map<string, string[]>(); // new number -> row ids
+  for (const c of ordered) {
+    const key = contractKey(c);
+    let no = numberByKey.get(key);
+    if (!no) {
+      const current = String(c.contract_no ?? "").trim();
+      const owner = current ? ownerByNumber.get(normKey(current)) : undefined;
+      no = current && (owner === undefined || owner === key)
+        ? current
+        : `${prefix}${String(++max).padStart(4, "0")}`;
+      numberByKey.set(key, no);
+      ownerByNumber.set(normKey(no), key);
+    }
+    if (c.contract_no !== no) {
+      c.contract_no = no;
+      const ids = changes.get(no) ?? [];
+      ids.push(c.id);
+      changes.set(no, ids);
+    }
+  }
+  let fixed = 0;
+  for (const [no, ids] of changes) {
+    const { error } = await supabase
+      .from("maintenance_contracts")
+      .update({ contract_no: no })
+      .in("id", ids);
+    if (!error) fixed += ids.length;
+  }
+  return fixed;
+}
+
 const contractSchema = z.object({
   msr_no: z.string().trim().max(100).default(""),
   contract_no: z.string().trim().max(100).default(""),
@@ -166,6 +215,12 @@ export const listContracts = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const rows = data ?? [];
     if (!rows.length) return [];
+    try {
+      await normalizeContractNumbers(supabase, rows);
+    } catch {
+      /* never block the list on a numbering repair */
+    }
+
 
     const { data: reps } = await supabase
       .from("reports")
