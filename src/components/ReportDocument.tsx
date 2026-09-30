@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
 import { LEFT_DEVICES, RIGHT_DEVICES, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
+import { SYSTEM_LABELS, type SystemType } from "@/lib/maintenance-contracts";
 
 const NAVY = "#103a52";
 const BORDER = "1px solid #000000";
@@ -79,6 +80,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
               ["Client Name", data.client_name],
               ["Client Email", data.client_email],
               ["Contract", data.contract],
+              ["System Type", SYSTEM_LABELS[data.system_type as SystemType] ?? data.system_type],
               ["Order No.", data.order_no],
               ["Project", data.project],
               ["Site/Location", data.site_location],
