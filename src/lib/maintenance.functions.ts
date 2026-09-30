@@ -119,6 +119,20 @@ async function attachReportFields(supabase: any, tasks: any[]) {
   });
 }
 
+/** Attach the contract's system type (FF, FA, CCTV, …) to each visit. */
+async function attachSystemType(supabase: any, tasks: any[]) {
+  const contractIds = Array.from(
+    new Set(tasks.map((t: any) => t.contract_id).filter(Boolean)),
+  );
+  if (!contractIds.length) return tasks;
+  const { data: contracts } = await supabase
+    .from("maintenance_contracts")
+    .select("id, system_type")
+    .in("id", contractIds);
+  const byId = Object.fromEntries((contracts ?? []).map((c: any) => [c.id, c.system_type ?? ""]));
+  return tasks.map((t: any) => ({ ...t, system_type: byId[t.contract_id] ?? t.system_type ?? "" }));
+}
+
 export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -131,7 +145,10 @@ export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
       .or(`created_by.eq.${userId},contract_id.not.is.null`)
       .order("due_date", { ascending: true });
     if (error) throw new Error(error.message);
-    return await attachReportFields(supabase, data ?? []);
+    return await attachSystemType(
+      supabase,
+      await attachReportFields(supabase, data ?? []),
+    );
   });
 
 export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
@@ -158,7 +175,10 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
         (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
       );
     }
-    const enriched = await attachReportFields(supabase, tasks);
+    const enriched = await attachSystemType(
+      supabase,
+      await attachReportFields(supabase, tasks),
+    );
     return enriched.map((t: any) => ({ ...t, employee_name: nameById[t.created_by] ?? "—" }));
   });
 

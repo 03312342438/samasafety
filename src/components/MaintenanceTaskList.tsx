@@ -103,6 +103,11 @@ export function MaintenanceTaskList({
             <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div>
                 <p className="font-semibold">
+                  {t.system_type && (
+                    <span className="mr-2 rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                      {t.system_type}
+                    </span>
+                  )}
                   {t.client_name || "—"}
                   {t.project ? ` · ${t.project}` : ""}
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
