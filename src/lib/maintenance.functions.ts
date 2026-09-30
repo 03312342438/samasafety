@@ -119,6 +119,20 @@ async function attachReportFields(supabase: any, tasks: any[]) {
   });
 }
 
+/** Attach the contract's system type (FF, FA, CCTV, …) to each visit. */
+async function attachSystemType(supabase: any, tasks: any[]) {
+  const contractIds = Array.from(
+    new Set(tasks.map((t: any) => t.contract_id).filter(Boolean)),
+  );
+  if (!contractIds.length) return tasks;
+  const { data: contracts } = await supabase
+    .from("maintenance_contracts")
+    .select("id, system_type")
+    .in("id", contractIds);
+  const byId = Object.fromEntries((contracts ?? []).map((c: any) => [c.id, c.system_type ?? ""]));
+  return tasks.map((t: any) => ({ ...t, system_type: byId[t.contract_id] ?? t.system_type ?? "" }));
+}
+
 export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
