@@ -145,7 +145,10 @@ export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
       .or(`created_by.eq.${userId},contract_id.not.is.null`)
       .order("due_date", { ascending: true });
     if (error) throw new Error(error.message);
-    return await attachReportFields(supabase, data ?? []);
+    return await attachSystemType(
+      supabase,
+      await attachReportFields(supabase, data ?? []),
+    );
   });
 
 export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
@@ -172,7 +175,10 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
         (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
       );
     }
-    const enriched = await attachReportFields(supabase, tasks);
+    const enriched = await attachSystemType(
+      supabase,
+      await attachReportFields(supabase, tasks),
+    );
     return enriched.map((t: any) => ({ ...t, employee_name: nameById[t.created_by] ?? "—" }));
   });
 
