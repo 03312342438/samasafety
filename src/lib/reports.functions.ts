@@ -153,11 +153,15 @@ export const listMyReports = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("reports")
-      .select("*")
+      .select("*, maintenance_contracts(system_type)")
       .eq("created_by", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    // Flatten the contract's system type (FF, FA, FE, CCTV, …) onto each row.
+    return (data ?? []).map((r: any) => {
+      const { maintenance_contracts, ...rest } = r;
+      return { ...rest, system_type: maintenance_contracts?.system_type ?? "" };
+    });
   });
 
 export const listAllReports = createServerFn({ method: "GET" })
@@ -173,10 +177,14 @@ export const listAllReports = createServerFn({ method: "GET" })
     if (!isAdmin) throw new Error("Forbidden: admin access required");
     const { data, error } = await supabase
       .from("reports")
-      .select("*")
+      .select("*, maintenance_contracts(system_type)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    const rows = data ?? [];
+    // Flatten the contract's system type (FF, FA, FE, CCTV, …) onto each row.
+    const rows = (data ?? []).map((r: any) => {
+      const { maintenance_contracts, ...rest } = r;
+      return { ...rest, system_type: maintenance_contracts?.system_type ?? "" };
+    });
 
     // Attach the name of the employee who created each report.
     const ids = Array.from(new Set(rows.map((r: any) => r.created_by).filter(Boolean)));
