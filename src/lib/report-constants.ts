@@ -32,6 +32,8 @@ export type ReportData = {
   client_name: string;
   client_email: string;
   contract: string;
+  /** System type of the maintenance contract this visit belongs to (FF, FA, FE, CCTV, …). */
+  system_type: string;
   order_no: string;
   project: string;
   site_location: string;
@@ -68,6 +70,7 @@ export function recordToForm(r: ReportRecord): ReportData {
     client_name: r.client_name ?? "",
     client_email: r.client_email ?? "",
     contract: r.contract ?? "",
+    system_type: r.system_type ?? "",
     order_no: r.order_no ?? "",
     project: r.project ?? "",
     site_location: r.site_location ?? "",
@@ -106,6 +109,7 @@ export function emptyReport(): ReportData {
     client_name: "",
     client_email: "",
     contract: "",
+    system_type: "",
     order_no: "",
     project: "",
     site_location: "",

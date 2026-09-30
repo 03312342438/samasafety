@@ -115,6 +115,7 @@ export function ReportForm({
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
+      system_type: c.system_type || "",
       report_date: c.upcoming_visit || f.report_date,
       date_completed: c.upcoming_visit || f.date_completed,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
