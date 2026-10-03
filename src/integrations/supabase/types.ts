@@ -2096,6 +2096,7 @@ export type Database = {
           client_signature: string | null
           contract: string | null
           contract_id: string | null
+          contract_ids: string[]
           created_at: string
           created_by: string
           customer_id: string | null
@@ -2118,6 +2119,7 @@ export type Database = {
           report_date: string | null
           site_location: string | null
           spare_parts: Json
+          system_types: string[]
         }
         Insert: {
           action_taken?: string | null
@@ -2129,6 +2131,7 @@ export type Database = {
           client_signature?: string | null
           contract?: string | null
           contract_id?: string | null
+          contract_ids?: string[]
           created_at?: string
           created_by: string
           customer_id?: string | null
@@ -2151,6 +2154,7 @@ export type Database = {
           report_date?: string | null
           site_location?: string | null
           spare_parts?: Json
+          system_types?: string[]
         }
         Update: {
           action_taken?: string | null
@@ -2162,6 +2166,7 @@ export type Database = {
           client_signature?: string | null
           contract?: string | null
           contract_id?: string | null
+          contract_ids?: string[]
           created_at?: string
           created_by?: string
           customer_id?: string | null
@@ -2184,6 +2189,7 @@ export type Database = {
           report_date?: string | null
           site_location?: string | null
           spare_parts?: Json
+          system_types?: string[]
         }
         Relationships: [
           {
