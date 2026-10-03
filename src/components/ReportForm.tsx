@@ -9,6 +9,8 @@ import {
   type ReportData,
   type ReportRecord,
   type DeviceStatus,
+  devicesFor,
+  deviceKey,
   type SparePart,
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
@@ -81,14 +83,24 @@ export function ReportForm({
     queryKey: ["maintenance-contracts"],
     queryFn: () => fetchContracts(),
   });
-  const [contractId, setContractId] = useState("");
+  // A contract number can cover several systems (one contract row per system).
+  const [contractNo, setContractNo] = useState("");
   const today = new Date().toISOString().slice(0, 10);
-  const contractList = ((contracts as any[]) ?? []).filter(
-    (c) =>
-      c.id === contractId ||
-      ((!c.end_date || c.end_date >= today) && c.remaining_count > 0),
+  const activeContracts = ((contracts as any[]) ?? []).filter(
+    (c) => (!c.end_date || c.end_date >= today) && c.remaining_count > 0,
   );
-  const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
+  const groupKey = (c: any) =>
+    c.contract_no ||
+    [c.customer_name, c.project_name, c.site_location].join("|").toLowerCase();
+  const groups = new Map<string, any[]>();
+  for (const c of activeContracts) {
+    const k = groupKey(c);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(c);
+  }
+  const groupContracts = groups.get(contractNo) ?? [];
+  const contractId = form.contract_ids[0] ?? "";
+  const selectedContracts = groupContracts.filter((c) => form.contract_ids.includes(c.id));
 
   // Store catalogue, used to pick spare parts instead of typing them.
   const fetchStock = useServerFn(listStockItems);
@@ -104,18 +116,25 @@ export function ReportForm({
 
   // Picking a contract fills in everything known about the site and schedules
   // the visit on the next maintenance still outstanding.
-  const pickContract = (id: string) => {
-    setContractId(id);
-    const c = ((contracts as any[]) ?? []).find((x) => x.id === id);
-    if (!c) return;
+  const pickContract = (key: string) => {
+    setContractNo(key);
+    const list = groups.get(key) ?? [];
+    const c = list[0];
+    if (!c) {
+      setForm((f) => ({ ...f, contract_ids: [], system_types: [], system_type: "" }));
+      return;
+    }
+    // Start with every system of the contract ticked; the user can untick.
     setForm((f) => ({
       ...f,
+      contract_ids: list.map((x) => x.id),
+      system_types: list.map((x) => x.system_type),
+      system_type: list.map((x) => x.system_type).join(", "),
       client_name: c.customer_name || f.client_name,
       client_email: c.customer_email || f.client_email,
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
-      system_type: c.system_type || "",
       report_date: c.upcoming_visit || f.report_date,
       date_completed: c.upcoming_visit || f.date_completed,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
@@ -138,8 +157,25 @@ export function ReportForm({
     count: parseInt(form.maintenance_count, 10) || 0,
   });
 
-  const setDevice = (name: string, status: DeviceStatus) =>
+  const setDevice = (name: string, status: string) =>
     setForm((f) => ({ ...f, devices: { ...f.devices, [name]: status } }));
+
+  const toggleSystem = (c: any) =>
+    setForm((f) => {
+      const on = f.contract_ids.includes(c.id);
+      const ids = on ? f.contract_ids.filter((x) => x !== c.id) : [...f.contract_ids, c.id];
+      const sys = groupContracts.filter((x) => ids.includes(x.id)).map((x) => x.system_type);
+      const first = groupContracts.find((x) => x.id === ids[0]);
+      return {
+        ...f,
+        contract_ids: ids,
+        system_types: sys,
+        system_type: sys.join(", "),
+        maintenance_interval_value: first?.interval_months
+          ? String(first.interval_months)
+          : f.maintenance_interval_value,
+      };
+    });
 
   const setSpare = (i: number, k: keyof SparePart, v: string) =>
     setForm((f) => {
@@ -220,7 +256,7 @@ export function ReportForm({
         toast.success("Report submitted");
         // Empty the sheet so the same report can't be submitted twice.
         setForm({ ...emptyReport(), performed_by: defaultPerformedBy ?? "" });
-        setContractId("");
+        setContractNo("");
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
         // recipient list still get the report notification.
