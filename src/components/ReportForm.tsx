@@ -336,10 +336,9 @@ export function ReportForm({
     );
   }
 
-  const inputDevices = [
-    { head: "Devices", items: LEFT_DEVICES },
-    { head: "Device", items: RIGHT_DEVICES },
-  ];
+  // Only the checklists of the selected systems are shown; reports without a
+  // system keep the general checklist.
+  const checklistSystems = form.system_types.length ? form.system_types : [""];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -349,28 +348,54 @@ export function ReportForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Field label="Maintenance contract (site)">
+            <Field label="Contract number">
               <SearchSelect
                 className="h-10"
-                value={contractId}
+                value={contractNo}
                 onChange={pickContract}
                 placeholder="— not linked to a contract —"
-                searchPlaceholder="Search contract, customer, project, site…"
+                searchPlaceholder="Search contract no., client, project, location…"
                 options={[
                   ["", "— not linked to a contract —"],
-                  ...contractList.map((c: any): [string, string] => [
-                    c.id,
-                    `[${c.system_type || "—"}] ${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} (${c.remaining_count} left)`,
-                  ]),
+                  ...[...groups.entries()].map(([k, list]): [string, string] => {
+                    const c = list[0];
+                    const sys = list.map((x: any) => x.system_type).join(", ");
+                    return [
+                      k,
+                      `${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} [${sys}]`,
+                    ];
+                  }),
                 ]}
               />
             </Field>
-            {contract && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {contract.system_type} · every {contract.interval_months} month(s) · visit{" "}
-                {contract.completed_count + 1} of {contract.total_visits} · due{" "}
-                {contract.upcoming_visit ? prettyDate(contract.upcoming_visit) : "—"}
-              </p>
+            {groupContracts.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <Label className="text-sm">System types in this report</Label>
+                <div className="flex flex-wrap gap-2">
+                  {groupContracts.map((c: any) => {
+                    const on = form.contract_ids.includes(c.id);
+                    return (
+                      <Button
+                        key={c.id}
+                        type="button"
+                        size="sm"
+                        variant={on ? "default" : "outline"}
+                        onClick={() => toggleSystem(c)}
+                      >
+                        {on && <CheckCircle2 className="mr-1 h-4 w-4" />}
+                        {c.system_type}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {selectedContracts.map((c: any) => (
+                  <p key={c.id} className="text-xs text-muted-foreground">
+                    {c.system_type} · every {c.interval_months} month(s) · visit{" "}
+                    {c.completed_count + 1} of {c.total_visits} · due{" "}
+                    {c.upcoming_visit ? prettyDate(c.upcoming_visit) : "—"}
+                  </p>
+                ))}
+              </div>
             )}
           </div>
           <Field label="Client Name">
