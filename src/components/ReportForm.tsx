@@ -447,30 +447,47 @@ export function ReportForm({
         <CardHeader>
           <CardTitle>Device Checklist</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          {inputDevices.map((col) => (
-            <div key={col.head} className="space-y-2">
-              {col.items.map((name) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between gap-3 rounded-md border p-2.5"
-                >
-                  <span className="text-sm font-medium">{name}</span>
-                  <div className="flex shrink-0 gap-1">
-                    {(["ok", "faulty"] as DeviceStatus[]).map((s) => (
-                      <Button
-                        key={s}
-                        type="button"
-                        size="sm"
-                        variant={form.devices[name] === s ? (s === "ok" ? "default" : "destructive") : "outline"}
-                        onClick={() => setDevice(name, s)}
-                      >
-                        {s === "ok" ? "OK" : "Faulty"}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        <CardContent className="space-y-6">
+          {checklistSystems.map((sys) => (
+            <div key={sys || "general"} className="space-y-2">
+              {sys && <h4 className="text-sm font-semibold">{sys}</h4>}
+              <div className="grid gap-2 md:grid-cols-2">
+                {devicesFor(sys).map((d) => {
+                  const k = sys ? deviceKey(sys, d.name) : d.name;
+                  const qk = deviceKey(sys, d.name, "qty");
+                  return (
+                    <div
+                      key={k}
+                      className="flex items-center justify-between gap-3 rounded-md border p-2.5"
+                    >
+                      <span className="text-sm font-medium">{d.name}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {d.kind !== "qty" &&
+                          (["ok", "faulty"] as DeviceStatus[]).map((s) => (
+                            <Button
+                              key={s}
+                              type="button"
+                              size="sm"
+                              variant={form.devices[k] === s ? (s === "ok" ? "default" : "destructive") : "outline"}
+                              onClick={() => setDevice(k, s)}
+                            >
+                              {s === "ok" ? "OK" : "Faulty"}
+                            </Button>
+                          ))}
+                        {d.kind !== "status" && (
+                          <Input
+                            className="h-8 w-20"
+                            inputMode="numeric"
+                            placeholder={d.kind === "qty" ? "Qty" : "Def. qty"}
+                            value={form.devices[qk] ?? ""}
+                            onChange={(e) => setDevice(qk, e.target.value)}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </CardContent>
