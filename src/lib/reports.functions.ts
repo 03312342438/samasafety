@@ -23,7 +23,9 @@ const reportSchema = z.object({
   msr_no: z.string().max(100).default(""),
   our_ref_no: z.string().max(100).default(""),
   report_date: z.string().max(40).default(""),
-  devices: z.record(z.string(), z.enum(["ok", "faulty"])).default({}),
+  devices: z.record(z.string().max(200), z.string().max(50)).default({}),
+  system_types: z.array(z.string().max(20)).max(20).default([]),
+  contract_ids: z.array(z.string().uuid()).max(20).default([]),
   spare_parts: z.array(sparePartSchema).max(50).default([]),
   action_taken: z.string().max(5000).default(""),
   remarks: z.string().max(2000).default(""),
@@ -139,10 +141,11 @@ export const createReport = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     // Visits filed against a maintenance contract are tracked by the contract
     // itself, so they don't create their own reminder schedule.
-    if (!data.job_number_id && !data.contract_id)
+    if (!data.job_number_id && !data.contract_id && !data.contract_ids.length)
       await regenerateTasks(supabase, row.id, userId, data);
     // A visit filed against a contract removes one pending visit from it.
-    if (data.contract_id) await syncContractTasks(supabase, data.contract_id);
+    const linked = new Set([...data.contract_ids, ...(data.contract_id ? [data.contract_id] : [])]);
+    for (const cid of linked) await syncContractTasks(supabase, cid);
     return { id: row.id, msr_no: data.msr_no };
   });
 
@@ -160,7 +163,12 @@ export const listMyReports = createServerFn({ method: "GET" })
     // Flatten the contract's system type (FF, FA, FE, CCTV, …) onto each row.
     return (data ?? []).map((r: any) => {
       const { maintenance_contracts, ...rest } = r;
-      return { ...rest, system_type: maintenance_contracts?.system_type ?? "" };
+      return {
+        ...rest,
+        system_type: rest.system_types?.length
+          ? rest.system_types.join(", ")
+          : maintenance_contracts?.system_type ?? "",
+      };
     });
   });
 
@@ -183,7 +191,12 @@ export const listAllReports = createServerFn({ method: "GET" })
     // Flatten the contract's system type (FF, FA, FE, CCTV, …) onto each row.
     const rows = (data ?? []).map((r: any) => {
       const { maintenance_contracts, ...rest } = r;
-      return { ...rest, system_type: maintenance_contracts?.system_type ?? "" };
+      return {
+        ...rest,
+        system_type: rest.system_types?.length
+          ? rest.system_types.join(", ")
+          : maintenance_contracts?.system_type ?? "",
+      };
     });
 
     // Attach the name of the employee who created each report.
@@ -230,7 +243,7 @@ export const updateReport = createServerFn({ method: "POST" })
       })
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if (existing?.created_by && !fields.job_number_id) {
+    if (existing?.created_by && !fields.job_number_id && !fields.contract_id && !fields.contract_ids.length) {
       await regenerateTasks(supabase, id, existing.created_by, fields);
     }
     return { ok: true };
