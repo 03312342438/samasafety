@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
-import { LEFT_DEVICES, RIGHT_DEVICES, type ReportData } from "@/lib/report-constants";
+import { LEFT_DEVICES, RIGHT_DEVICES, devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
 import { SYSTEM_LABELS, type SystemType } from "@/lib/maintenance-contracts";
 
@@ -80,7 +80,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
               ["Client Name", data.client_name],
               ["Client Email", data.client_email],
               ["Contract", data.contract],
-              ["System Type", SYSTEM_LABELS[data.system_type as SystemType] ?? data.system_type],
+              ["System Type", (data.system_types?.length ? data.system_types : data.system_type ? [data.system_type] : []).map((t) => SYSTEM_LABELS[t as SystemType] ?? t).join(", ")],
               ["Order No.", data.order_no],
               ["Project", data.project],
               ["Site/Location", data.site_location],
@@ -117,7 +117,32 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
         </table>
       </div>
 
-      {/* Devices section */}
+      {/* Devices section: one checklist per system, or the general one for older reports */}
+      {data.system_types?.length ? (
+        data.system_types.map((sys) => (
+          <table key={sys} style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed", marginBottom: 10 }}>
+            <tbody>
+              <tr>
+                <td style={labelCell}>{SYSTEM_LABELS[sys as SystemType] ?? sys} — DEVICES</td>
+                <td style={{ ...labelCell, width: 52, textAlign: "center" }}>OK</td>
+                <td style={{ ...labelCell, width: 60, textAlign: "center" }}>FAULTY</td>
+                <td style={{ ...labelCell, width: 60, textAlign: "center" }}>QTY</td>
+              </tr>
+              {devicesFor(sys).map((d) => {
+                const status = data.devices[deviceKey(sys, d.name)];
+                return (
+                  <tr key={d.name}>
+                    <td style={{ ...cell, fontWeight: 700 }}>{d.name}</td>
+                    <td style={{ ...cell, textAlign: "center" }}>{d.kind !== "qty" && status === "ok" ? "Yes" : ""}</td>
+                    <td style={{ ...cell, textAlign: "center" }}>{d.kind !== "qty" && status === "faulty" ? "Yes" : ""}</td>
+                    <td style={{ ...cell, textAlign: "center" }}>{d.kind !== "status" ? data.devices[deviceKey(sys, d.name, "qty")] ?? "" : ""}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ))
+      ) : (
       <div style={{ display: "flex", gap: 14, marginBottom: 12 }}>
         {[
           { head: "DEVICES", items: LEFT_DEVICES },
@@ -141,6 +166,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
           </table>
         ))}
       </div>
+      )}
 
       {/* Spare parts */}
       <table style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed", marginBottom: 12 }}>

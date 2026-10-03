@@ -9,6 +9,8 @@ import {
   type ReportData,
   type ReportRecord,
   type DeviceStatus,
+  devicesFor,
+  deviceKey,
   type SparePart,
 } from "@/lib/report-constants";
 import { createReport, updateReport } from "@/lib/reports.functions";
@@ -81,14 +83,24 @@ export function ReportForm({
     queryKey: ["maintenance-contracts"],
     queryFn: () => fetchContracts(),
   });
-  const [contractId, setContractId] = useState("");
+  // A contract number can cover several systems (one contract row per system).
+  const [contractNo, setContractNo] = useState("");
   const today = new Date().toISOString().slice(0, 10);
-  const contractList = ((contracts as any[]) ?? []).filter(
-    (c) =>
-      c.id === contractId ||
-      ((!c.end_date || c.end_date >= today) && c.remaining_count > 0),
+  const activeContracts = ((contracts as any[]) ?? []).filter(
+    (c) => (!c.end_date || c.end_date >= today) && c.remaining_count > 0,
   );
-  const contract = ((contracts as any[]) ?? []).find((c) => c.id === contractId);
+  const groupKey = (c: any) =>
+    c.contract_no ||
+    [c.customer_name, c.project_name, c.site_location].join("|").toLowerCase();
+  const groups = new Map<string, any[]>();
+  for (const c of activeContracts) {
+    const k = groupKey(c);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(c);
+  }
+  const groupContracts = groups.get(contractNo) ?? [];
+  const contractId = form.contract_ids[0] ?? "";
+  const selectedContracts = groupContracts.filter((c) => form.contract_ids.includes(c.id));
 
   // Store catalogue, used to pick spare parts instead of typing them.
   const fetchStock = useServerFn(listStockItems);
@@ -104,18 +116,25 @@ export function ReportForm({
 
   // Picking a contract fills in everything known about the site and schedules
   // the visit on the next maintenance still outstanding.
-  const pickContract = (id: string) => {
-    setContractId(id);
-    const c = ((contracts as any[]) ?? []).find((x) => x.id === id);
-    if (!c) return;
+  const pickContract = (key: string) => {
+    setContractNo(key);
+    const list = groups.get(key) ?? [];
+    const c = list[0];
+    if (!c) {
+      setForm((f) => ({ ...f, contract_ids: [], system_types: [], system_type: "" }));
+      return;
+    }
+    // Start with every system of the contract ticked; the user can untick.
     setForm((f) => ({
       ...f,
+      contract_ids: list.map((x) => x.id),
+      system_types: list.map((x) => x.system_type),
+      system_type: list.map((x) => x.system_type).join(", "),
       client_name: c.customer_name || f.client_name,
       client_email: c.customer_email || f.client_email,
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
-      system_type: c.system_type || "",
       report_date: c.upcoming_visit || f.report_date,
       date_completed: c.upcoming_visit || f.date_completed,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
@@ -138,8 +157,25 @@ export function ReportForm({
     count: parseInt(form.maintenance_count, 10) || 0,
   });
 
-  const setDevice = (name: string, status: DeviceStatus) =>
+  const setDevice = (name: string, status: string) =>
     setForm((f) => ({ ...f, devices: { ...f.devices, [name]: status } }));
+
+  const toggleSystem = (c: any) =>
+    setForm((f) => {
+      const on = f.contract_ids.includes(c.id);
+      const ids = on ? f.contract_ids.filter((x) => x !== c.id) : [...f.contract_ids, c.id];
+      const sys = groupContracts.filter((x) => ids.includes(x.id)).map((x) => x.system_type);
+      const first = groupContracts.find((x) => x.id === ids[0]);
+      return {
+        ...f,
+        contract_ids: ids,
+        system_types: sys,
+        system_type: sys.join(", "),
+        maintenance_interval_value: first?.interval_months
+          ? String(first.interval_months)
+          : f.maintenance_interval_value,
+      };
+    });
 
   const setSpare = (i: number, k: keyof SparePart, v: string) =>
     setForm((f) => {
@@ -220,7 +256,7 @@ export function ReportForm({
         toast.success("Report submitted");
         // Empty the sheet so the same report can't be submitted twice.
         setForm({ ...emptyReport(), performed_by: defaultPerformedBy ?? "" });
-        setContractId("");
+        setContractNo("");
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
         // recipient list still get the report notification.
@@ -300,10 +336,9 @@ export function ReportForm({
     );
   }
 
-  const inputDevices = [
-    { head: "Devices", items: LEFT_DEVICES },
-    { head: "Device", items: RIGHT_DEVICES },
-  ];
+  // Only the checklists of the selected systems are shown; reports without a
+  // system keep the general checklist.
+  const checklistSystems = form.system_types.length ? form.system_types : [""];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -313,28 +348,54 @@ export function ReportForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Field label="Maintenance contract (site)">
+            <Field label="Contract number">
               <SearchSelect
                 className="h-10"
-                value={contractId}
+                value={contractNo}
                 onChange={pickContract}
                 placeholder="— not linked to a contract —"
-                searchPlaceholder="Search contract, customer, project, site…"
+                searchPlaceholder="Search contract no., client, project, location…"
                 options={[
                   ["", "— not linked to a contract —"],
-                  ...contractList.map((c: any): [string, string] => [
-                    c.id,
-                    `[${c.system_type || "—"}] ${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} (${c.remaining_count} left)`,
-                  ]),
+                  ...[...groups.entries()].map(([k, list]): [string, string] => {
+                    const c = list[0];
+                    const sys = list.map((x: any) => x.system_type).join(", ");
+                    return [
+                      k,
+                      `${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} [${sys}]`,
+                    ];
+                  }),
                 ]}
               />
             </Field>
-            {contract && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {contract.system_type} · every {contract.interval_months} month(s) · visit{" "}
-                {contract.completed_count + 1} of {contract.total_visits} · due{" "}
-                {contract.upcoming_visit ? prettyDate(contract.upcoming_visit) : "—"}
-              </p>
+            {groupContracts.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <Label className="text-sm">System types in this report</Label>
+                <div className="flex flex-wrap gap-2">
+                  {groupContracts.map((c: any) => {
+                    const on = form.contract_ids.includes(c.id);
+                    return (
+                      <Button
+                        key={c.id}
+                        type="button"
+                        size="sm"
+                        variant={on ? "default" : "outline"}
+                        onClick={() => toggleSystem(c)}
+                      >
+                        {on && <CheckCircle2 className="mr-1 h-4 w-4" />}
+                        {c.system_type}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {selectedContracts.map((c: any) => (
+                  <p key={c.id} className="text-xs text-muted-foreground">
+                    {c.system_type} · every {c.interval_months} month(s) · visit{" "}
+                    {c.completed_count + 1} of {c.total_visits} · due{" "}
+                    {c.upcoming_visit ? prettyDate(c.upcoming_visit) : "—"}
+                  </p>
+                ))}
+              </div>
             )}
           </div>
           <Field label="Client Name">
@@ -386,30 +447,47 @@ export function ReportForm({
         <CardHeader>
           <CardTitle>Device Checklist</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          {inputDevices.map((col) => (
-            <div key={col.head} className="space-y-2">
-              {col.items.map((name) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between gap-3 rounded-md border p-2.5"
-                >
-                  <span className="text-sm font-medium">{name}</span>
-                  <div className="flex shrink-0 gap-1">
-                    {(["ok", "faulty"] as DeviceStatus[]).map((s) => (
-                      <Button
-                        key={s}
-                        type="button"
-                        size="sm"
-                        variant={form.devices[name] === s ? (s === "ok" ? "default" : "destructive") : "outline"}
-                        onClick={() => setDevice(name, s)}
-                      >
-                        {s === "ok" ? "OK" : "Faulty"}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        <CardContent className="space-y-6">
+          {checklistSystems.map((sys) => (
+            <div key={sys || "general"} className="space-y-2">
+              {sys && <h4 className="text-sm font-semibold">{sys}</h4>}
+              <div className="grid gap-2 md:grid-cols-2">
+                {devicesFor(sys).map((d) => {
+                  const k = sys ? deviceKey(sys, d.name) : d.name;
+                  const qk = deviceKey(sys, d.name, "qty");
+                  return (
+                    <div
+                      key={k}
+                      className="flex items-center justify-between gap-3 rounded-md border p-2.5"
+                    >
+                      <span className="text-sm font-medium">{d.name}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {d.kind !== "qty" &&
+                          (["ok", "faulty"] as DeviceStatus[]).map((s) => (
+                            <Button
+                              key={s}
+                              type="button"
+                              size="sm"
+                              variant={form.devices[k] === s ? (s === "ok" ? "default" : "destructive") : "outline"}
+                              onClick={() => setDevice(k, s)}
+                            >
+                              {s === "ok" ? "OK" : "Faulty"}
+                            </Button>
+                          ))}
+                        {d.kind !== "status" && (
+                          <Input
+                            className="h-8 w-20"
+                            inputMode="numeric"
+                            placeholder={d.kind === "qty" ? "Qty" : "Def. qty"}
+                            value={form.devices[qk] ?? ""}
+                            onChange={(e) => setDevice(qk, e.target.value)}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </CardContent>

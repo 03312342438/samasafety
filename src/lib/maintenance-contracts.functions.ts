@@ -28,7 +28,7 @@ export async function syncContractTasks(supabase: any, contractId: string) {
   const { count } = await supabase
     .from("reports")
     .select("id", { count: "exact", head: true })
-    .eq("contract_id", contractId);
+    .or(`contract_id.eq.${contractId},contract_ids.cs.{${contractId}}`);
   const done = (count ?? 0) + (Number(c.prior_visits_done) || 0);
 
   // Existing rows for this contract (any status) so completed history is kept.
@@ -61,7 +61,10 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     });
   }
   if (rows.length) {
-    const { error } = await supabase.from("maintenance_tasks").insert(rows);
+    // The unique (contract, visit) index makes concurrent syncs harmless.
+    const { error } = await supabase
+      .from("maintenance_tasks")
+      .upsert(rows, { onConflict: "contract_id,sequence", ignoreDuplicates: true });
     if (error) throw new Error(error.message);
   }
 }
@@ -224,8 +227,8 @@ export const listContracts = createServerFn({ method: "GET" })
 
     const { data: reps } = await supabase
       .from("reports")
-      .select("id, contract_id, report_date, date_completed, created_at")
-      .in("contract_id", rows.map((r: any) => r.id));
+      .select("id, contract_id, contract_ids, report_date, date_completed, created_at")
+      .or(`contract_id.not.is.null,contract_ids.neq.{}`);
     const reports: any[] = reps ?? [];
 
     // Client email comes from the customer record, so the maintenance report
@@ -239,10 +242,9 @@ export const listContracts = createServerFn({ method: "GET" })
 
     const visitsByMsr: Record<string, string[]> = {};
     for (const r of reports) {
-      const key = r.contract_id;
-      if (!key) continue;
+      const keys = new Set<string>([...(r.contract_ids ?? []), ...(r.contract_id ? [r.contract_id] : [])]);
       const d = r.date_completed || r.report_date || String(r.created_at).slice(0, 10);
-      (visitsByMsr[key] ??= []).push(String(d).slice(0, 10));
+      for (const key of keys) (visitsByMsr[key] ??= []).push(String(d).slice(0, 10));
     }
     for (const k of Object.keys(visitsByMsr)) visitsByMsr[k].sort();
 

@@ -20,6 +20,69 @@ export const ALL_DEVICES = [...LEFT_DEVICES, ...RIGHT_DEVICES];
 
 export type DeviceStatus = "ok" | "faulty";
 
+/**
+ * Checklist per system type. "status" = OK / Faulty, "qty" = quantity only,
+ * "status_qty" = OK / Faulty plus quantity of defective units.
+ */
+export type DeviceKind = "status" | "qty" | "status_qty";
+export type DeviceDef = { name: string; kind: DeviceKind };
+
+const st = (name: string): DeviceDef => ({ name, kind: "status" });
+
+export const SYSTEM_DEVICES: Record<string, DeviceDef[]> = {
+  FA: [
+    "Control Equipment",
+    "Sounder Monitoring",
+    "Line Monitoring",
+    "Indicators",
+    "Controls",
+    "Fire Brigade Signaling",
+    "Power Supply",
+    "Battery Voltage (Alarm)",
+    "Charging Current",
+    "Battery Monitoring",
+    "Charger Monitoring",
+  ].map(st),
+  FE: [
+    { name: "Type: DCP (qty)", kind: "qty" },
+    { name: "Type: Water (qty)", kind: "qty" },
+    { name: "Type: CO2 (qty)", kind: "qty" },
+    { name: "Type: Foam (qty)", kind: "qty" },
+    { name: "Type: ADCP (qty)", kind: "qty" },
+    { name: "Pressure and Capacity", kind: "status_qty" },
+    { name: "Safety Seal", kind: "status_qty" },
+    { name: "Safety Pin", kind: "status_qty" },
+  ],
+  FF: [
+    { name: "Hose Reel (qty)", kind: "qty" },
+    ...[
+      "Hose Condition",
+      "Gate Valve Condition",
+      "Box Condition",
+      "Electrical Pump",
+      "Jockey Pump",
+      "Diesel Pump",
+      "Pump Battery",
+      "Pressure Gauge",
+      "Battery Charger",
+      "Control Board",
+      "Valves",
+      "Sprinklers Condition",
+    ].map(st),
+  ],
+  FSCP: [st("Fire Suppression Control Panel")],
+  FSC: ["Cylinders Condition", "Cylinder Head", "Discharge Nozzle"].map(st),
+};
+
+/** Devices for a system; systems without their own list use the general list. */
+export function devicesFor(system: string): DeviceDef[] {
+  return SYSTEM_DEVICES[system] ?? ALL_DEVICES.map(st);
+}
+
+/** Storage key of a device answer inside report.devices. */
+export const deviceKey = (system: string, name: string, part: "status" | "qty" = "status") =>
+  `${system}::${name}${part === "qty" ? "::qty" : ""}`;
+
 export type SparePart = {
   spare_no: string;
   description: string;
@@ -40,7 +103,11 @@ export type ReportData = {
   msr_no: string;
   our_ref_no: string;
   report_date: string;
-  devices: Record<string, DeviceStatus>;
+  devices: Record<string, string>;
+  /** Systems covered by this report (FA, FF, FE, …). Empty on older reports. */
+  system_types: string[];
+  /** Contracts (one per system) this visit counts against. */
+  contract_ids: string[];
   spare_parts: SparePart[];
   action_taken: string;
   remarks: string;
@@ -78,6 +145,8 @@ export function recordToForm(r: ReportRecord): ReportData {
     our_ref_no: r.our_ref_no ?? "",
     report_date: r.report_date ?? "",
     devices: r.devices ?? {},
+    system_types: (r as any).system_types ?? [],
+    contract_ids: (r as any).contract_ids ?? [],
     spare_parts:
       r.spare_parts && r.spare_parts.length
         ? r.spare_parts
@@ -117,6 +186,8 @@ export function emptyReport(): ReportData {
     our_ref_no: "",
     report_date: today,
     devices: {},
+    system_types: [],
+    contract_ids: [],
     spare_parts: [{ spare_no: "", description: "", qty: "", unit_price: "", total: "" }],
     action_taken: "",
     remarks: "",
