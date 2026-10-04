@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Printable maintenance report sections use `data-pdf-section` boundaries so the PDF renderer can paginate complete sections instead of slicing tables; this keeps print layout behavior explicit in the document markup.

@@ -1,5 +1,9 @@
 # Active work
 
+- [x] Correct new maintenance report dates to the submission day.
+- [x] Restyle generated maintenance reports in the professional SAMA document direction.
+- [x] Keep complete report sections and tables together across PDF pages.
+
 - [x] Fix all current preview typecheck/build errors, including pre-existing ones.
 - [x] Complete job-number creation with approved BOM/PO links and custom progress steps.
 - [x] Remove job-number linkage from BOM creation; preserve linkage through job creation.

@@ -10,6 +10,8 @@ const FOOTER_H = 18; // mm reserved for the footer band on every page
 const FOOTER_GAP = 6; // mm gap between content and footer
 const FOOTER_MARGIN = 7.5; // mm white margin boundary around the footer
 
+type PixelRange = { top: number; bottom: number };
+
 function drawFooter(pdf: jsPDF, pageW: number, pageH: number) {
   const totalFooterH = FOOTER_H + FOOTER_MARGIN * 2;
   const y = pageH - totalFooterH;
@@ -48,12 +50,35 @@ async function elementToPdf(el: HTMLElement): Promise<jsPDF> {
   const pxPerMm = canvas.width / pageW;
   const slicePx = Math.floor(usableH * pxPerMm); // content height per page (px)
 
+  // Report sections advertise safe page boundaries. Their DOM positions are
+  // converted to canvas pixels so a section that fits on one page is never
+  // cut between two PDF pages.
+  const rootRect = el.getBoundingClientRect();
+  const domToCanvas = canvas.width / rootRect.width;
+  const sections: PixelRange[] = Array.from(el.querySelectorAll<HTMLElement>("[data-pdf-section='true']"))
+    .map((section) => {
+      const rect = section.getBoundingClientRect();
+      return {
+        top: Math.max(0, Math.round((rect.top - rootRect.top) * domToCanvas)),
+        bottom: Math.min(canvas.height, Math.round((rect.bottom - rootRect.top) * domToCanvas)),
+      };
+    })
+    .filter((range) => range.bottom > range.top)
+    .sort((a, b) => a.top - b.top);
+
   let renderedPx = 0;
   let page = 0;
   while (renderedPx < canvas.height) {
     if (page > 0) pdf.addPage();
 
-    const sliceHpx = Math.min(slicePx, canvas.height - renderedPx);
+    let sliceHpx = Math.min(slicePx, canvas.height - renderedPx);
+    const proposedEnd = renderedPx + sliceHpx;
+    const crossing = sections.find(
+      (range) => range.top > renderedPx && range.top < proposedEnd && range.bottom > proposedEnd,
+    );
+    if (crossing && crossing.bottom - crossing.top <= slicePx) {
+      sliceHpx = crossing.top - renderedPx;
+    }
 
     const tmp = document.createElement("canvas");
     tmp.width = canvas.width;

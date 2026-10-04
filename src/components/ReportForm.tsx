@@ -85,7 +85,12 @@ export function ReportForm({
   });
   // A contract number can cover several systems (one contract row per system).
   const [contractNo, setContractNo] = useState("");
-  const today = new Date().toISOString().slice(0, 10);
+  const localToday = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60_000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+  };
+  const today = localToday();
   const activeContracts = ((contracts as any[]) ?? []).filter(
     (c) => (!c.end_date || c.end_date >= today) && c.remaining_count > 0,
   );
@@ -135,8 +140,10 @@ export function ReportForm({
       project: c.project_name || f.project,
       site_location: c.site_location || f.site_location,
       contract: c.contract_no || f.contract,
-      report_date: c.upcoming_visit || f.report_date,
-      date_completed: c.upcoming_visit || f.date_completed,
+      // The contract's due date identifies the visit, but an issued report
+      // must show the day the work is actually reported and completed.
+      report_date: today,
+      date_completed: today,
       maintenance_interval_value: c.interval_months ? String(c.interval_months) : "",
       maintenance_interval_unit: "months",
       maintenance_count: "",
@@ -234,10 +241,11 @@ export function ReportForm({
         toast.success("Report updated");
         onSaved?.();
       } else {
+        const submission = { ...form, report_date: today, date_completed: today };
         const res: any = await save({
-          data: { ...toPayload(form), contract_id: contractId || null } as any,
+          data: { ...toPayload(submission), contract_id: contractId || null } as any,
         });
-        const saved = { ...form, msr_no: res?.msr_no || form.msr_no };
+        const saved = { ...submission, msr_no: res?.msr_no || submission.msr_no };
         setForm(saved);
         await new Promise((r) => setTimeout(r, 80));
         // Generate the PDF while the offscreen document is still rendered.
