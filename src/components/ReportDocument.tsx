@@ -1,15 +1,15 @@
 import { forwardRef, type CSSProperties, type ReactNode } from "react";
 import { SAMA_LOGO_BASE64 } from "@/lib/logo";
-import { LEFT_DEVICES, RIGHT_DEVICES, devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
+import { devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
 import { SYSTEM_LABELS, type SystemType } from "@/lib/maintenance-contracts";
 
-const NAVY = "#123f5a";
-const BLUE = "#51a9d6";
-const INK = "#172b3a";
-const MUTED = "#657785";
-const LINE = "#d7e1e7";
-const PALE = "#f3f7f9";
+const BLUE = "#579bd3";
+const NAVY = "#113f57";
+const RED = "#d82332";
+const INK = "#111827";
+const LINE = "#26343d";
+const SOFT = "#eef5f8";
 const WHITE = "#ffffff";
 
 function fmtDate(value: string) {
@@ -19,327 +19,267 @@ function fmtDate(value: string) {
   return value;
 }
 
-const cell: CSSProperties = {
-  borderBottom: `1px solid ${LINE}`,
-  padding: "7px 9px",
-  fontSize: 10.5,
-  verticalAlign: "middle",
-  color: INK,
-  wordBreak: "break-word",
-};
-
-const headCell: CSSProperties = {
-  ...cell,
-  background: PALE,
-  color: NAVY,
-  fontSize: 9,
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-};
-
-const sectionStyle: CSSProperties = {
+const box: CSSProperties = {
   border: `1px solid ${LINE}`,
-  borderRadius: 4,
-  overflow: "hidden",
-  marginBottom: 11,
-  breakInside: "avoid",
-  pageBreakInside: "avoid",
+  minHeight: 20,
+  padding: "4px 6px",
+  boxSizing: "border-box",
+  overflowWrap: "anywhere",
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Value({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return <div style={{ ...box, color: INK, fontSize: 9, fontWeight: 600, ...style }}>{children || "—"}</div>;
+}
+
+function Label({ children, accent = false }: { children: ReactNode; accent?: boolean }) {
   return (
-    <section data-pdf-section="true" style={sectionStyle}>
-      <div
-        style={{
-          borderLeft: `4px solid ${BLUE}`,
-          background: PALE,
-          color: NAVY,
-          fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: "0.09em",
-          padding: "8px 10px",
-          textTransform: "uppercase",
-        }}
-      >
-        {title}
-      </div>
+    <div
+      style={{
+        color: accent ? RED : INK,
+        fontSize: 8,
+        fontWeight: 800,
+        lineHeight: 1.15,
+        textTransform: "uppercase",
+      }}
+    >
       {children}
-    </section>
+    </div>
   );
 }
 
-function Detail({ label, value, wide = false }: { label: string; value: ReactNode; wide?: boolean }) {
+function Field({ label, value, accent = false }: { label: string; value: ReactNode; accent?: boolean }) {
   return (
-    <div style={{ gridColumn: wide ? "span 2" : undefined, minWidth: 0 }}>
-      <div style={{ color: MUTED, fontSize: 8, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-        {label}
-      </div>
-      <div style={{ color: INK, fontSize: 10.5, fontWeight: 600, marginTop: 3, minHeight: 14, wordBreak: "break-word" }}>
-        {value || "—"}
-      </div>
+    <div style={{ display: "grid", gridTemplateColumns: "82px 1fr", alignItems: "center", gap: 5, minWidth: 0 }}>
+      <Label accent={accent}>{label}</Label>
+      <Value>{value}</Value>
     </div>
+  );
+}
+
+function RuledSection({ title, children, minHeight = 48 }: { title: string; children: ReactNode; minHeight?: number }) {
+  return (
+    <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, minHeight, padding: "5px 6px" }}>
+      <Label>{title}</Label>
+      <div style={{ marginTop: 4 }}>{children}</div>
+    </section>
   );
 }
 
 type Props = { data: ReportData };
 
 export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) => {
-  const total = data.spare_parts.reduce((sum, part) => {
-    const value = Number.parseFloat(part.total);
-    return sum + (Number.isNaN(value) ? 0 : value);
-  }, 0);
-  const filledSpares = data.spare_parts.filter(
-    (part) => part.spare_no || part.description || part.qty || part.unit_price || part.total,
-  );
-  const spareRows = filledSpares.length
-    ? filledSpares
-    : [{ spare_no: "", description: "No spare parts or consumables used", qty: "", unit_price: "", total: "" }];
   const systemTypes = data.system_types?.length
     ? data.system_types
     : data.system_type
-      ? [data.system_type]
+      ? data.system_type.split(",").map((item) => item.trim()).filter(Boolean)
       : [];
-  const systemNames = systemTypes
-    .map((system) => SYSTEM_LABELS[system as SystemType] ?? system)
-    .join(", ");
-
-  const deviceMark = (name: string, faulty: boolean) => {
-    const status = data.devices[name];
-    if (faulty) return status === "faulty" ? "FAULTY" : "";
-    return status === "ok" ? "OK" : "";
-  };
-
-  const statusMark = (active: boolean, faulty = false) => (
-    active ? (
-      <span
-        style={{
-          display: "inline-block",
-          minWidth: 37,
-          borderRadius: 10,
-          background: faulty ? "#fdebec" : "#e8f4ee",
-          color: faulty ? "#a43b43" : "#2f6f52",
-          fontSize: 8,
-          fontWeight: 700,
-          padding: "3px 6px",
-        }}
-      >
-        {faulty ? "FAULTY" : "OK"}
-      </span>
-    ) : ""
+  const filledSpares = data.spare_parts.filter(
+    (part) => part.spare_no || part.description || part.qty || part.unit_price || part.total,
   );
+  const total = filledSpares.reduce((sum, part) => {
+    const value = Number.parseFloat(part.total);
+    return sum + (Number.isNaN(value) ? 0 : value);
+  }, 0);
+  const faulty = systemTypes.flatMap((system) =>
+    devicesFor(system)
+      .filter((device) => data.devices[deviceKey(system, device.name)] === "faulty")
+      .map((device) => {
+        const quantity = data.devices[deviceKey(system, device.name, "qty")];
+        return `${system} — ${device.name}${quantity ? ` (Qty ${quantity})` : ""}`;
+      }),
+  );
+  const reportNo = data.msr_no || "Pending";
 
   return (
     <div
       ref={ref}
+      data-pdf-one-page="true"
       style={{
         width: 794,
-        minHeight: 1123,
+        height: 1123,
         background: WHITE,
         color: INK,
         fontFamily: "Arial, Helvetica, sans-serif",
-        padding: "30px 32px 34px",
+        padding: "28px 36px 0",
         boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <section data-pdf-section="true" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
-        <header style={{ borderBottom: `3px solid ${NAVY}`, paddingBottom: 13, marginBottom: 13 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
-            <img src={SAMA_LOGO_BASE64} alt="Sama Safety & Security" style={{ width: 158, height: "auto" }} />
-            <div style={{ textAlign: "right" }}>
-              <div style={{ color: NAVY, fontSize: 20, fontWeight: 700, letterSpacing: "0.02em", textTransform: "uppercase" }}>
-                Maintenance Service Report
-              </div>
-              <div style={{ color: MUTED, fontSize: 9.5, marginTop: 5 }}>
-                MSR {data.msr_no || "Pending"} &nbsp;•&nbsp; Our Ref. {data.our_ref_no || "Pending"}
-              </div>
+      <section data-pdf-section="true">
+        <header style={{ display: "grid", gridTemplateColumns: "190px 1fr 210px", alignItems: "center", gap: 14 }}>
+          <img src={SAMA_LOGO_BASE64} alt="Sama Safety & Security" style={{ width: 166, height: "auto" }} />
+          <div style={{ color: INK, fontSize: 16, fontWeight: 800, lineHeight: 1.05, textAlign: "center" }}>
+            Maintenance &amp; Job
+            <br />
+            Completion Report
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, fontWeight: 800 }}>Sama Safety &amp; Security</div>
+            <div style={{ color: "#6b7280", fontSize: 7.5, marginTop: 4 }}>
+              Fire Alarm&nbsp; | &nbsp;Fire Fighting&nbsp; | &nbsp;Extinguishers&nbsp; | &nbsp;Maintenance
             </div>
           </div>
         </header>
+        <div style={{ height: 3, background: BLUE, margin: "10px 0 7px" }} />
 
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, alignItems: "center", marginBottom: 6 }}>
+          <Field label="M.S.R No." value={reportNo} accent />
+          <Field label="Our Ref" value={data.our_ref_no} accent />
+          <Field label="Order No." value={data.order_no} accent />
+        </div>
+
+        <div style={{ border: `1px solid ${LINE}`, padding: 6 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 8 }}>
+            <Field label="Customer M/s" value={data.client_name} />
+            <Field label="Site" value={data.site_location} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 8, marginTop: 5 }}>
+            <Field label="Project" value={data.project} />
+            <Field label="Date" value={fmtDate(data.report_date)} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 8, marginTop: 5 }}>
+            <Field label="Contract No." value={data.contract} />
+            <Field label="Completed" value={fmtDate(data.date_completed || data.report_date)} />
+          </div>
+        </div>
+      </section>
+
+      <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "92px 1fr", gap: 7 }}>
+          <Label>System details</Label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+            {(systemTypes.length ? systemTypes : ["General"]).map((system) => (
+              <span key={system} style={{ fontSize: 8.5, fontWeight: 700 }}>
+                <span style={{ color: RED, marginRight: 4 }}>■</span>
+                {SYSTEM_LABELS[system as SystemType] ?? system}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px" }}>
+        <Label>Inspection checklist</Label>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "13px 20px",
-            background: PALE,
-            border: `1px solid ${LINE}`,
-            borderRadius: 4,
-            padding: "13px 15px",
-            marginBottom: 11,
+            gridTemplateColumns: systemTypes.length > 1 ? "1fr 1fr" : "1fr",
+            gap: 5,
+            marginTop: 4,
           }}
         >
-          <Detail label="Client" value={data.client_name} />
-          <Detail label="Project" value={data.project} />
-          <Detail label="Service Date" value={fmtDate(data.report_date)} />
-          <Detail label="Contract No." value={data.contract} />
-          <Detail label="Order No." value={data.order_no} />
-          <Detail label="Date Completed" value={fmtDate(data.date_completed || data.report_date)} />
-          <Detail label="Site / Location" value={data.site_location} />
-          <Detail label="System Type" value={systemNames || "General system"} wide />
-          <Detail label="Client Email" value={data.client_email} wide />
-        </div>
-      </section>
-
-      {systemTypes.length ? (
-        systemTypes.map((system) => (
-          <Section key={system} title={`${SYSTEM_LABELS[system as SystemType] ?? system} · Inspection checklist`}>
-            <table style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed" }}>
-              <thead>
-                <tr>
-                  <th style={headCell}>Device / Inspection Point</th>
-                  <th style={{ ...headCell, width: 67, textAlign: "center" }}>OK</th>
-                  <th style={{ ...headCell, width: 67, textAlign: "center" }}>Faulty</th>
-                  <th style={{ ...headCell, width: 58, textAlign: "center" }}>Qty</th>
-                </tr>
-              </thead>
-              <tbody>
+          {(systemTypes.length ? systemTypes : [""]).map((system) => (
+            <div key={system || "general"} style={{ border: `1px solid ${LINE}`, breakInside: "avoid" }}>
+              <div style={{ background: SOFT, borderBottom: `1px solid ${LINE}`, padding: "3px 5px", fontSize: 8, fontWeight: 800 }}>
+                {system ? SYSTEM_LABELS[system as SystemType] ?? system : "GENERAL SYSTEM"}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 38px 42px 36px", fontSize: 7.4 }}>
+                <strong style={{ padding: "2px 4px" }}>DEVICE / POINT</strong>
+                <strong style={{ padding: "2px", textAlign: "center" }}>OK</strong>
+                <strong style={{ padding: "2px", textAlign: "center" }}>FAULT</strong>
+                <strong style={{ padding: "2px", textAlign: "center" }}>QTY</strong>
                 {devicesFor(system).map((device) => {
-                  const status = data.devices[deviceKey(system, device.name)];
+                  const key = system ? deviceKey(system, device.name) : device.name;
+                  const status = data.devices[key];
+                  const qty = data.devices[deviceKey(system, device.name, "qty")] ?? "";
                   return (
-                    <tr key={device.name}>
-                      <td style={{ ...cell, fontWeight: 600 }}>{device.name}</td>
-                      <td style={{ ...cell, textAlign: "center" }}>
-                        {device.kind !== "qty" ? statusMark(status === "ok") : ""}
-                      </td>
-                      <td style={{ ...cell, textAlign: "center" }}>
-                        {device.kind !== "qty" ? statusMark(status === "faulty", true) : ""}
-                      </td>
-                      <td style={{ ...cell, textAlign: "center", fontWeight: 600 }}>
-                        {device.kind !== "status" ? data.devices[deviceKey(system, device.name, "qty")] ?? "" : ""}
-                      </td>
-                    </tr>
+                    <div key={key} style={{ display: "contents" }}>
+                      <span style={{ borderTop: `1px solid ${LINE}`, padding: "2px 4px", fontWeight: 600 }}>{device.name}</span>
+                      <span style={{ borderLeft: `1px solid ${LINE}`, borderTop: `1px solid ${LINE}`, padding: 2, textAlign: "center", color: status === "ok" ? NAVY : INK }}>
+                        {status === "ok" ? "✓" : ""}
+                      </span>
+                      <span style={{ borderLeft: `1px solid ${LINE}`, borderTop: `1px solid ${LINE}`, padding: 2, textAlign: "center", color: status === "faulty" ? RED : INK }}>
+                        {status === "faulty" ? "✓" : ""}
+                      </span>
+                      <span style={{ borderLeft: `1px solid ${LINE}`, borderTop: `1px solid ${LINE}`, padding: 2, textAlign: "center", fontWeight: 700 }}>{qty}</span>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </Section>
-        ))
-      ) : (
-        <Section title="Inspection checklist">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-            {[LEFT_DEVICES, RIGHT_DEVICES].map((items, columnIndex) => (
-              <table
-                key={columnIndex}
-                style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed", borderLeft: columnIndex ? `1px solid ${LINE}` : undefined }}
-              >
-                <thead>
-                  <tr>
-                    <th style={headCell}>Device</th>
-                    <th style={{ ...headCell, width: 55, textAlign: "center" }}>OK</th>
-                    <th style={{ ...headCell, width: 62, textAlign: "center" }}>Faulty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((name) => (
-                    <tr key={name}>
-                      <td style={{ ...cell, fontWeight: 600 }}>{name}</td>
-                      <td style={{ ...cell, textAlign: "center" }}>{statusMark(deviceMark(name, false) === "OK")}</td>
-                      <td style={{ ...cell, textAlign: "center" }}>{statusMark(deviceMark(name, true) === "FAULTY", true)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      <Section title="Spare parts & consumables">
-        <table style={{ borderCollapse: "collapse", width: "100%", tableLayout: "fixed" }}>
-          <thead>
-            <tr>
-              <th style={{ ...headCell, width: 88 }}>Item No.</th>
-              <th style={headCell}>Description</th>
-              <th style={{ ...headCell, width: 55, textAlign: "center" }}>Qty</th>
-              <th style={{ ...headCell, width: 78, textAlign: "right" }}>Unit Price</th>
-              <th style={{ ...headCell, width: 78, textAlign: "right" }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {spareRows.map((part, index) => (
-              <tr key={index}>
-                <td style={cell}>{part.spare_no}</td>
-                <td style={cell}>{part.description}</td>
-                <td style={{ ...cell, textAlign: "center" }}>{part.qty}</td>
-                <td style={{ ...cell, textAlign: "right" }}>{part.unit_price}</td>
-                <td style={{ ...cell, textAlign: "right" }}>{part.total}</td>
-              </tr>
-            ))}
-            <tr>
-              <td colSpan={3} style={{ ...cell, borderBottom: 0 }} />
-              <td style={{ ...headCell, textAlign: "right", borderBottom: 0 }}>Total</td>
-              <td style={{ ...cell, textAlign: "right", borderBottom: 0, fontWeight: 700 }}>{total.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </Section>
-
-      <Section title="Maintenance schedule">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", padding: "12px 14px" }}>
-          <Detail label="Maintenance Interval" value={intervalLabel(data.maintenance_interval_value, data.maintenance_interval_unit)} />
-          <Detail label="No. of Maintenances" value={data.maintenance_count} />
-          {data.next_maintenance ? <Detail label="Notes" value={data.next_maintenance} wide /> : null}
+              </div>
+            </div>
+          ))}
         </div>
-      </Section>
+      </section>
 
-      <Section title="Service summary">
-        <div style={{ minHeight: 62, padding: "11px 13px", fontSize: 10.5, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
-          {data.action_taken || "No action details recorded."}
+      <RuledSection title="Defects" minHeight={44}>
+        <div style={{ fontSize: 8.5, lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
+          {faulty.length ? faulty.join("; ") : "No defects recorded."}
         </div>
-        {data.remarks ? (
-          <div style={{ borderTop: `1px solid ${LINE}`, padding: "9px 13px", fontSize: 10, lineHeight: 1.45 }}>
-            <strong style={{ color: NAVY }}>Remarks: </strong>{data.remarks}
-          </div>
-        ) : null}
-      </Section>
+      </RuledSection>
 
-      <section data-pdf-section="true" style={{ ...sectionStyle, marginBottom: 0 }}>
+      <RuledSection title="Action taken" minHeight={52}>
+        <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.action_taken || "No action details recorded."}</div>
+      </RuledSection>
+
+      <RuledSection title="Comments / remarks" minHeight={42}>
+        <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.remarks || "—"}</div>
+      </RuledSection>
+
+      <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-          <div style={{ borderRight: `1px solid ${LINE}`, padding: "13px 15px" }}>
-            <div style={{ color: NAVY, fontSize: 9, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-              Technician validation
-            </div>
-            <div style={{ height: 58, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {data.employee_signature ? <img src={data.employee_signature} alt="Employee signature" style={{ maxHeight: 52, maxWidth: "78%" }} /> : null}
-            </div>
-            <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 8, fontSize: 10 }}>
-              <strong>{data.performed_by || "—"}</strong>
-              <div style={{ color: MUTED, fontSize: 8.5, marginTop: 2 }}>Performed by</div>
+          <div style={{ padding: "5px 6px", borderRight: `1px solid ${LINE}` }}>
+            <Label>Spare parts / consumables</Label>
+            <div style={{ marginTop: 4, fontSize: 8, lineHeight: 1.4 }}>
+              {filledSpares.length
+                ? filledSpares.map((part) => `${part.spare_no || "—"} · ${part.description || "—"} · Qty ${part.qty || "—"}`).join("\n")
+                : "None used"}
             </div>
           </div>
-          <div style={{ padding: "13px 15px" }}>
-            <div style={{ color: NAVY, fontSize: 9, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-              Client acknowledgement
-            </div>
-            <div style={{ height: 58, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {data.client_signature ? <img src={data.client_signature} alt="Client signature" style={{ maxHeight: 52, maxWidth: "78%" }} /> : null}
-            </div>
-            <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 8, fontSize: 10 }}>
-              <strong>{data.client_sign_name || "—"}</strong>
-              <span style={{ color: MUTED }}> · {data.client_designation || "Designation not stated"}</span>
-              <div style={{ color: MUTED, fontSize: 8.5, marginTop: 2 }}>Completed {fmtDate(data.date_completed || data.report_date)}</div>
+          <div style={{ padding: "5px 6px" }}>
+            <Label>Next maintenance</Label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 4, fontSize: 8 }}>
+              <span><strong>Interval:</strong> {intervalLabel(data.maintenance_interval_value, data.maintenance_interval_unit)}</span>
+              <span><strong>Visits:</strong> {data.maintenance_count || "—"}</span>
+              <span style={{ gridColumn: "span 2" }}><strong>Notes:</strong> {data.next_maintenance || "—"}</span>
+              {filledSpares.length ? <span style={{ gridColumn: "span 2" }}><strong>Parts total:</strong> {total.toFixed(2)}</span> : null}
             </div>
           </div>
         </div>
       </section>
 
-      <div
-        data-pdf-footer="true"
-        style={{
-          borderTop: `3px solid ${BLUE}`,
-          background: NAVY,
-          color: WHITE,
-          textAlign: "center",
-          fontSize: 8.5,
-          padding: "9px 8px",
-          lineHeight: 1.45,
-          marginTop: 13,
-        }}
-      >
-        Tel: 00973 17684492 · Fax: 00973 17684856 · P.O. Box 75873, Juffair, Kingdom of Bahrain
-        <br />
-        CR No. 67898-1 · sama@samasafety.net · www.samasafety.net
+      <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+          <div style={{ padding: "6px", borderRight: `1px solid ${LINE}` }}>
+            <Label accent>To be filled by technician</Label>
+            <div style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {data.employee_signature ? <img src={data.employee_signature} alt="Employee signature" style={{ maxHeight: 35, maxWidth: "75%" }} /> : null}
+            </div>
+            <Field label="Engineer" value={data.performed_by} />
+          </div>
+          <div style={{ padding: "6px" }}>
+            <Label>Client acknowledgement</Label>
+            <div style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {data.client_signature ? <img src={data.client_signature} alt="Client signature" style={{ maxHeight: 35, maxWidth: "75%" }} /> : null}
+            </div>
+            <Field label="Client name" value={`${data.client_sign_name || "—"}${data.client_designation ? ` · ${data.client_designation}` : ""}`} />
+          </div>
+        </div>
+      </section>
+
+      <div style={{ marginTop: "auto" }}>
+        <div style={{ border: `1px solid ${LINE}`, borderBottom: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", padding: "5px 6px", fontSize: 7.5 }}>
+          <span><strong>Issue No.</strong> 01</span>
+          <span style={{ textAlign: "center" }}><strong>Revision:</strong> 00</span>
+          <span style={{ textAlign: "right" }}><strong>Document No.</strong> SAMA-MSR-001</span>
+        </div>
+        <div
+          data-pdf-footer="true"
+          style={{
+            borderTop: `3px solid ${BLUE}`,
+            background: NAVY,
+            color: WHITE,
+            textAlign: "center",
+            fontSize: 8,
+            padding: "9px 8px 10px",
+            lineHeight: 1.5,
+          }}
+        >
+          Tel: 00973 17684492 · Fax: 00973 17684856 · P.O. Box 75873, Juffair, Kingdom of Bahrain
+          <br />
+          CR No. 67898-1 · sama@samasafety.net · www.samasafety.net
+        </div>
       </div>
     </div>
   );
