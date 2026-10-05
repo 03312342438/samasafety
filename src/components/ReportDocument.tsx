@@ -56,9 +56,28 @@ function Field({ label, value, accent = false }: { label: string; value: ReactNo
   );
 }
 
-function RuledSection({ title, children, minHeight = 48 }: { title: string; children: ReactNode; minHeight?: number }) {
+function RuledSection({
+  title,
+  children,
+  minHeight = 48,
+  grow = 1,
+}: {
+  title: string;
+  children: ReactNode;
+  minHeight?: number;
+  grow?: number;
+}) {
   return (
-    <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, minHeight, padding: "5px 6px" }}>
+    <section
+      data-pdf-section="true"
+      style={{
+        border: `1px solid ${LINE}`,
+        borderTop: 0,
+        minHeight,
+        padding: "5px 6px",
+        flex: `${grow} 1 ${minHeight}px`,
+      }}
+    >
       <Label>{title}</Label>
       <div style={{ marginTop: 4 }}>{children}</div>
     </section>
@@ -203,17 +222,17 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
         </div>
       </section>
 
-      <RuledSection title="Defects" minHeight={44}>
+      <RuledSection title="Defects" minHeight={44} grow={1.35}>
         <div style={{ fontSize: 8.5, lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
           {faulty.length ? faulty.join("; ") : "No defects recorded."}
         </div>
       </RuledSection>
 
-      <RuledSection title="Action taken" minHeight={52}>
+      <RuledSection title="Action taken" minHeight={52} grow={1}>
         <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.action_taken || "No action details recorded."}</div>
       </RuledSection>
 
-      <RuledSection title="Comments / remarks" minHeight={42}>
+      <RuledSection title="Comments / remarks" minHeight={42} grow={0.75}>
         <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.remarks || "—"}</div>
       </RuledSection>
 
