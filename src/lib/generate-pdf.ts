@@ -33,18 +33,25 @@ function drawFooter(pdf: jsPDF, pageW: number, pageH: number) {
 }
 
 async function elementToPdf(el: HTMLElement): Promise<jsPDF> {
+  const onePage = el.dataset.pdfOnePage === "true";
   const canvas = await html2canvas(el, {
     scale: 2,
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
-    // The on-screen footer is drawn directly on each PDF page instead.
-    ignoreElements: (node) => (node as HTMLElement).dataset?.pdfFooter === "true",
+    // Multi-page documents receive a repeated PDF footer. One-page report
+    // sheets keep the footer that is already part of their fixed layout.
+    ignoreElements: (node) => !onePage && (node as HTMLElement).dataset?.pdfFooter === "true",
   });
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
+
+  if (onePage) {
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.97), "JPEG", 0, 0, pageW, pageH);
+    return pdf;
+  }
 
   const usableH = pageH - FOOTER_H - FOOTER_GAP; // content area per page (mm)
   const pxPerMm = canvas.width / pageW;

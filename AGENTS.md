@@ -9,4 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Printable maintenance report sections use `data-pdf-section` boundaries so the PDF renderer can paginate complete sections instead of slicing tables; this keeps print layout behavior explicit in the document markup.
+- Maintenance reports use a fixed A4-proportioned one-page document marked with `data-pdf-one-page`; other printable documents retain section-boundary pagination.
