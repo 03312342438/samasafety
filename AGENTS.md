@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Maintenance reports use a fixed A4-proportioned one-page document marked with `data-pdf-one-page`; other printable documents retain section-boundary pagination.
+- Issued maintenance reports persist a per-system visit-progress snapshot so historical PDFs do not change when contracts advance.
