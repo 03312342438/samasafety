@@ -91,6 +91,13 @@ export type SparePart = {
   total: string;
 };
 
+export type VisitSummary = {
+  system_type: string;
+  completed: number;
+  remaining: number;
+  next_visit: string;
+};
+
 export type ReportData = {
   client_name: string;
   client_email: string;
@@ -108,6 +115,8 @@ export type ReportData = {
   system_types: string[];
   /** Contracts (one per system) this visit counts against. */
   contract_ids: string[];
+  /** Issued-report snapshot of each system's maintenance progress. */
+  visit_summary: VisitSummary[];
   spare_parts: SparePart[];
   action_taken: string;
   remarks: string;
@@ -147,6 +156,7 @@ export function recordToForm(r: ReportRecord): ReportData {
     devices: r.devices ?? {},
     system_types: (r as any).system_types ?? [],
     contract_ids: (r as any).contract_ids ?? [],
+    visit_summary: (r as any).visit_summary ?? [],
     spare_parts:
       r.spare_parts && r.spare_parts.length
         ? r.spare_parts
@@ -188,6 +198,7 @@ export function emptyReport(): ReportData {
     devices: {},
     system_types: [],
     contract_ids: [],
+    visit_summary: [],
     spare_parts: [{ spare_no: "", description: "", qty: "", unit_price: "", total: "" }],
     action_taken: "",
     remarks: "",

@@ -1,5 +1,5 @@
 import { forwardRef, type CSSProperties, type ReactNode } from "react";
-import { SAMA_LOGO_BASE64 } from "@/lib/logo";
+import samaLogo from "@/assets/sama-logo.png.asset.json";
 import { devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
 import { SYSTEM_LABELS, type SystemType } from "@/lib/maintenance-contracts";
@@ -128,11 +128,9 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
     >
       <section data-pdf-section="true">
         <header style={{ display: "grid", gridTemplateColumns: "190px 1fr 210px", alignItems: "center", gap: 14 }}>
-          <img src={SAMA_LOGO_BASE64} alt="Sama Safety & Security" style={{ width: 166, height: "auto" }} />
+          <img src={samaLogo.url} alt="Sama Safety & Security" style={{ width: 166, height: "auto" }} />
           <div style={{ color: INK, fontSize: 16, fontWeight: 800, lineHeight: 1.05, textAlign: "center" }}>
-            Maintenance &amp; Job
-            <br />
-            Completion Report
+            Maintenance Report
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 10, fontWeight: 800 }}>Sama Safety &amp; Security</div>
@@ -177,20 +175,34 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
             ))}
           </div>
         </div>
+        {data.visit_summary?.length ? (
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(data.visit_summary.length, 4)}, 1fr)`, gap: 5, marginTop: 6 }}>
+            {data.visit_summary.map((visit) => (
+              <div key={visit.system_type} style={{ border: `1px solid ${LINE}`, background: SOFT, padding: "4px 5px", fontSize: 7.5, lineHeight: 1.35 }}>
+                <strong>{visit.system_type}</strong>
+                <div>Completed: <strong>{visit.completed}</strong> · Remaining: <strong>{visit.remaining}</strong></div>
+                <div>Next visit: <strong>{fmtDate(visit.next_visit)}</strong></div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px" }}>
         <Label>Inspection checklist</Label>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: systemTypes.length > 1 ? "1fr 1fr" : "1fr",
-            gap: 5,
-            marginTop: 4,
-          }}
-        >
-          {(systemTypes.length ? systemTypes : [""]).map((system) => (
-            <div key={system || "general"} style={{ border: `1px solid ${LINE}`, breakInside: "avoid" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 5, marginTop: 4 }}>
+          {(systemTypes.length ? systemTypes : [""]).map((system, index, systems) => (
+            <div
+              key={system || "general"}
+              style={{
+                border: `1px solid ${LINE}`,
+                breakInside: "avoid",
+                boxSizing: "border-box",
+                width: systems.length > 1 && !(systems.length % 2 === 1 && index === systems.length - 1)
+                  ? "calc(50% - 2.5px)"
+                  : "100%",
+              }}
+            >
               <div style={{ background: SOFT, borderBottom: `1px solid ${LINE}`, padding: "3px 5px", fontSize: 8, fontWeight: 800 }}>
                 {system ? SYSTEM_LABELS[system as SystemType] ?? system : "GENERAL SYSTEM"}
               </div>
@@ -265,7 +277,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
             <div style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {data.employee_signature ? <img src={data.employee_signature} alt="Employee signature" style={{ maxHeight: 35, maxWidth: "75%" }} /> : null}
             </div>
-            <Field label="Engineer" value={data.performed_by} />
+            <Field label="Technician" value={data.performed_by} />
           </div>
           <div style={{ padding: "6px" }}>
             <Label>Client acknowledgement</Label>

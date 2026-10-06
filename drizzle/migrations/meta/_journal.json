@@ -8,6 +8,13 @@
       "when": 1791031795263,
       "tag": "0000_dedupe_tasks_multi_system_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791270444034,
+      "tag": "0001_add_report_visit_summary",
+      "breakpoints": true
     }
   ]
 }

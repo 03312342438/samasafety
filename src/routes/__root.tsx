@@ -14,7 +14,7 @@ import appCss from "../styles.css?url";
 // Served as a real static file from /public so BOTH Lovable hosting and the
 // self-hosted Cloudflare Worker can serve it. (Lovable-CDN /__l5e asset URLs
 // 404 on the Worker, which is why the favicon was missing there.)
-const faviconUrl = "/sama-favicon.png";
+const faviconUrl = "/favicon.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
