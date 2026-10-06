@@ -2120,6 +2120,7 @@ export type Database = {
           site_location: string | null
           spare_parts: Json
           system_types: string[]
+          visit_summary: Json
         }
         Insert: {
           action_taken?: string | null
@@ -2155,6 +2156,7 @@ export type Database = {
           site_location?: string | null
           spare_parts?: Json
           system_types?: string[]
+          visit_summary?: Json
         }
         Update: {
           action_taken?: string | null
@@ -2190,6 +2192,7 @@ export type Database = {
           site_location?: string | null
           spare_parts?: Json
           system_types?: string[]
+          visit_summary?: Json
         }
         Relationships: [
           {
