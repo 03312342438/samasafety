@@ -13,6 +13,13 @@ const sparePartSchema = z.object({
   total: z.string().max(50).default(""),
 });
 
+const visitSummarySchema = z.object({
+  system_type: z.string().max(20),
+  completed: z.number().int().min(0).max(1000),
+  remaining: z.number().int().min(0).max(1000),
+  next_visit: z.string().max(40).default(""),
+});
+
 const reportSchema = z.object({
   client_name: z.string().max(300).default(""),
   client_email: z.string().max(320).default(""),
@@ -26,6 +33,7 @@ const reportSchema = z.object({
   devices: z.record(z.string().max(200), z.string().max(50)).default({}),
   system_types: z.array(z.string().max(20)).max(20).default([]),
   contract_ids: z.array(z.string().uuid()).max(20).default([]),
+  visit_summary: z.array(visitSummarySchema).max(20).default([]),
   spare_parts: z.array(sparePartSchema).max(50).default([]),
   action_taken: z.string().max(5000).default(""),
   remarks: z.string().max(2000).default(""),

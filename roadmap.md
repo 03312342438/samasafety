@@ -1,5 +1,8 @@
 # Active work
 
+- [x] Remove blank checklist space and add per-system completed, remaining, and next-visit details to the one-page maintenance report.
+- [x] Update the maintenance report title, technician label, SAMA logo, favicon, and FS meaning.
+
 - [x] Match the maintenance report to the supplied one-page SAMA service-sheet layout.
 - [x] Keep the portal's existing inputs and show Our Ref and Order No. in the report header.
 - [x] Force maintenance report downloads and emails to one A4 page without trailing blank space.

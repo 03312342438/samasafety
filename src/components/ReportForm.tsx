@@ -17,7 +17,7 @@ import { createReport, updateReport } from "@/lib/reports.functions";
 import { listContracts } from "@/lib/maintenance-contracts.functions";
 import { listStockItems } from "@/lib/inventory.functions";
 import { SearchSelect } from "@/components/SearchSelect";
-import { prettyDate } from "@/lib/maintenance-contracts";
+import { prettyDate, visitDate } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
@@ -107,6 +107,21 @@ export function ReportForm({
   const contractId = form.contract_ids[0] ?? "";
   const selectedContracts = groupContracts.filter((c) => form.contract_ids.includes(c.id));
 
+  const visitSummaryFor = (list: any[]) =>
+    list.map((c) => {
+      const completed = Math.min((Number(c.completed_count) || 0) + 1, Number(c.total_visits) || 0);
+      const remaining = Math.max((Number(c.total_visits) || 0) - completed, 0);
+      return {
+        system_type: String(c.system_type || ""),
+        completed,
+        remaining,
+        next_visit:
+          remaining > 0 && c.start_date
+            ? visitDate(c.start_date, Number(c.interval_months) || 0, completed + 1)
+            : "",
+      };
+    });
+
   // Store catalogue, used to pick spare parts instead of typing them.
   const fetchStock = useServerFn(listStockItems);
   const { data: stock } = useQuery({
@@ -134,6 +149,7 @@ export function ReportForm({
       ...f,
       contract_ids: list.map((x) => x.id),
       system_types: list.map((x) => x.system_type),
+      visit_summary: visitSummaryFor(list),
       system_type: list.map((x) => x.system_type).join(", "),
       client_name: c.customer_name || f.client_name,
       client_email: c.customer_email || f.client_email,
@@ -177,6 +193,7 @@ export function ReportForm({
         ...f,
         contract_ids: ids,
         system_types: sys,
+        visit_summary: visitSummaryFor(groupContracts.filter((x) => ids.includes(x.id))),
         system_type: sys.join(", "),
         maintenance_interval_value: first?.interval_months
           ? String(first.interval_months)

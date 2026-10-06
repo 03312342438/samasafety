@@ -8,7 +8,7 @@ export const SYSTEM_LABELS: Record<SystemType, string> = {
   FA: "FA — Fire Alarm",
   CCTV: "CCTV",
   GAS: "GAS Suppression",
-  FS: "FS — Fire Safety",
+  FS: "FS — Fire Suppression",
   FE: "FE — Fire Extinguisher",
   FSCP: "FSCP — Fire Suppression Control Panel",
   FSC: "FSC — Fire Suppression Cylinder",
