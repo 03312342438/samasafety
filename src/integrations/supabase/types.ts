@@ -363,6 +363,7 @@ export type Database = {
           call_received_at: string
           client_email: string
           client_name: string
+          client_sign_date: string
           client_sign_name: string
           contact_person: string
           contact_phone: string
@@ -381,6 +382,8 @@ export type Database = {
           spare_parts: Json
           status: string
           system_type: string
+          technician_sign_date: string
+          technician_sign_name: string
           updated_at: string
         }
         Insert: {
@@ -389,6 +392,7 @@ export type Database = {
           call_received_at?: string
           client_email?: string
           client_name?: string
+          client_sign_date?: string
           client_sign_name?: string
           contact_person?: string
           contact_phone?: string
@@ -407,6 +411,8 @@ export type Database = {
           spare_parts?: Json
           status?: string
           system_type?: string
+          technician_sign_date?: string
+          technician_sign_name?: string
           updated_at?: string
         }
         Update: {
@@ -415,6 +421,7 @@ export type Database = {
           call_received_at?: string
           client_email?: string
           client_name?: string
+          client_sign_date?: string
           client_sign_name?: string
           contact_person?: string
           contact_phone?: string
@@ -433,6 +440,8 @@ export type Database = {
           spare_parts?: Json
           status?: string
           system_type?: string
+          technician_sign_date?: string
+          technician_sign_name?: string
           updated_at?: string
         }
         Relationships: []
