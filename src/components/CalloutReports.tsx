@@ -82,7 +82,7 @@ export function CalloutReports({ performedBy, canEdit = true }: { performedBy: s
                 <Badge variant={r.status === "closed" ? "outline" : r.priority === "urgent" ? "destructive" : "default"}>
                   {STATUS_LABEL[r.status]}{r.priority === "urgent" && r.status !== "closed" ? " · Urgent" : ""}
                 </Badge>
-                {canEdit && (
+                {(canEdit || r.status !== "closed") && (
                   <Button size="sm" variant="outline" onClick={() => setEditing(r)}>
                     <Pencil className="mr-1 h-4 w-4" /> {r.status === "closed" ? "View / Edit" : "Attend"}
                   </Button>
