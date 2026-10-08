@@ -10,7 +10,8 @@ import {
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
 import { MaintenanceTaskList, SiteFilter, filterBySite, splitCarriedOver } from "@/components/MaintenanceTaskList";
-import { History } from "lucide-react";
+import { History, PhoneCall } from "lucide-react";
+import { CalloutReports } from "@/components/CalloutReports";
 import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
 import { ReportDownloadButton } from "@/components/ReportDownloadButton";
@@ -196,6 +197,7 @@ function Dashboard() {
                   { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
                   { value: "carried", label: (<><History className="mr-1 h-4 w-4" /> Carried Over ({carried.length})</>) },
+                  { value: "callout", label: (<><PhoneCall className="mr-1 h-4 w-4" /> Call-out Reports</>) },
                   // Maintenance-only logins don't manage contracts.
                   ...(!maintenanceOnly
                     ? [{ value: "contracts", label: (<><ClipboardList className="mr-1 h-4 w-4" /> Maintenance Contracts</>) }]
@@ -227,6 +229,15 @@ function Dashboard() {
         {activeTab === "contracts" && canFillReport && !isAdmin && !maintenanceOnly && (
           <div className="mt-5">
             <MaintenanceContracts />
+          </div>
+        )}
+
+        {activeTab === "callout" && canFillReport && !isAdmin && (
+          <div className="mt-5">
+            <CalloutReports
+              performedBy={profile?.profile?.full_name || ""}
+              canEdit={!maintenanceOnly}
+            />
           </div>
         )}
 
