@@ -356,6 +356,87 @@ export type Database = {
           },
         ]
       }
+      callout_reports: {
+        Row: {
+          action_taken: string
+          arrival_at: string | null
+          call_received_at: string
+          client_email: string
+          client_name: string
+          client_sign_name: string
+          contact_person: string
+          contact_phone: string
+          created_at: string
+          created_by: string
+          date_completed: string | null
+          findings: string
+          follow_up_notes: string
+          id: string
+          performed_by: string
+          priority: string
+          project: string
+          reference: string
+          reported_problem: string
+          site_location: string
+          spare_parts: Json
+          status: string
+          system_type: string
+          updated_at: string
+        }
+        Insert: {
+          action_taken?: string
+          arrival_at?: string | null
+          call_received_at?: string
+          client_email?: string
+          client_name?: string
+          client_sign_name?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string
+          created_by: string
+          date_completed?: string | null
+          findings?: string
+          follow_up_notes?: string
+          id?: string
+          performed_by?: string
+          priority?: string
+          project?: string
+          reference?: string
+          reported_problem?: string
+          site_location?: string
+          spare_parts?: Json
+          status?: string
+          system_type?: string
+          updated_at?: string
+        }
+        Update: {
+          action_taken?: string
+          arrival_at?: string | null
+          call_received_at?: string
+          client_email?: string
+          client_name?: string
+          client_sign_name?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          date_completed?: string | null
+          findings?: string
+          follow_up_notes?: string
+          id?: string
+          performed_by?: string
+          priority?: string
+          project?: string
+          reference?: string
+          reported_problem?: string
+          site_location?: string
+          spare_parts?: Json
+          status?: string
+          system_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_notes: {
         Row: {
           amount: number

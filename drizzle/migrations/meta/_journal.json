@@ -15,6 +15,13 @@
       "when": 1791270444034,
       "tag": "0001_add_report_visit_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791441402733,
+      "tag": "0002_create_callout_reports",
+      "breakpoints": true
     }
   ]
 }
