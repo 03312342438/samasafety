@@ -25,16 +25,22 @@ export async function syncContractTasks(supabase: any, contractId: string) {
   const total = countVisits(c.start_date, c.end_date, c.interval_months);
   if (!total) return;
 
-  const { count } = await supabase
+  const { data: reps } = await supabase
     .from("reports")
-    .select("id", { count: "exact", head: true })
+    .select("date_completed, report_date, created_at")
     .or(`contract_id.eq.${contractId},contract_ids.cs.{${contractId}}`);
-  const done = (count ?? 0) + (Number(c.prior_visits_done) || 0);
+  const dates = ((reps ?? []) as any[])
+    .map((r) => String(r.date_completed || r.report_date || r.created_at || "").slice(0, 10))
+    .filter(Boolean)
+    .sort();
+  const done = dates.length + (Number(c.prior_visits_done) || 0);
+  const lastDone =
+    dates[dates.length - 1] || (c.prior_last_visit ? String(c.prior_last_visit).slice(0, 10) : "");
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
     .from("maintenance_tasks")
-    .select("id, sequence, status")
+    .select("id, sequence, status, due_date")
     .eq("contract_id", contractId);
   const rowsBySeq = new Map<number, any>();
   for (const t of existing ?? []) rowsBySeq.set(t.sequence, t);
@@ -48,12 +54,19 @@ export async function syncContractTasks(supabase: any, contractId: string) {
 
   const rows = [];
   for (let n = done + 1; n <= total; n++) {
-    if (rowsBySeq.has(n)) continue; // keep what is already there
+    const due = scheduledVisitDate(c.start_date, c.interval_months, n, done, lastDone);
+    const ex = rowsBySeq.get(n);
+    if (ex) {
+      // Reschedule from the actual date of the last completed visit.
+      if (ex.status === "pending" && String(ex.due_date ?? "").slice(0, 10) !== due)
+        await supabase.from("maintenance_tasks").update({ due_date: due }).eq("id", ex.id);
+      continue;
+    }
     rows.push({
       contract_id: contractId,
       created_by: c.created_by,
       sequence: n,
-      due_date: visitDate(c.start_date, c.interval_months, n),
+      due_date: due,
       status: "pending",
       client_name: c.customer_name || "",
       project: c.project_name || "",

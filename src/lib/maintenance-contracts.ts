@@ -69,6 +69,25 @@ export function visitDate(start: string | null, intervalMonths: number, n: numbe
   return addMonths(String(start).slice(0, 10), intervalMonths * (n - 1));
 }
 
+/**
+ * Due date of visit `n` once `done` visits are completed. After a completed
+ * visit, later visits follow the actual date of the last completed visit
+ * (e.g. visit 2 done on 1 May with a 3-month interval -> 1 Aug, 1 Nov).
+ * Before any visit is done, the original contract schedule applies.
+ */
+export function scheduledVisitDate(
+  start: string | null,
+  intervalMonths: number,
+  n: number,
+  done: number,
+  lastDone: string | null | undefined,
+): string {
+  if (lastDone && done > 0 && n > done) {
+    return addMonths(String(lastDone).slice(0, 10), intervalMonths * (n - done));
+  }
+  return visitDate(start, intervalMonths, n);
+}
+
 export function contractStatus(opts: {
   endDate: string | null;
   upcoming: string;
@@ -76,7 +95,9 @@ export function contractStatus(opts: {
 }): string {
   const today = new Date().toISOString().slice(0, 10);
   if (opts.remaining <= 0) return "Completed";
-  if (opts.endDate && String(opts.endDate).slice(0, 10) < today) return "Expired";
+  // Every contracted visit must still be done after the contract ends.
+  if (opts.endDate && String(opts.endDate).slice(0, 10) < today)
+    return `Expired – ${opts.remaining} Visit${opts.remaining === 1 ? "" : "s"} Remaining`;
   if (opts.upcoming && opts.upcoming < today) return "Overdue";
   if (opts.upcoming && opts.upcoming <= addDays(today, 30)) return "Due soon";
   return "On schedule";
