@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { SYSTEM_TYPES, SYSTEM_LABELS } from "@/lib/maintenance-contracts";
+import { SignaturePad } from "@/components/SignaturePad";
+import { CalloutDownloadButton } from "@/components/CalloutDocument";
 
 const nowLocal = () => {
   const d = new Date();
@@ -32,6 +34,8 @@ const empty = (performedBy: string): CalloutInput => ({
   reported_problem: "", priority: "normal", arrival_at: "", findings: "",
   action_taken: "", follow_up_notes: "", performed_by: performedBy,
   client_sign_name: "", status: "pending",
+  technician_sign_name: performedBy, technician_sign_date: "", client_sign_date: "",
+  technician_signature: "", client_signature: "",
 });
 
 const STATUS_LABEL: Record<string, string> = {
@@ -82,6 +86,7 @@ export function CalloutReports({ performedBy, canEdit = true }: { performedBy: s
                 <Badge variant={r.status === "closed" ? "outline" : r.priority === "urgent" ? "destructive" : "default"}>
                   {STATUS_LABEL[r.status]}{r.priority === "urgent" && r.status !== "closed" ? " · Urgent" : ""}
                 </Badge>
+                <CalloutDownloadButton data={r} size="sm" />
                 {(canEdit || r.status !== "closed") && (
                   <Button size="sm" variant="outline" onClick={() => setEditing(r)}>
                     <Pencil className="mr-1 h-4 w-4" /> {r.status === "closed" ? "View / Edit" : "Attend"}
@@ -197,14 +202,25 @@ function CalloutForm({
         <div className="space-y-1"><Label>Findings</Label><Textarea value={f.findings} onChange={set("findings")} /></div>
         <div className="space-y-1"><Label>Action taken</Label><Textarea value={f.action_taken} onChange={set("action_taken")} /></div>
         <div className="space-y-1"><Label>Follow-up needed (parts, return visit…)</Label><Textarea value={f.follow_up_notes} onChange={set("follow_up_notes")} /></div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {field("Technician", "performed_by")}
-          {field("Client name (sign-off)", "client_sign_name")}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-semibold">Technician</p>
+            {field("Name", "performed_by")}
+            <SignaturePad label="Technician signature" value={f.technician_signature ?? ""} onChange={(v) => setF((p) => ({ ...p, technician_signature: v }))} />
+            {field("Date", "technician_sign_date", "date")}
+          </div>
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-semibold">Client</p>
+            {field("Name", "client_sign_name")}
+            <SignaturePad label="Client signature" value={f.client_signature ?? ""} onChange={(v) => setF((p) => ({ ...p, client_signature: v }))} />
+            {field("Date", "client_sign_date", "date")}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={busy} onClick={() => submit("pending")}>Log call (not attended)</Button>
           <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended – needs follow-up</Button>
           <Button disabled={busy} onClick={() => submit("closed")}>Attended – close call</Button>
+          {initial?.id && <CalloutDownloadButton data={{ ...initial, ...f, reference: initial.reference }} />}
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
         </div>
       </CardContent>

@@ -92,7 +92,8 @@ export function ReportForm({
   };
   const today = localToday();
   const activeContracts = ((contracts as any[]) ?? []).filter(
-    (c) => (!c.end_date || c.end_date >= today) && c.remaining_count > 0,
+    // Expired contracts stay selectable until every contracted visit is done.
+    (c) => c.remaining_count > 0,
   );
   const groupKey = (c: any) =>
     c.contract_no ||
