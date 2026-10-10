@@ -20,6 +20,11 @@ const calloutSchema = z.object({
   follow_up_notes: z.string().max(5000).default(""),
   performed_by: z.string().max(300).default(""),
   client_sign_name: z.string().max(300).default(""),
+  technician_sign_name: z.string().max(300).default(""),
+  technician_sign_date: z.string().max(40).nullable().optional(),
+  client_sign_date: z.string().max(40).nullable().optional(),
+  technician_signature: z.string().max(500000).default(""),
+  client_signature: z.string().max(500000).default(""),
   status: z.enum(["pending", "follow_up", "closed"]),
 });
 export type CalloutInput = z.infer<typeof calloutSchema>;
@@ -45,6 +50,8 @@ export const saveCallout = createServerFn({ method: "POST" })
     const payload: any = {
       ...row,
       arrival_at: row.arrival_at || null,
+      technician_sign_date: row.technician_sign_date || null,
+      client_sign_date: row.client_sign_date || null,
       date_completed: row.status === "closed" ? new Date().toISOString().slice(0, 10) : null,
     };
     if (id) {

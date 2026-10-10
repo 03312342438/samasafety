@@ -48,7 +48,7 @@ const emptyForm = () => ({
 });
 
 const statusClass = (s: string) =>
-  s === "Overdue" || s === "Expired"
+  s === "Overdue" || s.startsWith("Expired")
     ? "bg-destructive/10 text-destructive"
     : s === "Due soon"
       ? "bg-amber-100 text-amber-700"

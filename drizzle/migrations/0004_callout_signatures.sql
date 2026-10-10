@@ -1,0 +1,1 @@
+ALTER TABLE public.callout_reports ADD COLUMN IF NOT EXISTS technician_signature text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS client_signature text NOT NULL DEFAULT '';

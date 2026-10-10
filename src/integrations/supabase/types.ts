@@ -365,6 +365,7 @@ export type Database = {
           client_name: string
           client_sign_date: string
           client_sign_name: string
+          client_signature: string
           contact_person: string
           contact_phone: string
           created_at: string
@@ -384,6 +385,7 @@ export type Database = {
           system_type: string
           technician_sign_date: string
           technician_sign_name: string
+          technician_signature: string
           updated_at: string
         }
         Insert: {
@@ -394,6 +396,7 @@ export type Database = {
           client_name?: string
           client_sign_date?: string
           client_sign_name?: string
+          client_signature?: string
           contact_person?: string
           contact_phone?: string
           created_at?: string
@@ -413,6 +416,7 @@ export type Database = {
           system_type?: string
           technician_sign_date?: string
           technician_sign_name?: string
+          technician_signature?: string
           updated_at?: string
         }
         Update: {
@@ -423,6 +427,7 @@ export type Database = {
           client_name?: string
           client_sign_date?: string
           client_sign_name?: string
+          client_signature?: string
           contact_person?: string
           contact_phone?: string
           created_at?: string
@@ -442,6 +447,7 @@ export type Database = {
           system_type?: string
           technician_sign_date?: string
           technician_sign_name?: string
+          technician_signature?: string
           updated_at?: string
         }
         Relationships: []
