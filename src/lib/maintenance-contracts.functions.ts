@@ -6,7 +6,7 @@ import {
   SYSTEM_TYPES,
   contractStatus,
   countVisits,
-  visitDate,
+  scheduledVisitDate,
   type SystemType,
 } from "@/lib/maintenance-contracts";
 
@@ -273,7 +273,9 @@ export const listContracts = createServerFn({ method: "GET" })
       const remaining = Math.max(total - done, 0);
       // The first visit falls on the contract start date itself.
       const upcoming =
-        remaining > 0 && c.start_date ? visitDate(c.start_date, c.interval_months, done + 1) : "";
+        remaining > 0 && c.start_date
+          ? scheduledVisitDate(c.start_date, c.interval_months, done + 1, done, lastVisit)
+          : "";
       return {
         ...c,
         customer_email:

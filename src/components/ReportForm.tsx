@@ -17,7 +17,7 @@ import { createReport, updateReport } from "@/lib/reports.functions";
 import { listContracts } from "@/lib/maintenance-contracts.functions";
 import { listStockItems } from "@/lib/inventory.functions";
 import { SearchSelect } from "@/components/SearchSelect";
-import { prettyDate, visitDate } from "@/lib/maintenance-contracts";
+import { prettyDate, addMonths } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
@@ -117,7 +117,7 @@ export function ReportForm({
         remaining,
         next_visit:
           remaining > 0 && c.start_date
-            ? visitDate(c.start_date, Number(c.interval_months) || 0, completed + 1)
+            ? addMonths(localToday(), Number(c.interval_months) || 0)
             : "",
       };
     });
