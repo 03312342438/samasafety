@@ -1,0 +1,3 @@
+ALTER TABLE public.maintenance_contracts ADD COLUMN total_visits_override integer DEFAULT NULL, ADD COLUMN completed_visits_override integer DEFAULT NULL;
+ALTER TABLE public.maintenance_contracts ADD CONSTRAINT contract_total_visits_override_valid CHECK (total_visits_override IS NULL OR total_visits_override BETWEEN 0 AND 1000), ADD CONSTRAINT contract_completed_visits_override_valid CHECK (completed_visits_override IS NULL OR completed_visits_override BETWEEN 0 AND 1000);
+COMMENT ON COLUMN public.maintenance_contracts.completed_visits_override IS 'Baseline completed count set by user; subsequent filed reports increase it. prior_visits_done stores baseline less already filed reports.';
