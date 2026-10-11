@@ -6,6 +6,7 @@ import {
   SYSTEM_TYPES,
   contractStatus,
   countVisits,
+  contractVisitCounts,
   scheduledVisitDate,
   type SystemType,
 } from "@/lib/maintenance-contracts";
@@ -22,9 +23,6 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     .maybeSingle();
   if (!c || !c.start_date || !c.interval_months) return;
 
-  const total = countVisits(c.start_date, c.end_date, c.interval_months);
-  if (!total) return;
-
   const { data: reps } = await supabase
     .from("reports")
     .select("date_completed, report_date, created_at")
@@ -33,9 +31,9 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     .map((r) => String(r.date_completed || r.report_date || r.created_at || "").slice(0, 10))
     .filter(Boolean)
     .sort();
-  const done = dates.length + (Number(c.prior_visits_done) || 0);
+  const { total, done } = contractVisitCounts(c, dates.length);
   const lastDone =
-    dates[dates.length - 1] || (c.prior_last_visit ? String(c.prior_last_visit).slice(0, 10) : "");
+    [dates[dates.length - 1], c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
@@ -217,6 +215,8 @@ const contractSchema = z.object({
   notes: z.string().trim().max(1000).default(""),
   prior_visits_done: z.number().int().min(0).max(1000).optional(),
   prior_last_visit: z.string().max(40).optional(),
+  total_visits_override: z.number().int().min(0).max(1000).nullable().optional(),
+  completed_visits_override: z.number().int().min(0).max(1000).nullable().optional(),
 });
 
 /** Contracts with every derived column (last visit, upcoming, remaining, status). */
@@ -264,13 +264,8 @@ export const listContracts = createServerFn({ method: "GET" })
     return rows.map((c: any) => {
       const visits = visitsByMsr[c.id] ?? [];
       const prior = Number(c.prior_visits_done) || 0;
-      const total = countVisits(c.start_date, c.end_date, c.interval_months);
-      const doneRaw = visits.length + prior;
-      const done = Math.min(doneRaw, total || doneRaw);
-      const lastVisit = visits.length
-        ? visits[visits.length - 1]
-        : c.prior_last_visit ? String(c.prior_last_visit).slice(0, 10) : "";
-      const remaining = Math.max(total - done, 0);
+      const { total, done, remaining } = contractVisitCounts(c, visits.length);
+      const lastVisit = [visits.at(-1), c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
       // The first visit falls on the contract start date itself.
       const upcoming =
         remaining > 0 && c.start_date
@@ -312,7 +307,17 @@ export const saveContract = createServerFn({ method: "POST" })
       prior_last_visit: fields.prior_last_visit || null,
       start_date: fields.start_date || null,
       end_date: fields.end_date || null,
+      completed_reports_at_override: 0,
     };
+    if (id && fields.completed_visits_override != null) {
+      const { count, error } = await supabase.from("reports").select("id", { count: "exact", head: true })
+        .or(`contract_id.eq.${id},contract_ids.cs.{${id}}`);
+      if (error) throw new Error(error.message);
+      payload.completed_reports_at_override = count ?? 0;
+    }
+    const total = fields.total_visits_override ?? countVisits(fields.start_date, fields.end_date, fields.interval_months);
+    if ((fields.completed_visits_override ?? fields.prior_visits_done ?? 0) > total)
+      throw new Error("Visits done cannot exceed total contracted visits.");
     if (id) {
       const { error } = await supabase
         .from("maintenance_contracts")

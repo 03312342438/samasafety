@@ -45,6 +45,9 @@ const emptyForm = () => ({
   system_type: "FF" as SystemType,
   interval_months: SYSTEM_INTERVAL.FF,
   notes: "",
+  total_visits_override: null as number | null,
+  completed_visits_override: null as number | null,
+  prior_last_visit: "",
 });
 
 const statusClass = (s: string) =>
@@ -132,6 +135,9 @@ export function MaintenanceContracts() {
       system_type: (r.system_type ?? "FF") as SystemType,
       interval_months: r.interval_months ?? 6,
       notes: r.notes ?? "",
+      total_visits_override: r.total_visits,
+      completed_visits_override: r.completed_count,
+      prior_last_visit: r.last_visit ?? "",
     });
     setOpen(true);
   };
@@ -227,6 +233,7 @@ export function MaintenanceContracts() {
       value: (r) => r.remaining_count,
       cell: (r) => `${r.remaining_count} of ${r.total_visits}`,
     },
+    { key: "completed_count", header: "Visits Done", value: (r) => r.completed_count },
     {
       key: "status",
       header: "Status",
@@ -387,6 +394,18 @@ export function MaintenanceContracts() {
                   <p className="text-xs text-muted-foreground">
                     Set automatically from the system type.
                   </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contract-total-visits">Total contracted visits / year</Label>
+                  <Input id="contract-total-visits" type="number" min={0} max={1000} value={form.total_visits_override ?? ""} placeholder="Automatic from dates and interval" onChange={(e) => set({ total_visits_override: e.target.value === "" ? null : Number(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contract-visits-done">Visits done / year</Label>
+                  <Input id="contract-visits-done" type="number" min={0} max={form.total_visits_override ?? 1000} value={form.completed_visits_override ?? ""} placeholder="Automatic from reports" onChange={(e) => set({ completed_visits_override: e.target.value === "" ? null : Number(e.target.value) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contract-last-visit">Last completed visit date</Label>
+                  <Input id="contract-last-visit" type="date" value={form.prior_last_visit} onChange={(e) => set({ prior_last_visit: e.target.value })} />
                 </div>
                 <DialogFooter className="sm:col-span-2">
                   <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

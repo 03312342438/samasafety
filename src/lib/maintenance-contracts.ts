@@ -63,6 +63,15 @@ export function countVisits(
   return Math.max(Math.ceil(months / intervalMonths), 0);
 }
 
+export function contractVisitCounts(c: { start_date: string | null; end_date: string | null; interval_months: number; total_visits_override?: number | null; completed_visits_override?: number | null; completed_reports_at_override?: number; prior_visits_done?: number }, reportCount: number) {
+  const total = c.total_visits_override ?? countVisits(c.start_date, c.end_date, c.interval_months);
+  const rawDone = c.completed_visits_override != null
+    ? c.completed_visits_override + Math.max(0, reportCount - (c.completed_reports_at_override ?? 0))
+    : reportCount + (c.prior_visits_done ?? 0);
+  const done = Math.min(total, Math.max(0, rawDone));
+  return { total, done, remaining: Math.max(0, total - done) };
+}
+
 /** Due date of visit number `n` (1-based); the first visit is the start date. */
 export function visitDate(start: string | null, intervalMonths: number, n: number): string {
   if (!start || n < 1) return "";

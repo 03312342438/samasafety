@@ -50,6 +50,13 @@
       "when": 1791727385397,
       "tag": "0006_contract_completed_report_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791727423637,
+      "tag": "0007_approved_users_maintenance_history",
+      "breakpoints": true
     }
   ]
 }
