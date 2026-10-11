@@ -55,9 +55,9 @@ export const saveCallout = createServerFn({ method: "POST" })
       date_completed: row.status === "closed" ? new Date().toISOString().slice(0, 10) : null,
     };
     if (id) {
-      const { error } = await sb.from("callout_reports").update(payload).eq("id", id);
+      const { data: updated, error } = await sb.from("callout_reports").update(payload).eq("id", id).select("*").single();
       if (error) throw new Error(error.message);
-      return { id };
+      return updated;
     }
     const { data: last } = await sb.from("callout_reports").select("reference");
     const max = Math.max(
@@ -68,8 +68,8 @@ export const saveCallout = createServerFn({ method: "POST" })
     const { data: ins, error } = await sb
       .from("callout_reports")
       .insert({ ...payload, reference, created_by: context.userId })
-      .select("id")
+      .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return { id: ins.id, reference };
+    return ins;
   });
