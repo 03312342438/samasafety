@@ -1,5 +1,10 @@
 # Active work
 
+- [ ] Use the same saved-report PDF for email attachments and downloads.
+- [ ] Show maintenance history and report authors to every approved login.
+- [ ] Allow editing contracted total and completed visit counts and reschedule pending visits.
+- [ ] Email submitted call-out reports to the maintenance recipients.
+
 - [x] Remove blank checklist space and add per-system completed, remaining, and next-visit details to the one-page maintenance report.
 - [x] Update the maintenance report title, technician label, SAMA logo, favicon, and FS meaning.
 

@@ -1232,6 +1232,8 @@ export type Database = {
       }
       maintenance_contracts: {
         Row: {
+          completed_reports_at_override: number
+          completed_visits_override: number | null
           contract_no: string
           created_at: string
           created_by: string
@@ -1247,9 +1249,12 @@ export type Database = {
           site_location: string
           start_date: string | null
           system_type: string
+          total_visits_override: number | null
           updated_at: string
         }
         Insert: {
+          completed_reports_at_override?: number
+          completed_visits_override?: number | null
           contract_no?: string
           created_at?: string
           created_by: string
@@ -1265,9 +1270,12 @@ export type Database = {
           site_location?: string
           start_date?: string | null
           system_type?: string
+          total_visits_override?: number | null
           updated_at?: string
         }
         Update: {
+          completed_reports_at_override?: number
+          completed_visits_override?: number | null
           contract_no?: string
           created_at?: string
           created_by?: string
@@ -1283,6 +1291,7 @@ export type Database = {
           site_location?: string
           start_date?: string | null
           system_type?: string
+          total_visits_override?: number | null
           updated_at?: string
         }
         Relationships: []

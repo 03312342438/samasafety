@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -14,7 +15,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { SYSTEM_TYPES, SYSTEM_LABELS } from "@/lib/maintenance-contracts";
 import { SignaturePad } from "@/components/SignaturePad";
-import { CalloutDownloadButton } from "@/components/CalloutDocument";
+import { CalloutDownloadButton, CalloutDocument } from "@/components/CalloutDocument";
+import { emailCallout } from "@/lib/email.functions";
+import { elementToPdfBase64, elementToReportImageBase64 } from "@/lib/generate-pdf";
 
 const nowLocal = () => {
   const d = new Date();
@@ -128,6 +131,10 @@ function CalloutForm({
   initial, performedBy, onDone, onCancel,
 }: { initial?: any; performedBy: string; onDone: () => void; onCancel?: () => void }) {
   const save = useServerFn(saveCallout);
+  const sendEmail = useServerFn(emailCallout);
+  const documentRef = useRef<HTMLDivElement>(null);
+  const submitting = useRef(false);
+  const [emailDocument, setEmailDocument] = useState<any>(null);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState<CalloutInput>(() =>
@@ -138,9 +145,10 @@ function CalloutForm({
   const set = (k: keyof CalloutInput) => (e: any) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const submit = async (status: CalloutInput["status"]) => {
-    if (busy) return;
+    if (submitting.current) return;
     if (!f.client_name.trim()) return toast.error("Enter the client name");
     setBusy(true);
+    submitting.current = true;
     try {
       const res: any = await save({
         data: {
@@ -153,12 +161,25 @@ function CalloutForm({
       });
       qc.invalidateQueries({ queryKey: ["callouts"] });
       toast.success(res.reference ? `Call-out ${res.reference} saved` : "Call-out saved");
+      flushSync(() => setEmailDocument(res));
+      try {
+        if (!documentRef.current) throw new Error("Call-out PDF could not be generated");
+        const pdf_base64 = await elementToPdfBase64(documentRef.current);
+        const image_base64 = await elementToReportImageBase64(documentRef.current);
+        const emailed = await sendEmail({ data: { report_id: res.id, pdf_base64, image_base64 } });
+        if (emailed.sent) toast.success("Call-out report emailed");
+        else toast.error("Call-out saved, but no email recipients are configured");
+        if (emailed.failed.length) toast.error(emailed.failed.join(" | "));
+      } catch (err) {
+        toast.error(`Call-out saved, but email failed: ${err instanceof Error ? err.message : "Please try again"}`);
+      }
       if (!initial) setF(empty(performedBy));
       onDone();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     } finally {
       setBusy(false);
+      submitting.current = false;
     }
   };
 
@@ -223,6 +244,7 @@ function CalloutForm({
           {initial?.id && <CalloutDownloadButton data={{ ...initial, ...f, reference: initial.reference }} />}
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
         </div>
+        {emailDocument && <div style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }} aria-hidden><CalloutDocument ref={documentRef} data={emailDocument} /></div>}
       </CardContent>
     </Card>
   );

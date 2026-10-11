@@ -33,6 +33,7 @@ function drawFooter(pdf: jsPDF, pageW: number, pageH: number) {
 }
 
 async function elementToPdf(el: HTMLElement): Promise<jsPDF> {
+  await Promise.all(Array.from(el.querySelectorAll("img")).map(async (img) => { try { await img.decode(); } catch { /* capture fallback */ } }));
   const onePage = el.dataset.pdfOnePage === "true";
   const canvas = await html2canvas(el, {
     scale: 2,
@@ -90,7 +91,8 @@ async function elementToPdf(el: HTMLElement): Promise<jsPDF> {
     const tmp = document.createElement("canvas");
     tmp.width = canvas.width;
     tmp.height = sliceHpx;
-    const ctx = tmp.getContext("2d")!;
+    const ctx = tmp.getContext("2d");
+    if (!ctx) throw new Error("Could not create PDF canvas");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, tmp.width, tmp.height);
     ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
@@ -124,4 +126,9 @@ export async function elementToPdfBase64(el: HTMLElement): Promise<string> {
   const pdf = await elementToPdf(el);
   const dataUrl = pdf.output("dataurlstring");
   return dataUrl.split(",")[1] ?? "";
+}
+
+export async function elementToReportImageBase64(el: HTMLElement): Promise<string> {
+  const canvas = await html2canvas(el, { scale: 1.5, backgroundColor: "#ffffff", useCORS: true, logging: false });
+  return canvas.toDataURL("image/png").split(",")[1] ?? "";
 }

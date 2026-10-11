@@ -36,6 +36,13 @@ import { SalesDashboard } from "@/components/SalesDashboard";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  head: () => ({ meta: [
+    { title: "Maintenance Reports & History | SAMA Portal" },
+    { name: "description", content: "SAMA maintenance reports, contract visits, call-outs and shared maintenance history." },
+    { property: "og:title", content: "Maintenance Reports & History | SAMA Portal" },
+    { property: "og:description", content: "SAMA maintenance reports, contract visits, call-outs and shared maintenance history." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
+  ] }),
   validateSearch: (search: Record<string, unknown>): { view?: string } =>
     typeof search.view === "string" ? { view: search.view } : {},
   component: Dashboard,
@@ -52,8 +59,8 @@ function Dashboard() {
   const setStatus = useServerFn(setMaintenanceTaskStatus);
   const qc = useQueryClient();
   const { data: reports } = useQuery({
-    queryKey: isAdmin ? ["all-reports"] : ["my-reports"],
-    queryFn: () => (isAdmin ? fetchAllReports() : fetchMyReports()),
+    queryKey: ["all-reports"],
+    queryFn: () => fetchAllReports(),
   });
   const { data: tasks } = useQuery({
     queryKey: isAdmin ? ["all-maintenance-tasks"] : ["my-maintenance-tasks"],
@@ -75,7 +82,7 @@ function Dashboard() {
   // Management never fills reports: the report form is hidden and the
   // overview is always the landing tab.
   const activeTab =
-    (tab === "overview" && !isAdmin) || (tab === "new" && (isAdmin || !canFillReport))
+    view === "history" ? "history" : (tab === "overview" && !isAdmin) || (tab === "new" && (isAdmin || !canFillReport))
       ? fallbackTab
       : tab;
 
@@ -116,7 +123,7 @@ function Dashboard() {
   }
 
   // Sales staff get a pure sales dashboard — no maintenance reports at all.
-  if (isSalesOnly) {
+  if (isSalesOnly && view !== "history") {
     return (
       <div className="min-h-screen bg-secondary/40">
         <AppHeader name={profile?.profile?.full_name} roles={profile?.roles} />
@@ -134,18 +141,18 @@ function Dashboard() {
   }
 
   // Accounts staff have no maintenance section — send them to the finance area.
-  if (accountsOnly) {
+  if (accountsOnly && view !== "history") {
     return <Navigate to="/accounts" replace />;
   }
 
   // Store staff have no dashboard section — send them straight to the Store.
-  if (isInventoryOnly) {
+  if (isInventoryOnly && view !== "history") {
     return <Navigate to="/stock" replace />;
   }
 
   // Project managers land on the delivery dashboard; this page is their
   // "Maintenance" section, reached from the sidebar with ?view=maintenance.
-  if (!isAdmin && hasDept(profile?.roles, "project_manager") && view !== "maintenance") {
+  if (!isAdmin && hasDept(profile?.roles, "project_manager") && view !== "maintenance" && view !== "history") {
     return <Navigate to="/overview" replace />;
   }
 
@@ -194,7 +201,6 @@ function Dashboard() {
             ...(canFillReport && !isAdmin
               ? [
                   { value: "new", label: (<><Plus className="mr-1 h-4 w-4" /> New Report</>) },
-                  { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
                   { value: "maintenance", label: (<><CalendarClock className="mr-1 h-4 w-4" /> Maintenance Pending ({pending.length})</>) },
                   { value: "carried", label: (<><History className="mr-1 h-4 w-4" /> Carried Over ({carried.length})</>) },
                   { value: "callout", label: (<><PhoneCall className="mr-1 h-4 w-4" /> Call-out Reports</>) },
@@ -204,6 +210,7 @@ function Dashboard() {
                     : []),
                 ]
               : []),
+            { value: "history", label: (<><FileText className="mr-1 h-4 w-4" /> Maintenance History ({reports?.length ?? 0})</>) },
           ]}
         />
 
@@ -220,7 +227,7 @@ function Dashboard() {
             />
           </div>
         )}
-        {activeTab === "history" && canFillReport && !isAdmin && (
+        {activeTab === "history" && (
           <div className="mt-5">
             <ReportList reports={(reports as unknown as ReportRecord[]) ?? []} />
           </div>
@@ -385,10 +392,10 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
                 variant="outline"
                 size="sm"
               />
-              {!noDelete && <Button variant="outline" size="sm" onClick={() => setEditing(r)}>
+              {!noDelete && (myProfile?.isAdmin || r.created_by === myProfile?.profile?.id) && <Button variant="outline" size="sm" onClick={() => setEditing(r)}>
                 <Pencil className="mr-1 h-4 w-4" /> Edit
               </Button>}
-              {!noDelete && <AlertDialog>
+              {!noDelete && (myProfile?.isAdmin || r.created_by === myProfile?.profile?.id) && <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm">
                     <Trash2 className="mr-1 h-4 w-4" /> Delete

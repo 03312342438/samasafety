@@ -128,6 +128,7 @@ export function AppHeader({
     { to: "/accounts", label: "Accounts", icon: Receipt, show: !accountsStore && (!!isAdmin || hasDept(roles, "accounts")) },
     { to: "/approvals", label: "Approvals", icon: CheckSquare, show: true },
     { to: "/admin", label: "Management", icon: ShieldCheck, show: !!isAdmin },
+    { to: "/dashboard", search: { view: "history" }, label: "Maintenance History", icon: FileText, show: !!isAdmin || inventoryOnly || accountsOnly || accountsStore || salesOnly },
     ];
 
 
@@ -149,7 +150,7 @@ export function AppHeader({
           const active = pathname.startsWith(item.to);
           return (
             <Link
-              key={item.to}
+               key={`${item.to}-${item.label}`}
               to={item.to}
               search={item.search as never}
               className={cn(

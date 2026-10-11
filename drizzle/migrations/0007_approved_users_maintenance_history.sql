@@ -1,0 +1,1 @@
+CREATE POLICY "Approved staff view maintenance history" ON public.reports FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'approved') OR private.has_role(auth.uid(), 'admin'::public.app_role));

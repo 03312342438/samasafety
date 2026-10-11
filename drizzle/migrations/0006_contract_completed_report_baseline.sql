@@ -1,0 +1,2 @@
+ALTER TABLE public.maintenance_contracts ADD COLUMN completed_reports_at_override integer NOT NULL DEFAULT 0;
+COMMENT ON COLUMN public.maintenance_contracts.completed_reports_at_override IS 'Number of issued reports when completed_visits_override was set; newer reports increment the completed count.';

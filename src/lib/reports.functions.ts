@@ -154,7 +154,7 @@ export const createReport = createServerFn({ method: "POST" })
     // A visit filed against a contract removes one pending visit from it.
     const linked = new Set([...data.contract_ids, ...(data.contract_id ? [data.contract_id] : [])]);
     for (const cid of linked) await syncContractTasks(supabase, cid);
-    return { id: row.id, msr_no: data.msr_no };
+    return { id: row.id, msr_no: data.msr_no, our_ref_no: data.our_ref_no };
   });
 
 
@@ -184,13 +184,9 @@ export const listAllReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!isAdmin) throw new Error("Forbidden: admin access required");
+    const { data: viewer } = await supabase.from("profiles").select("status").eq("id", userId).maybeSingle();
+    const { data: admin } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+    if (!admin && viewer?.status !== "approved") throw new Error("Account pending approval");
     const { data, error } = await supabase
       .from("reports")
       .select("*, maintenance_contracts(system_type)")
@@ -211,15 +207,16 @@ export const listAllReports = createServerFn({ method: "GET" })
     const ids = Array.from(new Set(rows.map((r: any) => r.created_by).filter(Boolean)));
     let nameById: Record<string, string> = {};
     if (ids.length) {
-      const { data: profiles } = await supabase
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: profiles } = await supabaseAdmin
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name")
         .in("id", ids);
       nameById = Object.fromEntries(
-        (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
+        (profiles ?? []).map((p: any) => [p.id, p.full_name || ""]),
       );
     }
-    return rows.map((r: any) => ({ ...r, employee_name: nameById[r.created_by] ?? "—" }));
+    return rows.map((r: any) => ({ ...r, employee_name: nameById[r.created_by] || r.performed_by || "—" }));
   });
 
 export const updateReport = createServerFn({ method: "POST" })

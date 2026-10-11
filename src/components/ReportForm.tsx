@@ -21,7 +21,7 @@ import { prettyDate, addMonths } from "@/lib/maintenance-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
-import { elementToPdfBase64 } from "@/lib/generate-pdf";
+import { elementToPdfBase64, elementToReportImageBase64 } from "@/lib/generate-pdf";
 import { ReportDocument } from "@/components/ReportDocument";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,7 +102,7 @@ export function ReportForm({
   for (const c of activeContracts) {
     const k = groupKey(c);
     if (!groups.has(k)) groups.set(k, []);
-    groups.get(k)!.push(c);
+    groups.get(k)?.push(c);
   }
   const groupContracts = groups.get(contractNo) ?? [];
   const contractId = form.contract_ids[0] ?? "";
@@ -263,14 +263,16 @@ export function ReportForm({
         const res: any = await save({
           data: { ...toPayload(submission), contract_id: contractId || null } as any,
         });
-        const saved = { ...submission, msr_no: res?.msr_no || submission.msr_no };
+        const saved = { ...submission, msr_no: res?.msr_no || submission.msr_no, our_ref_no: res?.our_ref_no || submission.our_ref_no };
         setForm(saved);
         await new Promise((r) => setTimeout(r, 80));
         // Generate the PDF while the offscreen document is still rendered.
         let pdfBase64 = "";
+        let imageBase64 = "";
         if (docRef.current) {
           try {
             pdfBase64 = await elementToPdfBase64(docRef.current);
+            imageBase64 = await elementToReportImageBase64(docRef.current);
           } catch {
             /* ignore PDF errors; the report is still saved */
           }
@@ -286,7 +288,8 @@ export function ReportForm({
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
         // recipient list still get the report notification.
-        void emailToRecipients(saved, pdfBase64);
+        if (pdfBase64 && imageBase64) await emailToRecipients(res.id, pdfBase64, imageBase64);
+        else toast.error("Report saved, but the email PDF could not be generated. Download it from history.");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save report");
@@ -296,21 +299,13 @@ export function ReportForm({
     }
   };
 
-  const emailToRecipients = async (data: ReportData, pdfBase64: string) => {
+  const emailToRecipients = async (reportId: string, pdfBase64: string, imageBase64: string) => {
     try {
-      const label =
-        (data.msr_no || data.client_name || "report")
-          .replace(/[^a-z0-9-_ ]/gi, "")
-          .trim() || "report";
       const res = await sendEmail({
         data: {
+          report_id: reportId,
           pdf_base64: pdfBase64,
-          file_name: `MSR_${label}.pdf`,
-          client_name: data.client_name,
-          client_email: data.client_email,
-          msr_no: data.msr_no,
-          project: data.project,
-          performed_by: data.performed_by,
+          image_base64: imageBase64,
         },
       });
       if (res.sent) {
