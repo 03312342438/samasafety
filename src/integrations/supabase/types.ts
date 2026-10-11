@@ -1232,6 +1232,7 @@ export type Database = {
       }
       maintenance_contracts: {
         Row: {
+          completed_reports_at_override: number
           completed_visits_override: number | null
           contract_no: string
           created_at: string
@@ -1252,6 +1253,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          completed_reports_at_override?: number
           completed_visits_override?: number | null
           contract_no?: string
           created_at?: string
@@ -1272,6 +1274,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          completed_reports_at_override?: number
           completed_visits_override?: number | null
           contract_no?: string
           created_at?: string
