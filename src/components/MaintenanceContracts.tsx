@@ -7,6 +7,7 @@ import {
   deleteContract,
   deleteAllContracts,
   importContracts,
+  resyncAllContracts,
 } from "@/lib/maintenance-contracts.functions";
 import {
   downloadContractTemplate,
@@ -66,6 +67,22 @@ export function MaintenanceContracts() {
   const remove = useServerFn(deleteContract);
   const removeAll = useServerFn(deleteAllContracts);
   const [deletingAll, setDeletingAll] = useState(false);
+  const resync = useServerFn(resyncAllContracts);
+  const [resyncing, setResyncing] = useState(false);
+  const onResync = async () => {
+    setResyncing(true);
+    try {
+      await resync({});
+      qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
+      qc.invalidateQueries({ queryKey: ["my-maintenance-tasks"] });
+      qc.invalidateQueries({ queryKey: ["all-maintenance-tasks"] });
+      toast.success("Visit schedule recalculated for all contracts");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not recalculate visits");
+    } finally {
+      setResyncing(false);
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-contracts"],
@@ -261,6 +278,10 @@ export function MaintenanceContracts() {
             className="hidden"
             onChange={onUpload}
           />
+          <Button type="button" variant="outline" disabled={resyncing} onClick={onResync}>
+            <RefreshCw className={`mr-1 h-4 w-4 ${resyncing ? "animate-spin" : ""}`} />
+            {resyncing ? "Recalculating…" : "Recalculate visits"}
+          </Button>
           <Button type="button" variant="outline" onClick={onDownloadTemplate}>
             <Download className="mr-1 h-4 w-4" /> Template
           </Button>
