@@ -60,7 +60,10 @@ export function countVisits(
     (e.getMonth() - s.getMonth()) +
     (e.getDate() >= s.getDate() ? 0 : -1);
   if (months <= 0) return 0;
-  return Math.max(Math.ceil(months / intervalMonths), 0);
+  // Contracts are yearly: a period of up to 12 months (even when the end date
+  // was entered a few months early) is one full year of visits.
+  const years = Math.max(1, Math.round(months / 12));
+  return years * Math.ceil(12 / intervalMonths);
 }
 
 export function contractVisitCounts(c: { start_date: string | null; end_date: string | null; interval_months: number; total_visits_override?: number | null; completed_visits_override?: number | null; completed_reports_at_override?: number; prior_visits_done?: number }, reportCount: number) {
@@ -91,7 +94,7 @@ export function scheduledVisitDate(
   done: number,
   lastDone: string | null | undefined,
 ): string {
-  if (lastDone && done > 0 && n > done) {
+  if (lastDone && n > done) {
     return addMonths(String(lastDone).slice(0, 10), intervalMonths * (n - done));
   }
   return visitDate(start, intervalMonths, n);

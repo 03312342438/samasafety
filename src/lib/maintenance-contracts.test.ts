@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contractStatus, scheduledVisitDate, contractVisitCounts } from "./maintenance-contracts";
+import { countVisits, contractStatus, scheduledVisitDate, contractVisitCounts } from "./maintenance-contracts";
 
 describe("dynamic maintenance scheduling", () => {
   it("uses the contract schedule before any visit is done", () => {
@@ -29,5 +29,16 @@ describe("editable contracted visit counts", () => {
   });
   it("supports resetting completed visits without deleting issued reports", () => {
     expect(contractVisitCounts({ ...contract, completed_visits_override: 0, completed_reports_at_override: 3 }, 3)).toEqual({ total: 6, done: 0, remaining: 6 });
+  });
+});
+
+describe("visit counts and next dates", () => {
+  it("FA every 3 months is 4 visits per year even with a short end date", () => {
+    expect(countVisits("2026-06-01", "2026-12-01", 3)).toBe(4);
+    expect(countVisits("2026-01-01", "2026-12-01", 3)).toBe(4);
+    expect(countVisits("2026-01-01", "2027-01-01", 6)).toBe(2);
+  });
+  it("FF last visit 18 May with no counted visits -> next 18 Nov", () => {
+    expect(scheduledVisitDate("2026-06-01", 6, 1, 0, "2026-05-18")).toBe("2026-11-18");
   });
 });

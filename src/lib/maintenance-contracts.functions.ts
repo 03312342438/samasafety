@@ -220,6 +220,13 @@ const contractSchema = z.object({
 });
 
 /** Contracts with every derived column (last visit, upcoming, remaining, status). */
+export const resyncAllContracts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAllContractTasks(context.supabase);
+    return { ok: true };
+  });
+
 export const listContracts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
