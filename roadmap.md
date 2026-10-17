@@ -1,5 +1,8 @@
 # Active work
 
+- [ ] Remove call-out prices, default signature dates, accept an approved quotation number, and permit history deletion only for Project Managers.
+- [ ] Add text search to Maintenance Contracts and verify these changes.
+
 - [x] Add call-out spare parts and a quotation-approved second submission on the same report.
 - [ ] Verify live first submission, approved-quotation resubmission, and recipient emails with an intended real call-out (avoids sending test reports to configured recipients).
 
