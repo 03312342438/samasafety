@@ -3,8 +3,12 @@ import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Clock, FileText, Pencil } from "lucide-react";
-import { listCallouts, saveCallout, type CalloutInput } from "@/lib/callouts.functions";
+import { Plus, Clock, FileText, Pencil, Trash2 } from "lucide-react";
+import { listCallouts, saveCallout, listApprovedCalloutQuotations, type CalloutInput } from "@/lib/callouts.functions";
+import { listStockItems } from "@/lib/inventory.functions";
+import { SearchSelect } from "@/components/SearchSelect";
+import { emptyCalloutPart, hasCalloutParts, quotationMessage } from "@/lib/callout-workflow";
+import type { SparePart } from "@/lib/report-constants";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
@@ -39,6 +43,7 @@ const empty = (performedBy: string): CalloutInput => ({
   client_sign_name: "", status: "pending",
   technician_sign_name: performedBy, technician_sign_date: "", client_sign_date: "",
   technician_signature: "", client_signature: "",
+  spare_parts: [emptyCalloutPart()], spare_parts_quotation_id: null, finalize_spare_parts: false,
 });
 
 const STATUS_LABEL: Record<string, string> = {
@@ -84,6 +89,7 @@ export function CalloutReports({ performedBy, canEdit = true }: { performedBy: s
                   {r.project || r.site_location || "—"} · Call {new Date(r.call_received_at).toLocaleString()}
                 </p>
                 {r.reported_problem && <p className="mt-1 text-sm">{r.reported_problem}</p>}
+                {quotationMessage(r.spare_parts_quotation_status) && <p className="mt-1 text-sm font-semibold text-primary">{quotationMessage(r.spare_parts_quotation_status)}{r.spare_parts_quotation_reference ? ` · ${r.spare_parts_quotation_reference}` : ""}</p>}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={r.status === "closed" ? "outline" : r.priority === "urgent" ? "destructive" : "default"}>
@@ -92,7 +98,7 @@ export function CalloutReports({ performedBy, canEdit = true }: { performedBy: s
                 <CalloutDownloadButton data={r} size="sm" />
                 {(canEdit || r.status !== "closed") && (
                   <Button size="sm" variant="outline" onClick={() => setEditing(r)}>
-                    <Pencil className="mr-1 h-4 w-4" /> {r.status === "closed" ? "View / Edit" : "Attend"}
+                    <Pencil className="mr-1 h-4 w-4" /> {r.spare_parts_quotation_status === "requested" ? "Complete / Resubmit" : r.status === "closed" ? "View / Edit" : "Attend"}
                   </Button>
                 )}
               </div>
@@ -137,16 +143,41 @@ function CalloutForm({
   const [emailDocument, setEmailDocument] = useState<any>(null);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const fetchStock = useServerFn(listStockItems);
+  const fetchQuotations = useServerFn(listApprovedCalloutQuotations);
+  const { data: stock = [] } = useQuery({ queryKey: ["stock-items"], queryFn: () => fetchStock() });
+  const { data: quotations = [] } = useQuery({ queryKey: ["approved-callout-quotations"], queryFn: () => fetchQuotations(), enabled: initial?.spare_parts_quotation_status === "requested" });
   const [f, setF] = useState<CalloutInput>(() =>
     initial
-      ? { ...empty(performedBy), ...initial, call_received_at: toLocal(initial.call_received_at), arrival_at: toLocal(initial.arrival_at) }
+      ? { ...empty(performedBy), ...initial, spare_parts: initial.spare_parts?.length ? initial.spare_parts : [emptyCalloutPart()], finalize_spare_parts: false, call_received_at: toLocal(initial.call_received_at), arrival_at: toLocal(initial.arrival_at) }
       : empty(performedBy),
   );
   const set = (k: keyof CalloutInput) => (e: any) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const awaitingQuotation = initial?.spare_parts_quotation_status === "requested";
+  const partsLocked = awaitingQuotation || initial?.spare_parts_quotation_status === "approved";
+  const partsRequired = hasCalloutParts(f.spare_parts);
+  const setPart = (i: number, key: keyof SparePart, value: string) => setF((previous) => ({
+    ...previous, spare_parts: previous.spare_parts.map((part, index) => {
+      if (index !== i) return part;
+      const updated = { ...part, [key]: value };
+      return { ...updated, total: String(Number((Number(updated.qty || 0) * Number(updated.unit_price || 0)).toFixed(2))) };
+    }),
+  }));
+  const pickPart = (i: number, code: string) => {
+    const item = stock.find((s: any) => s.item_code === code);
+    setF((previous) => ({ ...previous, spare_parts: previous.spare_parts.map((part, index) => {
+      if (index !== i) return part;
+      const unit_price = item?.unit_cost != null ? String(item.unit_cost) : part.unit_price;
+      const qty = part.qty || "1";
+      return { ...part, spare_no: code, description: item?.description ?? part.description, qty, unit_price, total: String(Number((Number(qty) * Number(unit_price || 0)).toFixed(2))) };
+    }) }));
+  };
 
-  const submit = async (status: CalloutInput["status"]) => {
+  const submit = async (status: CalloutInput["status"], finalize = false) => {
     if (submitting.current) return;
     if (!f.client_name.trim()) return toast.error("Enter the client name");
+    if (finalize && !f.spare_parts_quotation_id) return toast.error("Select an approved spare parts quotation");
+    if (f.spare_parts.some((p) => (p.spare_no.trim() || p.description.trim()) && (!Number.isFinite(Number(p.qty)) || Number(p.qty) <= 0 || !Number.isFinite(Number(p.unit_price)) || Number(p.unit_price) < 0))) return toast.error("Enter a positive quantity and valid unit price for each spare part");
     setBusy(true);
     submitting.current = true;
     try {
@@ -155,6 +186,7 @@ function CalloutForm({
           ...f,
           id: initial?.id,
           status,
+          finalize_spare_parts: finalize,
           call_received_at: new Date(f.call_received_at).toISOString(),
           arrival_at: f.arrival_at ? new Date(f.arrival_at).toISOString() : null,
         } as any,
@@ -223,6 +255,21 @@ function CalloutForm({
         <div className="space-y-1"><Label>Findings</Label><Textarea value={f.findings} onChange={set("findings")} /></div>
         <div className="space-y-1"><Label>Action taken</Label><Textarea value={f.action_taken} onChange={set("action_taken")} /></div>
         <div className="space-y-1"><Label>Follow-up needed (parts, return visit…)</Label><Textarea value={f.follow_up_notes} onChange={set("follow_up_notes")} /></div>
+        <section className="space-y-3">
+          <h3 className="text-base font-semibold">Spare Parts / Consumables</h3>
+          {f.spare_parts.map((part, i) => (
+            <div key={i} className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-12">
+              <div className="sm:col-span-6"><SearchSelect value={part.spare_no} onChange={(code) => pickPart(i, code)} options={stock.map((item: any) => [item.item_code, `${item.item_code} — ${item.description}`] as [string, string])} placeholder="— select item from store —" searchPlaceholder="Search store items…" disabled={partsLocked || busy} /></div>
+              <Input className="sm:col-span-6 sm:col-start-1" aria-label={`Spare part ${i + 1} description`} placeholder="Description" value={part.description} onChange={(e) => setPart(i, "description", e.target.value)} disabled={partsLocked || busy} />
+              <Input className="sm:col-span-2" aria-label={`Spare part ${i + 1} quantity`} type="number" min="0.01" step="any" placeholder="Qty" value={part.qty} onChange={(e) => setPart(i, "qty", e.target.value)} disabled={partsLocked || busy} />
+              <Input className="sm:col-span-2" aria-label={`Spare part ${i + 1} unit price`} type="number" min="0" step="0.01" placeholder="Unit Price" value={part.unit_price} onChange={(e) => setPart(i, "unit_price", e.target.value)} disabled={partsLocked || busy} />
+              <div className="flex gap-2 sm:col-span-2"><Input aria-label={`Spare part ${i + 1} total`} placeholder="Total" value={part.total} readOnly /><Button title="Remove spare part" aria-label={`Remove spare part ${i + 1}`} type="button" variant="ghost" size="icon" disabled={partsLocked || busy} onClick={() => setF((p) => ({ ...p, spare_parts: p.spare_parts.filter((_, index) => index !== i) }))}><Trash2 className="h-4 w-4" /></Button></div>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" disabled={partsLocked || busy || f.spare_parts.length >= 30} onClick={() => setF((p) => ({ ...p, spare_parts: [...p.spare_parts, emptyCalloutPart()] }))}><Plus className="mr-1 h-4 w-4" />Add Row</Button>
+          <p className="text-sm font-semibold text-primary">{quotationMessage(initial?.spare_parts_quotation_status) || (partsRequired ? "Spare parts quotation is requested" : "")}</p>
+          {awaitingQuotation && <div className="space-y-1"><Label>Approved spare parts quotation</Label><SearchSelect value={f.spare_parts_quotation_id ?? ""} onChange={(id) => setF((p) => ({ ...p, spare_parts_quotation_id: id }))} options={quotations.map((quote: any) => [quote.id, `${quote.reference} — ${quote.customers?.name || ""} · ${quote.projects?.name || quote.title} · ${quote.site_location || ""}`] as [string, string])} placeholder="— select approved quotation —" searchPlaceholder="Search approved quotations…" disabled={busy} /></div>}
+        </section>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 rounded-md border p-3">
             <p className="text-sm font-semibold">Technician</p>
@@ -238,9 +285,15 @@ function CalloutForm({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={busy} onClick={() => submit("pending")}>Log call (not attended)</Button>
-          <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended – needs follow-up</Button>
-          <Button disabled={busy} onClick={() => submit("closed")}>Attended – close call</Button>
+          {!awaitingQuotation && <>
+            <Button variant="outline" disabled={busy} onClick={() => submit("pending")}>Log call (not attended)</Button>
+            <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended – needs follow-up</Button>
+            <Button disabled={busy} onClick={() => submit("closed")}>{partsRequired && !partsLocked ? "Submit & request spare parts quotation" : "Attended – close call"}</Button>
+          </>}
+          {awaitingQuotation && <>
+            <Button variant="outline" disabled={busy || !f.spare_parts_quotation_id} onClick={() => submit("follow_up", true)}>Resubmit – needs follow-up</Button>
+            <Button disabled={busy || !f.spare_parts_quotation_id} onClick={() => submit("closed", true)}>Resubmit – approved spare parts quotation</Button>
+          </>}
           {initial?.id && <CalloutDownloadButton data={{ ...initial, ...f, reference: initial.reference }} />}
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
         </div>
