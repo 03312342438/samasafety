@@ -13,3 +13,4 @@
 - Issued maintenance reports persist a per-system visit-progress snapshot so historical PDFs do not change when contracts advance.
 - Report email previews are captured from the same document as the attached PDF; recipients and report details are resolved from saved records server-side to avoid arbitrary browser-controlled email delivery.
 - Contract visit-count overrides store the report-count baseline so future reports increment edited progress without altering historical reports.
+- Call-out spare-parts resubmission updates the original saved report and verifies the linked quotation's approval server-side and with a database trigger, preventing approval bypass.

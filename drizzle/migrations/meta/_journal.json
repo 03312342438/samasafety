@@ -57,6 +57,13 @@
       "when": 1791727423637,
       "tag": "0007_approved_users_maintenance_history",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792221540536,
+      "tag": "0008_callout_spare_parts_quotation_workflow",
+      "breakpoints": true
     }
   ]
 }

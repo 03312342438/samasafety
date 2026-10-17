@@ -1,5 +1,8 @@
 # Active work
 
+- [x] Add call-out spare parts and a quotation-approved second submission on the same report.
+- [ ] Verify live first submission, approved-quotation resubmission, and recipient emails with an intended real call-out (avoids sending test reports to configured recipients).
+
 - [ ] Use the same saved-report PDF for email attachments and downloads.
 - [ ] Show maintenance history and report authors to every approved login.
 - [ ] Allow editing contracted total and completed visit counts and reschedule pending visits.

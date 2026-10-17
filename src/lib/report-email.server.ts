@@ -34,6 +34,7 @@ export async function sendSavedReportEmail(opts: { supabase: any; userId: string
       ${detailRow(opts.kind === "maintenance" ? "M.S.R No." : "Call-out No.", reference)}
       ${detailRow("Performed by", performedBy)}
       ${detailRow("Client email", row.client_email)}
+      ${opts.kind === "callout" ? detailRow("Spare parts quotation", row.spare_parts_quotation_status === "requested" ? "Spare parts quotation is requested" : row.spare_parts_quotation_status === "approved" ? `Approved spare parts quotation${row.spare_parts_quotation_reference ? ` — ${row.spare_parts_quotation_reference}` : ""}` : "") : ""}
     </table>`;
   // The inline preview is captured from the very same SAMA sheet as the PDF.
   const html = `<div style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;max-width:794px;margin:auto"><p style="color:#113f57;font-size:16px;font-weight:bold;margin:0 0 12px">${escape(title)} — ${escape(reference)}</p>${details}<img src="cid:sama-report" alt="${escape(title)} ${escape(reference)} — full report is attached as PDF" width="794" style="display:block;width:100%;max-width:794px;height:auto"></div>`;

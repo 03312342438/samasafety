@@ -5,6 +5,8 @@ import { downloadElementAsPdf } from "@/lib/generate-pdf";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { quotationMessage } from "@/lib/callout-workflow";
+import type { SparePart } from "@/lib/report-constants";
 
 // Fixed print palette matching the SAMA maintenance report (PDF output, not themed UI).
 const BLUE = "#579bd3";
@@ -47,6 +49,8 @@ const STATUS: Record<string, string> = { pending: "Not attended", follow_up: "Ne
 
 export const CalloutDocument = forwardRef<HTMLDivElement, { data: any }>(({ data }, ref) => {
   const sys = data.system_type ? SYSTEM_LABELS[data.system_type as SystemType] ?? data.system_type : "—";
+  const parts: SparePart[] = Array.isArray(data.spare_parts) ? data.spare_parts.filter((p: SparePart) => p.spare_no || p.description) : [];
+  const spareMessage = quotationMessage(data.spare_parts_quotation_status);
   const Sign = ({ who, name, sig, date }: { who: string; name: string; sig: string; date: string }) => (
     <div style={{ padding: 6 }}>
       <Lbl>{who}</Lbl>
@@ -99,6 +103,15 @@ export const CalloutDocument = forwardRef<HTMLDivElement, { data: any }>(({ data
         <Ruled title="Action Taken" text={data.action_taken} />
         <Ruled title="Follow-up Required" text={data.follow_up_notes} />
       </div>
+
+      {(parts.length > 0 || spareMessage) && <section style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px" }}>
+        <Lbl>Spare Parts / Consumables</Lbl>
+        {spareMessage && <div style={{ fontSize: 9, fontWeight: 800, margin: "4px 0" }}>{spareMessage}{data.spare_parts_quotation_reference ? ` — ${data.spare_parts_quotation_reference}` : ""}</div>}
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 8, marginTop: 4 }}>
+          <thead><tr>{["Part No.", "Description", "Qty", "Unit Price", "Total"].map((label) => <th key={label} style={{ ...box, textAlign: "left" }}>{label}</th>)}</tr></thead>
+          <tbody>{parts.map((part, i) => <tr key={i}>{[part.spare_no, part.description, part.qty, part.unit_price, part.total].map((value, index) => <td key={index} style={box}>{value || "—"}</td>)}</tr>)}</tbody>
+        </table>
+      </section>}
 
       <section style={{ border: `1px solid ${LINE}`, borderTop: 0, display: "grid", gridTemplateColumns: "1fr 1fr" }}>
         <div style={{ borderRight: `1px solid ${LINE}` }}>
