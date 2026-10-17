@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { calloutQuotationState, hasCalloutParts } from "@/lib/callout-workflow";
+import { calloutQuotationState, hasCalloutParts, approvedCalloutQuotation, canDeleteCalloutHistory, calloutSignatureDate } from "@/lib/callout-workflow";
+import { myRoles } from "@/lib/permissions";
 
 const calloutSchema = z.object({
   id: z.string().uuid().optional(),
@@ -29,6 +30,7 @@ const calloutSchema = z.object({
   status: z.enum(["pending", "follow_up", "closed"]),
   spare_parts: z.array(z.object({ spare_no: z.string().max(300), description: z.string().max(500), qty: z.string().max(40), unit_price: z.string().max(40), total: z.string().max(40) })).max(30).default([]),
   spare_parts_quotation_id: z.string().uuid().nullable().optional(),
+  spare_parts_quotation_number: z.string().max(300).default(""),
   finalize_spare_parts: z.boolean().default(false),
 });
 export type CalloutInput = z.infer<typeof calloutSchema>;
@@ -60,11 +62,18 @@ export const saveCallout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => calloutSchema.parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
-    const { id, finalize_spare_parts, ...row } = data;
+    const { id, finalize_spare_parts, spare_parts_quotation_number, ...row } = data;
     const previousResult = id ? await sb.from("callout_reports").select("*").eq("id", id).single() : null;
     if (previousResult?.error) throw new Error(previousResult.error.message);
     const previous = previousResult?.data;
-    const quotationId = row.spare_parts_quotation_id || previous?.spare_parts_quotation_id || null;
+    let quotationId = previous?.spare_parts_quotation_id || null;
+    if (finalize_spare_parts) {
+      const number = spare_parts_quotation_number.trim();
+      if (!number) throw new Error("Enter an approved spare parts quotation number");
+      const { data: quotes, error } = await context.supabase.from("quotations").select("id, reference, status").ilike("reference", number.replace(/[\\%_]/g, "\\$&"));
+      if (error) throw new Error(error.message);
+      quotationId = approvedCalloutQuotation(quotes ?? [], number).id;
+    }
     const quoteResult = quotationId ? await context.supabase.from("quotations").select("id, reference, status").eq("id", quotationId).single() : null;
     if (quoteResult?.error) throw new Error(quoteResult.error.message);
     const quotationStatus = calloutQuotationState({
@@ -74,14 +83,17 @@ export const saveCallout = createServerFn({ method: "POST" })
     const status = quotationStatus === "requested" ? "follow_up" : row.status;
     const payload: any = {
       ...row,
-      spare_parts: row.spare_parts.filter((p) => p.spare_no.trim() || p.description.trim()).map((p) => ({ ...p, total: String(Number((Number(p.qty || 0) * Number(p.unit_price || 0)).toFixed(2))) })),
+      spare_parts: row.spare_parts.filter((p) => p.spare_no.trim() || p.description.trim()).map((p) => {
+        if (!Number.isFinite(Number(p.qty)) || Number(p.qty) <= 0) throw new Error("Enter a positive quantity for each spare part");
+        return { ...p, unit_price: "", total: "" };
+      }),
       spare_parts_quotation_status: quotationStatus,
       spare_parts_quotation_id: quotationStatus === "approved" ? quotationId : null,
       spare_parts_quotation_reference: quotationStatus === "approved" ? quoteResult?.data?.reference ?? "" : "",
       status,
       arrival_at: row.arrival_at || null,
-      technician_sign_date: row.technician_sign_date || null,
-      client_sign_date: row.client_sign_date || null,
+      technician_sign_date: row.technician_sign_date || calloutSignatureDate(),
+      client_sign_date: row.client_sign_date || calloutSignatureDate(),
       date_completed: status === "closed" ? new Date().toISOString().slice(0, 10) : null,
     };
     if (id) {
@@ -102,4 +114,15 @@ export const saveCallout = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return ins;
+  });
+
+export const deleteCallout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const roles = await myRoles(context.supabase, context.userId);
+    if (!canDeleteCalloutHistory(roles, "closed")) throw new Error("Only Project Managers can delete call-out history");
+    const { data: removed, error } = await context.supabase.from("callout_reports").delete().eq("id", data.id).eq("status", "closed").select("id").single();
+    if (error || !removed) throw new Error(error?.message ?? "Only closed call-outs can be deleted");
+    return { deleted: removed.id };
   });

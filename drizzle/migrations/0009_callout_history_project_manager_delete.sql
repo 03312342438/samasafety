@@ -1,0 +1,1 @@
+ALTER POLICY "callouts delete" ON public.callout_reports TO authenticated USING (status = 'closed' AND EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'project_manager') AND NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'maintenance'));
