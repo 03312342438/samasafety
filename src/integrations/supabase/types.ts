@@ -381,6 +381,9 @@ export type Database = {
           reported_problem: string
           site_location: string
           spare_parts: Json
+          spare_parts_quotation_id: string | null
+          spare_parts_quotation_reference: string
+          spare_parts_quotation_status: string
           status: string
           system_type: string
           technician_sign_date: string
@@ -412,6 +415,9 @@ export type Database = {
           reported_problem?: string
           site_location?: string
           spare_parts?: Json
+          spare_parts_quotation_id?: string | null
+          spare_parts_quotation_reference?: string
+          spare_parts_quotation_status?: string
           status?: string
           system_type?: string
           technician_sign_date?: string
@@ -443,6 +449,9 @@ export type Database = {
           reported_problem?: string
           site_location?: string
           spare_parts?: Json
+          spare_parts_quotation_id?: string | null
+          spare_parts_quotation_reference?: string
+          spare_parts_quotation_status?: string
           status?: string
           system_type?: string
           technician_sign_date?: string
@@ -450,7 +459,15 @@ export type Database = {
           technician_signature?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "callout_reports_spare_parts_quotation_id_fkey"
+            columns: ["spare_parts_quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_notes: {
         Row: {
