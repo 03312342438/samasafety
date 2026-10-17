@@ -43,7 +43,7 @@ const empty = (performedBy: string): CalloutInput => ({
   client_sign_name: "", status: "pending",
   technician_sign_name: performedBy, technician_sign_date: "", client_sign_date: "",
   technician_signature: "", client_signature: "",
-  spare_parts: [emptyCalloutPart()], spare_parts_quotation_id: null, finalize_spare_parts: false,
+  spare_parts: [emptyCalloutPart()], spare_parts_quotation_id: null, spare_parts_quotation_number: "", finalize_spare_parts: false,
 });
 
 const STATUS_LABEL: Record<string, string> = {
