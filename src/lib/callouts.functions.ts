@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { calloutQuotationState, hasCalloutParts } from "@/lib/callout-workflow";
 
 const calloutSchema = z.object({
   id: z.string().uuid().optional(),
@@ -26,8 +27,21 @@ const calloutSchema = z.object({
   technician_signature: z.string().max(500000).default(""),
   client_signature: z.string().max(500000).default(""),
   status: z.enum(["pending", "follow_up", "closed"]),
+  spare_parts: z.array(z.object({ spare_no: z.string().max(300), description: z.string().max(500), qty: z.string().max(40), unit_price: z.string().max(40), total: z.string().max(40) })).max(30).default([]),
+  spare_parts_quotation_id: z.string().uuid().nullable().optional(),
+  finalize_spare_parts: z.boolean().default(false),
 });
 export type CalloutInput = z.infer<typeof calloutSchema>;
+
+export const listApprovedCalloutQuotations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.from("quotations")
+      .select("id, reference, title, site_location, customers(name), projects(name)")
+      .in("status", ["approved", "accepted", "won"]).order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 
 export const listCallouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -46,13 +60,29 @@ export const saveCallout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => calloutSchema.parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
-    const { id, ...row } = data;
+    const { id, finalize_spare_parts, ...row } = data;
+    const previousResult = id ? await sb.from("callout_reports").select("*").eq("id", id).single() : null;
+    if (previousResult?.error) throw new Error(previousResult.error.message);
+    const previous = previousResult?.data;
+    const quotationId = row.spare_parts_quotation_id || previous?.spare_parts_quotation_id || null;
+    const quoteResult = quotationId ? await context.supabase.from("quotations").select("id, reference, status").eq("id", quotationId).single() : null;
+    if (quoteResult?.error) throw new Error(quoteResult.error.message);
+    const quotationStatus = calloutQuotationState({
+      hasParts: hasCalloutParts(row.spare_parts), previous: previous?.spare_parts_quotation_status,
+      finalize: finalize_spare_parts, quotationApproved: ["approved", "accepted", "won"].includes(quoteResult?.data?.status ?? ""), hasSavedReport: Boolean(id),
+    });
+    const status = quotationStatus === "requested" ? "follow_up" : row.status;
     const payload: any = {
       ...row,
+      spare_parts: row.spare_parts.filter((p) => p.spare_no.trim() || p.description.trim()).map((p) => ({ ...p, total: String(Number((Number(p.qty || 0) * Number(p.unit_price || 0)).toFixed(2))) })),
+      spare_parts_quotation_status: quotationStatus,
+      spare_parts_quotation_id: quotationStatus === "approved" ? quotationId : null,
+      spare_parts_quotation_reference: quotationStatus === "approved" ? quoteResult?.data?.reference ?? "" : "",
+      status,
       arrival_at: row.arrival_at || null,
       technician_sign_date: row.technician_sign_date || null,
       client_sign_date: row.client_sign_date || null,
-      date_completed: row.status === "closed" ? new Date().toISOString().slice(0, 10) : null,
+      date_completed: status === "closed" ? new Date().toISOString().slice(0, 10) : null,
     };
     if (id) {
       const { data: updated, error } = await sb.from("callout_reports").update(payload).eq("id", id).select("*").single();
