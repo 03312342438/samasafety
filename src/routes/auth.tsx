@@ -16,6 +16,16 @@ import { toast } from "sonner";
 import { Loader2, ShieldPlus } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Sign In | SAMA Safety & Security" },
+      { name: "description", content: "Sign in or request an approved team account for the SAMA Safety & Security portal." },
+      { property: "og:title", content: "Sign In | SAMA Safety & Security" },
+      { property: "og:description", content: "Secure team access to the SAMA Safety & Security portal." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getUser();

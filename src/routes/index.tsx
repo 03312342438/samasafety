@@ -14,6 +14,8 @@ export const Route = createFileRoute("/")({
           "Sama Portal — the official platform for Sama Safety & Security teams to manage sales, projects, inventory, accounts, approvals and maintenance reports.",
       },
       { property: "og:title", content: "Sama Safety & Security — Sama Portal" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Manage sales, projects, inventory, accounts, approvals and maintenance reports in one place.",
