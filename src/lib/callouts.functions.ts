@@ -66,19 +66,11 @@ export const saveCallout = createServerFn({ method: "POST" })
     const previousResult = id ? await sb.from("callout_reports").select("*").eq("id", id).single() : null;
     if (previousResult?.error) throw new Error(previousResult.error.message);
     const previous = previousResult?.data;
-    let quotationId = previous?.spare_parts_quotation_id || null;
-    if (finalize_spare_parts) {
-      const number = spare_parts_quotation_number.trim();
-      if (!number) throw new Error("Enter an approved spare parts quotation number");
-      const { data: quotes, error } = await context.supabase.from("quotations").select("id, reference, status").ilike("reference", number.replace(/[\\%_]/g, "\\$&"));
-      if (error) throw new Error(error.message);
-      quotationId = approvedCalloutQuotation(quotes ?? [], number).id;
-    }
-    const quoteResult = quotationId ? await context.supabase.from("quotations").select("id, reference, status").eq("id", quotationId).single() : null;
-    if (quoteResult?.error) throw new Error(quoteResult.error.message);
+    const number = spare_parts_quotation_number.trim();
+    if (finalize_spare_parts && !number) throw new Error("Enter the spare parts quotation number");
     const quotationStatus = calloutQuotationState({
       hasParts: hasCalloutParts(row.spare_parts), previous: previous?.spare_parts_quotation_status,
-      finalize: finalize_spare_parts, quotationApproved: ["approved", "accepted", "won"].includes(quoteResult?.data?.status ?? ""), hasSavedReport: Boolean(id),
+      finalize: finalize_spare_parts, quotationApproved: Boolean(number), hasSavedReport: Boolean(id),
     });
     const status = quotationStatus === "requested" ? "follow_up" : row.status;
     const payload: any = {
@@ -88,8 +80,8 @@ export const saveCallout = createServerFn({ method: "POST" })
         return { ...p, unit_price: "", total: "" };
       }),
       spare_parts_quotation_status: quotationStatus,
-      spare_parts_quotation_id: quotationStatus === "approved" ? quotationId : null,
-      spare_parts_quotation_reference: quotationStatus === "approved" ? quoteResult?.data?.reference ?? "" : "",
+      spare_parts_quotation_id: null,
+      spare_parts_quotation_reference: quotationStatus === "approved" ? (finalize_spare_parts ? number : previous?.spare_parts_quotation_reference ?? "") : "",
       status,
       arrival_at: row.arrival_at || null,
       technician_sign_date: row.technician_sign_date || calloutSignatureDate(),

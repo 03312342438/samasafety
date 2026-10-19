@@ -71,6 +71,13 @@
       "when": 1792222888537,
       "tag": "0009_callout_history_project_manager_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792418127883,
+      "tag": "0010_callout_free_text_quotation_number",
+      "breakpoints": true
     }
   ]
 }
