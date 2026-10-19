@@ -1,4 +1,4 @@
-import { forwardRef, type CSSProperties, type ReactNode } from "react";
+import { forwardRef, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import samaLogo from "@/assets/sama-logo.png.asset.json";
 import { devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
@@ -75,7 +75,9 @@ function RuledSection({
         borderTop: 0,
         minHeight,
         padding: "5px 6px",
-        flex: `${grow} 1 ${minHeight}px`,
+        boxSizing: "border-box",
+        overflowWrap: "anywhere",
+        flex: `${grow} 0 auto`,
       }}
     >
       <Label>{title}</Label>
@@ -87,6 +89,23 @@ function RuledSection({
 type Props = { data: ReportData };
 
 export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentScale, setContentScale] = useState(1);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const fitToPage = () => {
+      // Measure the unscaled layout: sections keep their full text height.
+      // Only oversized reports are scaled as a whole, never squeezed row by row.
+      setContentScale(Math.min(1, 1095 / Math.max(1095, content.scrollHeight)));
+    };
+    fitToPage();
+    const observer = new ResizeObserver(fitToPage);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [data]);
+
   const systemTypes = data.system_types?.length
     ? data.system_types
     : data.system_type
@@ -119,6 +138,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
         background: WHITE,
         color: INK,
         fontFamily: "Arial, Helvetica, sans-serif",
+        lineHeight: 1.35,
         padding: "28px 36px 0",
         boxSizing: "border-box",
         display: "flex",
@@ -126,6 +146,19 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
         overflow: "hidden",
       }}
     >
+      <div
+        ref={contentRef}
+        data-pdf-content="true"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 1095,
+          flexShrink: 0,
+          overflowWrap: "anywhere",
+          transform: `scale(${contentScale})`,
+          transformOrigin: "top center",
+        }}
+      >
       <section data-pdf-section="true">
         <header style={{ display: "grid", gridTemplateColumns: "190px 1fr 210px", alignItems: "center", gap: 14 }}>
           <img src={samaLogo.url} alt="Sama Safety & Security" style={{ width: 166, height: "auto" }} />
@@ -311,6 +344,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
           <br />
           CR No. 67898-1 · sama@samasafety.net · www.samasafety.net
         </div>
+      </div>
       </div>
     </div>
   );
