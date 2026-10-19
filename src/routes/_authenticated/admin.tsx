@@ -36,6 +36,16 @@ import {
 } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  head: () => ({
+    meta: [
+      { title: "Management Administration | SAMA Safety & Security" },
+      { name: "description", content: "Manage SAMA team approvals, report recipients and maintenance administration." },
+      { property: "og:title", content: "Management Administration | SAMA Safety & Security" },
+      { property: "og:description", content: "SAMA team approvals, report recipients and maintenance administration." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AdminPage,
 });
 
