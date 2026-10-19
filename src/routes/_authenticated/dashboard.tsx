@@ -1,3 +1,4 @@
+import { downloadPendingExcel } from "@/lib/export-pending-excel";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -275,7 +276,12 @@ function Dashboard() {
             />
             <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
             <div>
-              <h2 className="mb-3 text-base font-semibold">Pending ({pending.length})</h2>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-semibold">Pending ({pending.length})</h2>
+                <Button size="sm" variant="outline" disabled={!pending.length} onClick={() => downloadPendingExcel(pending).catch(() => toast.error("Could not create the Excel file"))}>
+                  <Download className="mr-1 h-4 w-4" /> Download Excel
+                </Button>
+              </div>
               <MaintenanceTaskList tasks={pending} onToggle={toggle} />
             </div>
 
