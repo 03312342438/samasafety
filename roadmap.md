@@ -1,5 +1,7 @@
 # Active work
 
+- [ ] Correct overlapping maintenance report text and verify the one-page PDF.
+
 - [ ] Remove call-out prices, default signature dates, accept an approved quotation number, and permit history deletion only for Project Managers.
 - [ ] Add text search to Maintenance Contracts and verify these changes.
 
