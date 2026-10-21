@@ -100,6 +100,7 @@ function Dashboard() {
       await setStatus({ data: { id, status } });
       qc.invalidateQueries({ queryKey: ["my-maintenance-tasks"] });
       qc.invalidateQueries({ queryKey: ["all-maintenance-tasks"] });
+      qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update");
     }
