@@ -1,5 +1,6 @@
 # Active work
 
+- [x] Marking a pending visit done now counts it on the contract (done/remaining) and reschedules the next visit from the completion date; tests pass, build OK.
 - [x] Correct overlapping maintenance report text; visually verified one-page PDFs with long remarks and eight systems. Saved-history verification requires the user's signed-in preview.
 
 - [ ] Remove call-out prices, default signature dates, accept an approved quotation number, and permit history deletion only for Project Managers.
