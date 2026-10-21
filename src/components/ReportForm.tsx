@@ -490,7 +490,7 @@ export function ReportForm({
                               type="button"
                               size="sm"
                               variant={form.devices[k] === s ? (s === "ok" ? "default" : "destructive") : "outline"}
-                              onClick={() => setDevice(k, s)}
+                              onClick={() => setDevice(k, form.devices[k] === s ? "" : s)}
                             >
                               {s === "ok" ? "OK" : "Faulty"}
                             </Button>

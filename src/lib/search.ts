@@ -31,6 +31,7 @@ export const REPORT_SEARCH_FIELDS = [
 export const TASK_SEARCH_FIELDS = [
   "client_name",
   "contract",
+  "contract_no",
   "order_no",
   "project",
   "site_location",
