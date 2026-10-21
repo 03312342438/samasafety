@@ -22,6 +22,7 @@ import {
   type SystemType,
 } from "@/lib/maintenance-contracts";
 import { FilterTable, type Column } from "@/components/FilterTable";
+import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +90,25 @@ export function MaintenanceContracts() {
     queryFn: () => fetchContracts(),
   });
   const rows = ((data as Row[]) ?? []) as Row[];
+
+  // Free-text search across every contract detail.
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visibleRows = q
+    ? rows.filter((r) =>
+        [
+          r.contract_no,
+          r.customer_name,
+          r.project_name,
+          r.site_location,
+          r.system_type,
+          r.status,
+          r.notes,
+          r.start_date,
+          r.end_date,
+        ].some((v) => String(v ?? "").toLowerCase().includes(q)),
+      )
+    : rows;
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm());
