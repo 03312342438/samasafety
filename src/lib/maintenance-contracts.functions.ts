@@ -31,21 +31,31 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     .map((r) => String(r.date_completed || r.report_date || r.created_at || "").slice(0, 10))
     .filter(Boolean)
     .sort();
-  const { total, done } = contractVisitCounts(c, dates.length);
-  const lastDone =
-    [dates[dates.length - 1], c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
     .from("maintenance_tasks")
-    .select("id, sequence, status, due_date")
+    .select("id, sequence, status, due_date, completed_at")
     .eq("contract_id", contractId);
   const rowsBySeq = new Map<number, any>();
   for (const t of existing ?? []) rowsBySeq.set(t.sequence, t);
 
-  // Drop pending rows that fall outside the contract's visit plan.
+  // Visits marked done in "Maintenance Pending" count on the contract just
+  // like filed reports, and the next visit follows the actual done date.
+  const completedTasks = (existing ?? []).filter((t: any) => t.status === "completed");
+  const taskDates = completedTasks
+    .map((t: any) => String(t.completed_at || "").slice(0, 10))
+    .filter(Boolean);
+  const { total, done } = contractVisitCounts(c, dates.length + completedTasks.length);
+  const reportDone = contractVisitCounts(c, dates.length).done;
+  const lastDone =
+    [...dates, ...taskDates, c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
+
+  // Drop pending rows that fall outside the contract's visit plan. Visits
+  // already covered by a filed report are removed; earlier visits that were
+  // only skipped stay pending (carried over) until done or reported.
   const stale = (existing ?? [])
-    .filter((t: any) => t.status === "pending" && (t.sequence > total || t.sequence <= done))
+    .filter((t: any) => t.status === "pending" && (t.sequence > total || t.sequence <= reportDone))
     .map((t: any) => t.id);
   if (stale.length)
     await supabase.from("maintenance_tasks").delete().in("id", stale);
