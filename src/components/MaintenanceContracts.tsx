@@ -506,7 +506,8 @@ export function MaintenanceContracts() {
               </Button>
             </div>
           )}
-        />
+          />
+        </>
       )}
     </div>
   );
