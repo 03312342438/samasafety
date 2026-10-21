@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
+import { syncContractTasks } from "@/lib/maintenance-contracts.functions";
 
 // ---------- Maintenance contracts ----------
 // A maintenance contract is a maintenance job number: it carries the type of
@@ -192,6 +193,11 @@ export const setMaintenanceTaskStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const { data: task } = await supabase
+      .from("maintenance_tasks")
+      .select("id, contract_id")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await supabase
       .from("maintenance_tasks")
       .update({
@@ -200,6 +206,15 @@ export const setMaintenanceTaskStatus = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    // A contract visit marked done counts on the contract and the remaining
+    // visits are rescheduled from the actual completion date.
+    if (task?.contract_id) {
+      try {
+        await syncContractTasks(supabase, task.contract_id);
+      } catch {
+        /* the task update already succeeded; the next list load resyncs */
+      }
+    }
     return { ok: true };
   });
 
