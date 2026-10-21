@@ -469,10 +469,20 @@ export function MaintenanceContracts() {
           </CardContent>
         </Card>
       ) : (
-        <FilterTable
-          columns={columns}
-          rows={rows}
-          empty="No maintenance contracts yet. Use “Add contract” to build the list."
+        <>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search contracts by number, customer, project, site, system, status…"
+          />
+          <FilterTable
+            columns={columns}
+            rows={visibleRows}
+            empty={
+              q
+                ? `No contracts match “${search}”.`
+                : "No maintenance contracts yet. Use “Add contract” to build the list."
+            }
           actions={(r) => (
             <div className="flex justify-end gap-1">
               <Button
