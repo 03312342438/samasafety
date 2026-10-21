@@ -41,4 +41,12 @@ describe("visit counts and next dates", () => {
   it("FF last visit 18 May with no counted visits -> next 18 Nov", () => {
     expect(scheduledVisitDate("2026-06-01", 6, 1, 0, "2026-05-18")).toBe("2026-11-18");
   });
+  it("a visit marked done today counts on the contract and the next visit follows today", () => {
+    const c = { start_date: "2026-01-01", end_date: "2027-01-01", interval_months: 3 };
+    // one filed report plus one visit marked done in Maintenance Pending
+    expect(contractVisitCounts(c, 2)).toEqual({ total: 4, done: 2, remaining: 2 });
+    expect(scheduledVisitDate(c.start_date, c.interval_months, 3, 2, "2026-10-21")).toBe(
+      "2027-01-21",
+    );
+  });
 });

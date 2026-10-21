@@ -31,21 +31,31 @@ export async function syncContractTasks(supabase: any, contractId: string) {
     .map((r) => String(r.date_completed || r.report_date || r.created_at || "").slice(0, 10))
     .filter(Boolean)
     .sort();
-  const { total, done } = contractVisitCounts(c, dates.length);
-  const lastDone =
-    [dates[dates.length - 1], c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
 
   // Existing rows for this contract (any status) so completed history is kept.
   const { data: existing } = await supabase
     .from("maintenance_tasks")
-    .select("id, sequence, status, due_date")
+    .select("id, sequence, status, due_date, completed_at")
     .eq("contract_id", contractId);
   const rowsBySeq = new Map<number, any>();
   for (const t of existing ?? []) rowsBySeq.set(t.sequence, t);
 
-  // Drop pending rows that fall outside the contract's visit plan.
+  // Visits marked done in "Maintenance Pending" count on the contract just
+  // like filed reports, and the next visit follows the actual done date.
+  const completedTasks = (existing ?? []).filter((t: any) => t.status === "completed");
+  const taskDates = completedTasks
+    .map((t: any) => String(t.completed_at || "").slice(0, 10))
+    .filter(Boolean);
+  const { total, done } = contractVisitCounts(c, dates.length + completedTasks.length);
+  const reportDone = contractVisitCounts(c, dates.length).done;
+  const lastDone =
+    [...dates, ...taskDates, c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
+
+  // Drop pending rows that fall outside the contract's visit plan. Visits
+  // already covered by a filed report are removed; earlier visits that were
+  // only skipped stay pending (carried over) until done or reported.
   const stale = (existing ?? [])
-    .filter((t: any) => t.status === "pending" && (t.sequence > total || t.sequence <= done))
+    .filter((t: any) => t.status === "pending" && (t.sequence > total || t.sequence <= reportDone))
     .map((t: any) => t.id);
   if (stale.length)
     await supabase.from("maintenance_tasks").delete().in("id", stale);
@@ -268,11 +278,27 @@ export const listContracts = createServerFn({ method: "GET" })
     }
     for (const k of Object.keys(visitsByMsr)) visitsByMsr[k].sort();
 
+    // Visits marked done in "Maintenance Pending" count on the contract too.
+    const { data: doneTasks } = await supabase
+      .from("maintenance_tasks")
+      .select("contract_id, completed_at")
+      .eq("status", "completed")
+      .not("contract_id", "is", null);
+    const doneByContract: Record<string, { count: number; last: string }> = {};
+    for (const t of doneTasks ?? []) {
+      const e = (doneByContract[t.contract_id] ??= { count: 0, last: "" });
+      e.count += 1;
+      const d = String(t.completed_at ?? "").slice(0, 10);
+      if (d > e.last) e.last = d;
+    }
+
     return rows.map((c: any) => {
       const visits = visitsByMsr[c.id] ?? [];
+      const taskDone = doneByContract[c.id] ?? { count: 0, last: "" };
       const prior = Number(c.prior_visits_done) || 0;
-      const { total, done, remaining } = contractVisitCounts(c, visits.length);
-      const lastVisit = [visits.at(-1), c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
+      const { total, done, remaining } = contractVisitCounts(c, visits.length + taskDone.count);
+      const lastVisit =
+        [visits.at(-1), taskDone.last, c.prior_last_visit].filter(Boolean).sort().at(-1) || "";
       // The first visit falls on the contract start date itself.
       const upcoming =
         remaining > 0 && c.start_date
