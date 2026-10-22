@@ -456,7 +456,7 @@ function StatusFilter({
   for (const t of tasks) labels.add(visitStatusLabel(t));
   const options: [string, string][] = [
     ["", "All statuses"],
-    ...[...labels].sort((a, b) => a.localeCompare(b)),
+    ...[...labels].sort((a, b) => a.localeCompare(b)).map((l): [string, string] => [l, l]),
   ];
   return (
     <div className="flex items-center gap-2">
