@@ -121,31 +121,85 @@ export function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+export type VisitStatusInput = {
+  status?: string | null;
+  due_date?: string | null;
+  contract_end_date?: string | null;
+  contract_remaining?: number | null;
+};
+
+/** True when the visit's contract has already ended. */
+export function isExpiredContract(
+  t: VisitStatusInput,
+  today = new Date().toISOString().slice(0, 10),
+): boolean {
+  return Boolean(t.contract_end_date) && String(t.contract_end_date).slice(0, 10) < today;
+}
+
+/**
+ * Label of a pending visit whose contract has already ended: "Expired", or
+ * "Expired – N Visits Remaining" while contracted visits are still outstanding.
+ * Empty when the contract is still running (or there is no contract).
+ */
+export function expiredVisitLabel(
+  t: VisitStatusInput,
+  today = new Date().toISOString().slice(0, 10),
+): string {
+  if (!isExpiredContract(t, today)) return "";
+  const remaining = t.contract_remaining ?? 0;
+  return remaining > 0 ? `Expired – ${remaining} Visit${remaining === 1 ? "" : "s"} Remaining` : "Expired";
+}
+
 /**
  * Status label of a scheduled visit in Maintenance Pending: Completed,
- * Overdue, Due soon, Upcoming, or — when its contract has already expired but
- * visits are still outstanding — "Expired – N Visits Remaining".
+ * Expired (or "Expired – N Visits Remaining" when visits are still outstanding),
+ * Overdue, Due soon or Upcoming.
  */
 export function visitStatusLabel(
-  t: {
-    status?: string | null;
-    due_date?: string | null;
-    contract_end_date?: string | null;
-    contract_remaining?: number | null;
-  },
+  t: VisitStatusInput,
   today = new Date().toISOString().slice(0, 10),
 ): string {
   if (t.status === "completed") return "Completed";
-  const remaining = t.contract_remaining ?? 0;
-  if (t.contract_end_date && String(t.contract_end_date).slice(0, 10) < today && remaining > 0) {
-    return `Expired – ${remaining} Visit${remaining === 1 ? "" : "s"} Remaining`;
-  }
+  const expired = expiredVisitLabel(t, today);
+  if (expired) return expired;
   if (!t.due_date) return "Upcoming";
   if (t.due_date < today) return "Overdue";
   const days = Math.round(
     (new Date(`${t.due_date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000,
   );
   return days <= 7 ? "Due soon" : "Upcoming";
+}
+
+/** Statuses the Maintenance Pending status filter always offers. */
+export const VISIT_FILTER_STATUSES = ["Expired", "Overdue", "Due soon", "Upcoming", "Completed"] as const;
+
+/**
+ * Status used by the Maintenance Pending status filter. Every visit of an ended
+ * contract is "Expired", whether or not visits are still outstanding, so the
+ * filter has a single Expired entry instead of one per remaining count.
+ */
+export function visitFilterStatus(
+  t: VisitStatusInput,
+  today = new Date().toISOString().slice(0, 10),
+): string {
+  if (t.status === "completed") return "Completed";
+  if (isExpiredContract(t, today)) return "Expired";
+  return visitStatusLabel(t, today);
+}
+
+/** Dropdown options for the status filter: "All statuses" plus every status. */
+export function visitStatusOptions(
+  tasks: VisitStatusInput[],
+  today = new Date().toISOString().slice(0, 10),
+): [string, string][] {
+  const present = new Set(tasks.map((t) => visitFilterStatus(t, today)));
+  const extras = [...present]
+    .filter((s) => !(VISIT_FILTER_STATUSES as readonly string[]).includes(s))
+    .sort();
+  return [
+    ["", "All statuses"],
+    ...[...VISIT_FILTER_STATUSES, ...extras].map((s): [string, string] => [s, s]),
+  ];
 }
 
 export function prettyDate(d?: string | null): string {
