@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, MapPin, RotateCcw, Trash2 } from "lucide-react";
 import { SearchSelect } from "@/components/SearchSelect";
+import { visitStatusLabel } from "@/lib/maintenance-contracts";
 
 /**
  * Split pending visits: a visit is "carried over" once a later visit of the
@@ -95,7 +96,9 @@ export function MaintenanceTaskList({
   return (
     <div className="space-y-3">
       {tasks.map((t) => {
-        const overdue = t.status === "pending" && t.due_date < today;
+        const expiredLabel = t.status === "pending" ? visitStatusLabel(t) : "";
+        const expired = expiredLabel.startsWith("Expired – ");
+        const overdue = !expired && t.status === "pending" && t.due_date < today;
         const dueSoon =
           t.status === "pending" && t.due_date >= today && t.due_date <= soonCutoff;
         return (
@@ -125,6 +128,11 @@ export function MaintenanceTaskList({
                   {showEmployee && ` · Pending with ${t.employee_name ?? "—"}`}
                 </p>
                 <div className="mt-1 flex gap-2">
+                  {expired && (
+                    <span className="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                      {expiredLabel}
+                    </span>
+                  )}
                   {overdue && (
                     <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                       Overdue

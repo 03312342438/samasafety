@@ -1,6 +1,14 @@
+import { visitStatusLabel } from "./maintenance-contracts";
+
 const NAVY = "FF103A52";
 
-export type PendingRow = { due_date: string; status?: string; [k: string]: any };
+export type PendingRow = {
+  due_date: string;
+  status?: string;
+  contract_end_date?: string | null;
+  contract_remaining?: number | null;
+  [k: string]: any;
+};
 
 /** Priority rank: 0 overdue, 1 due within 7 days, 2 due within 30 days, 3 later. */
 export function pendingPriority(due: string, today = new Date().toISOString().slice(0, 10)) {
@@ -26,7 +34,7 @@ export async function downloadPendingExcel(rows: PendingRow[]) {
   wb.creator = "Sama Safety & Security";
   const ws = wb.addWorksheet("Maintenance Pending", { views: [{ state: "frozen", ySplit: 3 }], pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
   const cols = [
-    ["#", 6], ["Priority", 16], ["Due Date", 15], ["Days", 9], ["System", 10], ["Client", 28], ["Project", 26], ["Site / Location", 26], ["Contract No.", 16], ["Visit #", 9], ["Assigned To", 20],
+    ["#", 6], ["Priority", 16], ["Status", 26], ["Due Date", 15], ["Days", 9], ["System", 10], ["Client", 28], ["Project", 26], ["Site / Location", 26], ["Contract No.", 16], ["Visit #", 9], ["Assigned To", 20],
   ] as const;
   ws.columns = cols.map(([, w]) => ({ width: w }));
   ws.mergeCells(1, 1, 1, cols.length);
@@ -54,7 +62,7 @@ export async function downloadPendingExcel(rows: PendingRow[]) {
   sorted.forEach((r, i) => {
     const p = pendingPriority(r.due_date, today);
     const days = Math.round((new Date(`${r.due_date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000);
-    const row = ws.addRow([i + 1, p.label, fmt(r.due_date), days, r.system_type ?? "", r.client_name ?? "", r.project ?? "", r.site_location ?? "", r.contract_no ?? "", r.sequence ?? "", r.employee_name ?? ""]);
+    const row = ws.addRow([i + 1, p.label, visitStatusLabel(r), fmt(r.due_date), days, r.system_type ?? "", r.client_name ?? "", r.project ?? "", r.site_location ?? "", r.contract_no ?? "", r.sequence ?? "", r.employee_name ?? ""]);
     row.height = 20;
     row.eachCell((c, n) => {
       c.font = { name: "Calibri", size: 10, color: { argb: n === 2 ? tones[p.rank][1] : "FF1F2937" }, bold: n === 2 };
