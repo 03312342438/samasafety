@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countVisits, contractStatus, scheduledVisitDate, contractVisitCounts } from "./maintenance-contracts";
+import { countVisits, contractStatus, scheduledVisitDate, contractVisitCounts, visitStatusLabel } from "./maintenance-contracts";
 
 describe("dynamic maintenance scheduling", () => {
   it("uses the contract schedule before any visit is done", () => {
@@ -48,5 +48,25 @@ describe("visit counts and next dates", () => {
     expect(scheduledVisitDate(c.start_date, c.interval_months, 3, 2, "2026-10-21")).toBe(
       "2027-01-21",
     );
+  });
+});
+
+describe("pending visit status labels", () => {
+  it("a completed visit is labelled Completed", () => {
+    expect(visitStatusLabel({ status: "completed", due_date: "2020-01-01" }, "2026-10-22")).toBe("Completed");
+  });
+  it("an expired contract with visits left labels the visit with the remaining count", () => {
+    expect(
+      visitStatusLabel({ status: "pending", due_date: "2020-06-01", contract_end_date: "2020-01-01", contract_remaining: 3 }, "2026-10-22"),
+    ).toBe("Expired – 3 Visits Remaining");
+  });
+  it("an expired contract with no remaining visits falls back to the due date", () => {
+    expect(
+      visitStatusLabel({ status: "pending", due_date: "2020-06-01", contract_end_date: "2020-01-01", contract_remaining: 0 }, "2026-10-22"),
+    ).toBe("Overdue");
+  });
+  it("due dates within the next week are Due soon and later ones Upcoming", () => {
+    expect(visitStatusLabel({ status: "pending", due_date: "2026-10-25" }, "2026-10-22")).toBe("Due soon");
+    expect(visitStatusLabel({ status: "pending", due_date: "2026-12-01" }, "2026-10-22")).toBe("Upcoming");
   });
 });

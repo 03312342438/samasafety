@@ -1,5 +1,6 @@
 # Active work
 
+- [x] Status filter in Maintenance Pending (Overdue, Due soon, Upcoming, Completed, Expired – N Visits Remaining) plus a Status column in the pending Excel; tests pass, build OK.
 - [x] Report OK/Faulty buttons toggle off when clicked again; keyword search added to Maintenance Contracts; Maintenance Pending search now matches contract numbers; build OK.
 - [x] Marking a pending visit done now counts it on the contract (done/remaining) and reschedules the next visit from the completion date; tests pass, build OK.
 - [x] Correct overlapping maintenance report text; visually verified one-page PDFs with long remarks and eight systems. Saved-history verification requires the user's signed-in preview.

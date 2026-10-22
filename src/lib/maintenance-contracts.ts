@@ -121,6 +121,33 @@ export function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Status label of a scheduled visit in Maintenance Pending: Completed,
+ * Overdue, Due soon, Upcoming, or — when its contract has already expired but
+ * visits are still outstanding — "Expired – N Visits Remaining".
+ */
+export function visitStatusLabel(
+  t: {
+    status?: string | null;
+    due_date?: string | null;
+    contract_end_date?: string | null;
+    contract_remaining?: number | null;
+  },
+  today = new Date().toISOString().slice(0, 10),
+): string {
+  if (t.status === "completed") return "Completed";
+  const remaining = t.contract_remaining ?? 0;
+  if (t.contract_end_date && String(t.contract_end_date).slice(0, 10) < today && remaining > 0) {
+    return `Expired – ${remaining} Visit${remaining === 1 ? "" : "s"} Remaining`;
+  }
+  if (!t.due_date) return "Upcoming";
+  if (t.due_date < today) return "Overdue";
+  const days = Math.round(
+    (new Date(`${t.due_date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000,
+  );
+  return days <= 7 ? "Due soon" : "Upcoming";
+}
+
 export function prettyDate(d?: string | null): string {
   if (!d) return "";
   const dt = new Date(`${String(d).slice(0, 10)}T00:00:00`);

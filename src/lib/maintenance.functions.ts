@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSchedule } from "@/lib/maintenance-schedule";
 import { syncContractTasks } from "@/lib/maintenance-contracts.functions";
+import { contractVisitCounts } from "@/lib/maintenance-contracts";
 
 // ---------- Maintenance contracts ----------
 // A maintenance contract is a maintenance job number: it carries the type of
@@ -138,6 +139,56 @@ async function attachSystemType(supabase: any, tasks: any[]) {
   }));
 }
 
+/**
+ * Attach the contract's end date and remaining-visit count to each visit so
+ * the pending list can label and filter "Expired – N Visits Remaining".
+ */
+async function attachContractStatus(supabase: any, tasks: any[]) {
+  const contractIds = Array.from(
+    new Set(tasks.map((t: any) => t.contract_id).filter(Boolean)),
+  );
+  if (!contractIds.length) return tasks;
+  const { data: contracts } = await supabase
+    .from("maintenance_contracts")
+    .select(
+      "id, end_date, total_visits_override, completed_visits_override, completed_reports_at_override, prior_visits_done",
+    )
+    .in("id", contractIds);
+  const byId = Object.fromEntries((contracts ?? []).map((c: any) => [c.id, c]));
+
+  // Reports filed against each contract count as completed visits.
+  const { data: reps } = await supabase
+    .from("reports")
+    .select("id, contract_id, contract_ids")
+    .or(
+      contractIds.map((id: string) => `contract_id.eq.${id},contract_ids.cs.{${id}}`).join(","),
+    );
+  const reportCounts: Record<string, number> = {};
+  for (const id of contractIds) {
+    reportCounts[id] = (reps ?? []).filter(
+      (r: any) => r.contract_id === id || ((r.contract_ids ?? []) as string[]).includes(id),
+    ).length;
+  }
+
+  // Visits marked done in Maintenance Pending also count on the contract.
+  const doneTaskCounts: Record<string, number> = {};
+  for (const t of tasks) {
+    if (t.contract_id && t.status === "completed") {
+      doneTaskCounts[t.contract_id] = (doneTaskCounts[t.contract_id] ?? 0) + 1;
+    }
+  }
+
+  return tasks.map((t: any) => {
+    const c = t.contract_id ? byId[t.contract_id] : null;
+    if (!c) return { ...t, contract_end_date: "", contract_remaining: null };
+    const { remaining } = contractVisitCounts(
+      c,
+      (reportCounts[t.contract_id] ?? 0) + (doneTaskCounts[t.contract_id] ?? 0),
+    );
+    return { ...t, contract_end_date: c.end_date ?? "", contract_remaining: remaining };
+  });
+}
+
 export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -150,9 +201,12 @@ export const listMyMaintenanceTasks = createServerFn({ method: "GET" })
       .or(`created_by.eq.${userId},contract_id.not.is.null`)
       .order("due_date", { ascending: true });
     if (error) throw new Error(error.message);
-    return await attachSystemType(
+    return await attachContractStatus(
       supabase,
-      await attachReportFields(supabase, data ?? []),
+      await attachSystemType(
+        supabase,
+        await attachReportFields(supabase, data ?? []),
+      ),
     );
   });
 
@@ -180,9 +234,12 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
         (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
       );
     }
-    const enriched = await attachSystemType(
+    const enriched = await attachContractStatus(
       supabase,
-      await attachReportFields(supabase, tasks),
+      await attachSystemType(
+        supabase,
+        await attachReportFields(supabase, tasks),
+      ),
     );
     return enriched.map((t: any) => ({ ...t, employee_name: nameById[t.created_by] ?? "—" }));
   });

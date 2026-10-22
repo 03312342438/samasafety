@@ -11,7 +11,9 @@ import {
   setMaintenanceTaskStatus,
 } from "@/lib/maintenance.functions";
 import { MaintenanceTaskList, SiteFilter, filterBySite, splitCarriedOver } from "@/components/MaintenanceTaskList";
-import { History, PhoneCall, Download } from "lucide-react";
+import { History, PhoneCall, Download, ListFilter } from "lucide-react";
+import { SearchSelect } from "@/components/SearchSelect";
+import { visitStatusLabel } from "@/lib/maintenance-contracts";
 import { CalloutReports } from "@/components/CalloutReports";
 import { MaintenanceContracts } from "@/components/MaintenanceContracts";
 import { ReportForm } from "@/components/ReportForm";
@@ -79,6 +81,7 @@ function Dashboard() {
   const [tab, setTab] = useState(isAdmin ? "overview" : "new");
   const [taskQuery, setTaskQuery] = useState("");
   const [siteFilter, setSiteFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const fallbackTab = isAdmin ? "overview" : canFillReport ? "new" : "history";
   // Management never fills reports: the report form is hidden and the
   // overview is always the landing tab.
@@ -93,6 +96,11 @@ function Dashboard() {
   );
   const { pending, carried } = splitCarriedOver(taskList);
   const done = taskList.filter((t) => t.status === "completed");
+  // Status filter (Overdue, Due soon, Upcoming, Completed,
+  // "Expired – N Visits Remaining", …) narrows the pending/completed lists.
+  const matchStatus = (t: any) => !statusFilter || visitStatusLabel(t) === statusFilter;
+  const pendingShown = pending.filter(matchStatus);
+  const doneShown = done.filter(matchStatus);
 
 
   const toggle = async (id: string, status: "pending" | "completed") => {
@@ -276,22 +284,26 @@ function Dashboard() {
               placeholder="Search client, contract, order no, project, site, MSR no, our ref, date…"
             />
             <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
+            <StatusFilter tasks={allTasks} value={statusFilter} onChange={setStatusFilter} />
             <div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-base font-semibold">Pending ({pending.length})</h2>
-                <Button size="sm" variant="outline" disabled={!pending.length} onClick={() => downloadPendingExcel(pending).catch(() => toast.error("Could not create the Excel file"))}>
+                <h2 className="text-base font-semibold">
+                  Pending ({pendingShown.length}
+                  {statusFilter ? ` of ${pending.length}` : ""})
+                </h2>
+                <Button size="sm" variant="outline" disabled={!pendingShown.length} onClick={() => downloadPendingExcel(pendingShown).catch(() => toast.error("Could not create the Excel file"))}>
                   <Download className="mr-1 h-4 w-4" /> Download Excel
                 </Button>
               </div>
-              <MaintenanceTaskList tasks={pending} onToggle={toggle} />
+              <MaintenanceTaskList tasks={pendingShown} onToggle={toggle} />
             </div>
 
-            {done.length > 0 && (
+            {doneShown.length > 0 && (
               <div>
                 <h2 className="mb-3 text-base font-semibold text-muted-foreground">
-                  Completed ({done.length})
+                  Completed ({doneShown.length})
                 </h2>
-                <MaintenanceTaskList tasks={done} onToggle={toggle} />
+                <MaintenanceTaskList tasks={doneShown} onToggle={toggle} />
               </div>
             )}
           </div>
@@ -426,6 +438,37 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+/** Dropdown listing every visit status present (Overdue, Completed, "Expired – N Visits Remaining", …). */
+function StatusFilter({
+  tasks,
+  value,
+  onChange,
+}: {
+  tasks: any[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const labels = new Set<string>();
+  for (const t of tasks) labels.add(visitStatusLabel(t));
+  const options: [string, string][] = [
+    ["", "All statuses"],
+    ...[...labels].sort((a, b) => a.localeCompare(b)).map((l): [string, string] => [l, l]),
+  ];
+  return (
+    <div className="flex items-center gap-2">
+      <ListFilter className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <SearchSelect
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder="All statuses"
+        searchPlaceholder="Search status…"
+        className="max-w-xs"
+      />
     </div>
   );
 }
