@@ -34,17 +34,17 @@ export async function sendSavedReportEmail(opts: { supabase: any; userId: string
       ${detailRow(opts.kind === "maintenance" ? "M.S.R No." : "Call-out No.", reference)}
       ${detailRow("Performed by", performedBy)}
       ${detailRow("Client email", row.client_email)}
-      ${opts.kind === "callout" ? detailRow("Spare parts quotation", row.spare_parts_quotation_status === "requested" ? "Spare parts quotation is requested" : row.spare_parts_quotation_status === "approved" ? `Approved spare parts quotation${row.spare_parts_quotation_reference ? ` — ${row.spare_parts_quotation_reference}` : ""}` : "") : ""}
+      ${opts.kind === "callout" ? detailRow("Spare parts quotation", row.spare_parts_quotation_status === "requested" ? "Spare parts quotation is requested" : row.spare_parts_quotation_status === "approved" ? `Approved spare parts quotation${row.spare_parts_quotation_reference ? ` - ${row.spare_parts_quotation_reference}` : ""}` : "") : ""}
     </table>`;
   // The inline preview is captured from the very same SAMA sheet as the PDF.
-  const html = `<div style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;max-width:794px;margin:auto"><p style="color:#113f57;font-size:16px;font-weight:bold;margin:0 0 12px">${escape(title)} — ${escape(reference)}</p>${details}<img src="cid:sama-report" alt="${escape(title)} ${escape(reference)} — full report is attached as PDF" width="794" style="display:block;width:100%;max-width:794px;height:auto"></div>`;
+  const html = `<div style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;max-width:794px;margin:auto"><p style="color:#113f57;font-size:16px;font-weight:bold;margin:0 0 12px">${escape(title)} - ${escape(reference)}</p>${details}<img src="cid:sama-report" alt="${escape(title)} ${escape(reference)} - full report is attached as PDF" width="794" style="display:block;width:100%;max-width:794px;height:auto"></div>`;
   const delivered: string[] = [];
   const failed: string[] = [];
   for (const recipient of to) {
     const response = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": key },
-      body: JSON.stringify({ from: `"${name}" <${address}>`, to: [recipient], subject: `${title} — ${reference}`, html, ...(client ? { reply_to: client } : {}), attachments: [{ filename, content: opts.pdf }, { filename: "sama-report.png", content: opts.image, content_id: "sama-report" }] }),
+      body: JSON.stringify({ from: `"${name}" <${address}>`, to: [recipient], subject: `${title} - ${reference}`, html, ...(client ? { reply_to: client } : {}), attachments: [{ filename, content: opts.pdf }, { filename: "sama-report.png", content: opts.image, content_id: "sama-report" }] }),
     });
     if (response.ok) delivered.push(recipient);
     else {

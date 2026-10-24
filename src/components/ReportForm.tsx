@@ -132,7 +132,7 @@ export function ReportForm({
   const stockList = (stock as any[]) ?? [];
   const stockOptions: [string, string][] = stockList.map((s) => [
     s.item_code,
-    `${s.item_code} — ${s.description}${s.unit ? ` (${s.unit})` : ""}`,
+    `${s.item_code} - ${s.description}${s.unit ? ` (${s.unit})` : ""}`,
   ]);
 
   // Picking a contract fills in everything known about the site and schedules
@@ -374,16 +374,16 @@ export function ReportForm({
                 className="h-10"
                 value={contractNo}
                 onChange={pickContract}
-                placeholder="— not linked to a contract —"
+                placeholder="- not linked to a contract -"
                 searchPlaceholder="Search contract no., client, project, location…"
                 options={[
-                  ["", "— not linked to a contract —"],
+                  ["", "- not linked to a contract -"],
                   ...[...groups.entries()].map(([k, list]): [string, string] => {
                     const c = list[0];
                     const sys = list.map((x: any) => x.system_type).join(", ");
                     return [
                       k,
-                      `${c.contract_no || "—"} · ${c.customer_name} — ${c.project_name} — ${c.site_location} [${sys}]`,
+                      `${c.contract_no || "-"} · ${c.customer_name} - ${c.project_name} - ${c.site_location} [${sys}]`,
                     ];
                   }),
                 ]}
@@ -413,7 +413,7 @@ export function ReportForm({
                   <p key={c.id} className="text-xs text-muted-foreground">
                     {c.system_type} · every {c.interval_months} month(s) · visit{" "}
                     {c.completed_count + 1} of {c.total_visits} · due{" "}
-                    {c.upcoming_visit ? prettyDate(c.upcoming_visit) : "—"}
+                    {c.upcoming_visit ? prettyDate(c.upcoming_visit) : "-"}
                   </p>
                 ))}
               </div>
@@ -526,7 +526,7 @@ export function ReportForm({
                   value={p.spare_no}
                   onChange={(code) => pickStockItem(i, code)}
                   options={stockOptions}
-                  placeholder="— select item from store —"
+                  placeholder="- select item from store -"
                   searchPlaceholder="Search store items…"
                 />
               </div>

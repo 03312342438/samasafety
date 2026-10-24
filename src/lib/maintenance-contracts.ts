@@ -4,14 +4,14 @@ export const SYSTEM_TYPES = ["FF", "FA", "CCTV", "GAS", "FS", "FE", "FSCP", "FSC
 export type SystemType = (typeof SYSTEM_TYPES)[number];
 
 export const SYSTEM_LABELS: Record<SystemType, string> = {
-  FF: "FF — Fire Fighting",
-  FA: "FA — Fire Alarm",
+  FF: "FF - Fire Fighting",
+  FA: "FA - Fire Alarm",
   CCTV: "CCTV",
   GAS: "GAS Suppression",
-  FS: "FS — Fire Suppression",
-  FE: "FE — Fire Extinguisher",
-  FSCP: "FSCP — Fire Suppression Control Panel",
-  FSC: "FSC — Fire Suppression Cylinder",
+  FS: "FS - Fire Suppression",
+  FE: "FE - Fire Extinguisher",
+  FSCP: "FSCP - Fire Suppression Control Panel",
+  FSC: "FSC - Fire Suppression Cylinder",
 };
 
 /** Default months between two visits for each system. */

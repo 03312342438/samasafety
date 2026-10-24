@@ -228,7 +228,7 @@ function ApprovalsPage() {
                   : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
-          {/* Management decides on requests — it never raises them.
+          {/* Management decides on requests - it never raises them.
               Store lots are submitted from the Store screen, not here. */}
           {!isAdmin && !isStoreOnly && (
 
@@ -260,10 +260,10 @@ function ApprovalsPage() {
                       value={form.quotation_id}
                       onChange={(e) => setForm({ ...form, quotation_id: e.target.value })}
                     >
-                      <option value="">— select quotation —</option>
+                      <option value="">- select quotation -</option>
                       {((quotations as any[]) ?? []).map((q) => (
                         <option key={q.id} value={q.id}>
-                          {q.reference} — {q.customers?.name ?? "—"} ({money(q.total_amount)} {q.currency})
+                          {q.reference} - {q.customers?.name ?? "-"} ({money(q.total_amount)} {q.currency})
                         </option>
                       ))}
                     </select>
@@ -278,10 +278,10 @@ function ApprovalsPage() {
                       value={form.customer_po_id}
                       onChange={(e) => setForm({ ...form, customer_po_id: e.target.value })}
                     >
-                      <option value="">— select purchase order —</option>
+                      <option value="">- select purchase order -</option>
                       {((pos as any[]) ?? []).map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.po_number || p.reference} — {p.customers?.name ?? "—"} ({money(p.po_value)} {p.currency})
+                          {p.po_number || p.reference} - {p.customers?.name ?? "-"} ({money(p.po_value)} {p.currency})
                         </option>
                       ))}
                     </select>
@@ -295,9 +295,9 @@ function ApprovalsPage() {
                     value={form.project_id}
                     onChange={(e) => setForm({ ...form, project_id: e.target.value })}
                   >
-                    <option value="">— none —</option>
+                    <option value="">- none -</option>
                     {((projects as any[]) ?? []).map((p) => (
-                      <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>
+                      <option key={p.id} value={p.id}>{p.project_number} - {p.name}</option>
                     ))}
                   </select>
                 </div>
@@ -392,7 +392,7 @@ function ApprovalsPage() {
 
                     {a.decision !== "pending" && !isAdmin && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Lock className="h-3 w-3" /> Locked record — only Management can remove it
+                        <Lock className="h-3 w-3" /> Locked record - only Management can remove it
                       </span>
                     )}
                     {a.decision !== "pending" && isAdmin && (
@@ -464,11 +464,11 @@ function ApprovalsPage() {
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-2">
                   <p><span className="text-muted-foreground">Quotation</span><br />{q.reference}</p>
-                  <p><span className="text-muted-foreground">Customer</span><br />{q.customers?.name ?? "—"}</p>
-                  <p><span className="text-muted-foreground">Project</span><br />{project ? `${project.project_number} — ${project.name}` : "—"}</p>
-                  <p><span className="text-muted-foreground">Site</span><br />{q.site_location || project?.site_location || "—"}</p>
-                  <p><span className="text-muted-foreground">Title</span><br />{q.title || "—"}</p>
-                  <p><span className="text-muted-foreground">Preliminary BOM/BOS</span><br />{bom ? `${bom.reference}${bom.title ? ` — ${bom.title}` : ""}` : "—"}</p>
+                  <p><span className="text-muted-foreground">Customer</span><br />{q.customers?.name ?? "-"}</p>
+                  <p><span className="text-muted-foreground">Project</span><br />{project ? `${project.project_number} - ${project.name}` : "-"}</p>
+                  <p><span className="text-muted-foreground">Site</span><br />{q.site_location || project?.site_location || "-"}</p>
+                  <p><span className="text-muted-foreground">Title</span><br />{q.title || "-"}</p>
+                  <p><span className="text-muted-foreground">Preliminary BOM/BOS</span><br />{bom ? `${bom.reference}${bom.title ? ` - ${bom.title}` : ""}` : "-"}</p>
                 </div>
 
                 {bomItems.length > 0 && (
@@ -489,7 +489,7 @@ function ApprovalsPage() {
                         <tbody>
                           {bomItems.map((i: any) => (
                             <tr key={i.id} className="border-t">
-                              <td className="whitespace-nowrap p-2">{i.stock_items?.item_code ?? "—"}</td>
+                              <td className="whitespace-nowrap p-2">{i.stock_items?.item_code ?? "-"}</td>
                               <td className="p-2">{i.description}</td>
                               <td className="p-2">{i.quantity}</td>
                               <td className="p-2">{i.unit}</td>
@@ -548,13 +548,13 @@ function ApprovalsPage() {
           })()}
           {(detail as any)?.kind === "customer_po" && (
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <p><span className="text-muted-foreground">PO number</span><br />{(detail as any).po?.po_number || "—"}</p>
-              <p><span className="text-muted-foreground">PO date</span><br />{(detail as any).po?.po_date || "—"}</p>
-              <p><span className="text-muted-foreground">Customer</span><br />{(detail as any).po?.customers?.name ?? "—"}</p>
+              <p><span className="text-muted-foreground">PO number</span><br />{(detail as any).po?.po_number || "-"}</p>
+              <p><span className="text-muted-foreground">PO date</span><br />{(detail as any).po?.po_date || "-"}</p>
+              <p><span className="text-muted-foreground">Customer</span><br />{(detail as any).po?.customers?.name ?? "-"}</p>
               <p><span className="text-muted-foreground">Value</span><br />{money((detail as any).po?.po_value)} {(detail as any).po?.currency}</p>
-              <p><span className="text-muted-foreground">Against quotation</span><br />{(detail as any).po?.quotations?.reference ?? "—"}</p>
+              <p><span className="text-muted-foreground">Against quotation</span><br />{(detail as any).po?.quotations?.reference ?? "-"}</p>
               <p><span className="text-muted-foreground">Verification</span><br />{humanize((detail as any).po?.verification_status ?? "")}</p>
-              <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{(detail as any).po?.notes || "—"}</p>
+              <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{(detail as any).po?.notes || "-"}</p>
             </div>
           )}
           {(detail as any)?.kind === "stock_lot" && (() => {
@@ -567,11 +567,11 @@ function ApprovalsPage() {
             return (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <p><span className="text-muted-foreground">Lot number</span><br />{lot?.lot_number || "—"}</p>
-                  <p><span className="text-muted-foreground">Received</span><br />{lot?.received_at || "—"}</p>
+                  <p><span className="text-muted-foreground">Lot number</span><br />{lot?.lot_number || "-"}</p>
+                  <p><span className="text-muted-foreground">Received</span><br />{lot?.received_at || "-"}</p>
                   <p><span className="text-muted-foreground">Status</span><br />{humanize(lot?.status ?? "")}</p>
                   <p><span className="text-muted-foreground">Lot value</span><br />{money(total)} {lot?.currency || "BHD"}</p>
-                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{lot?.notes || "—"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{lot?.notes || "-"}</p>
                 </div>
                 <div className="overflow-x-auto rounded-md border">
                   <table className="w-full text-xs">
@@ -590,14 +590,14 @@ function ApprovalsPage() {
                     <tbody>
                       {lines.map((l: any) => (
                         <tr key={l.id} className="border-t">
-                          <td className="p-2">{l.stock_items?.item_code ?? "—"}</td>
+                          <td className="p-2">{l.stock_items?.item_code ?? "-"}</td>
                           <td className="p-2">{l.stock_items?.description ?? l.description}</td>
-                          <td className="p-2">{l.supplier || "—"}</td>
-                          <td className="p-2">{l.store_location || "—"}</td>
+                          <td className="p-2">{l.supplier || "-"}</td>
+                          <td className="p-2">{l.store_location || "-"}</td>
                           <td className="p-2 text-right">{l.quantity} {l.stock_items?.unit ?? ""}</td>
                           <td className="p-2 text-right">{money(l.unit_cost)}</td>
                           <td className="p-2 text-right">{money(Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0))}</td>
-                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "—"}</td>
+                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "-"}</td>
                         </tr>
                       ))}
                       {lines.length === 0 && (
@@ -621,12 +621,12 @@ function ApprovalsPage() {
             return (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <p><span className="text-muted-foreground">Release no.</span><br />{rel?.reference || "—"}</p>
+                  <p><span className="text-muted-foreground">Release no.</span><br />{rel?.reference || "-"}</p>
                   <p><span className="text-muted-foreground">Job number</span><br />No job number</p>
-                  <p><span className="text-muted-foreground">Released to</span><br />{rel?.released_to || "—"}</p>
+                  <p><span className="text-muted-foreground">Released to</span><br />{rel?.released_to || "-"}</p>
                   <p><span className="text-muted-foreground">Status</span><br />{humanize(rel?.status ?? "")}</p>
-                  <p className="col-span-2"><span className="text-muted-foreground">Purpose</span><br />{rel?.purpose || "—"}</p>
-                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{rel?.notes || "—"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Purpose</span><br />{rel?.purpose || "-"}</p>
+                  <p className="col-span-2"><span className="text-muted-foreground">Notes</span><br />{rel?.notes || "-"}</p>
                 </div>
                 <div className="overflow-x-auto rounded-md border">
                   <table className="w-full text-xs">
@@ -643,12 +643,12 @@ function ApprovalsPage() {
                     <tbody>
                       {lines.map((l: any) => (
                         <tr key={l.id} className="border-t">
-                          <td className="p-2">{l.stock_items?.item_code ?? "—"}</td>
+                          <td className="p-2">{l.stock_items?.item_code ?? "-"}</td>
                           <td className="p-2">{l.stock_items?.description ?? l.description}</td>
                           <td className="p-2 text-right">{l.quantity} {l.unit}</td>
                           <td className="p-2 text-right">{money(l.unit_cost)}</td>
                           <td className="p-2 text-right">{money(Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0))}</td>
-                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "—"}</td>
+                          <td className="p-2 text-right">{l.stock_items?.quantity_on_hand ?? "-"}</td>
                         </tr>
                       ))}
                       {lines.length === 0 && (
@@ -667,7 +667,7 @@ function ApprovalsPage() {
 
           {(detail as any)?.kind === "none" && (
             <p className="text-sm text-muted-foreground">
-              {(detail as any)?.approval?.details || "No linked record — see the request details above."}
+              {(detail as any)?.approval?.details || "No linked record - see the request details above."}
             </p>
           )}
         </DialogContent>

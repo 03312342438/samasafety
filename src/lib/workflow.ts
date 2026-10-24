@@ -76,7 +76,7 @@ export function hasDept(roles: string[] | undefined, dept: Department): boolean 
 
 /**
  * Store-only account: has the inventory department and no other real department.
- * The legacy "employee" role is ignored here — it is granted to every sign-up
+ * The legacy "employee" role is ignored here - it is granted to every sign-up
  * and would otherwise make a store keeper look like a technician.
  */
 export function isStoreOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
@@ -86,7 +86,7 @@ export function isStoreOnly(roles: string[] | undefined, isAdmin?: boolean): boo
 
 /**
  * Sales-only account: has the sales department and no other real department.
- * The legacy "employee" role is ignored — it is granted to every sign-up and
+ * The legacy "employee" role is ignored - it is granted to every sign-up and
  * would otherwise make a sales person look like a technician.
  */
 export function isSalesOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
@@ -96,7 +96,7 @@ export function isSalesOnly(roles: string[] | undefined, isAdmin?: boolean): boo
 
 /**
  * Accounts-only account: finance staff and nothing else. The legacy "employee"
- * role is ignored — it is granted to every sign-up and would otherwise make an
+ * role is ignored - it is granted to every sign-up and would otherwise make an
  * accountant look like a technician (maintenance reports, site work).
  */
 export function isAccountsOnly(roles: string[] | undefined, isAdmin?: boolean): boolean {
@@ -130,7 +130,7 @@ export function isMaintenanceOnly(roles: string[] | undefined, isAdmin?: boolean
 
 
 // --------------------------------------------------------------------------
-// Master lifecycle — the single controlled status list (section 22).
+// Master lifecycle - the single controlled status list (section 22).
 // --------------------------------------------------------------------------
 export const LIFECYCLE_STAGES = [
   "inquiry",
@@ -213,12 +213,12 @@ export const APPROVAL_TYPES = {
 } as const;
 
 export const APPROVAL_TYPE_LABELS: Record<string, string> = {
-  quotation_commercial: "A1 — Quotation / Commercial Exception",
-  project_initiation: "A2 — Customer Order / Project Initiation",
-  bom_bos: "A3 — BOM / BOS",
-  job_number: "A4 — Job Number",
-  additional_material: "A5 — Additional Material / Cost",
-  final_review: "A6 — Final Project / Commercial Review",
+  quotation_commercial: "A1 - Quotation / Commercial Exception",
+  project_initiation: "A2 - Customer Order / Project Initiation",
+  bom_bos: "A3 - BOM / BOS",
+  job_number: "A4 - Job Number",
+  additional_material: "A5 - Additional Material / Cost",
+  final_review: "A6 - Final Project / Commercial Review",
   customer_po: "Purchase Order approval",
   commercial_review: "Commercial review",
   item_code: "Item code approval",
@@ -228,7 +228,7 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
 };
 
 
-/** Fixed store categories — the only categories an item may be filed under. */
+/** Fixed store categories - the only categories an item may be filed under. */
 export const STOCK_CATEGORIES = [
   "Consumables",
   "Mechanical",
@@ -269,7 +269,7 @@ export function statusBadgeClass(status: string): string {
 }
 
 export function humanize(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "-";
   return (
     STAGE_LABELS[value] ??
     DECISION_LABELS[value] ??
@@ -278,7 +278,7 @@ export function humanize(value: string | null | undefined): string {
 }
 
 // --------------------------------------------------------------------------
-// Department capability matrix — the single source of truth for "who can do
+// Department capability matrix - the single source of truth for "who can do
 // what". Mirrored server-side by `assertCan` in permissions.ts.
 // --------------------------------------------------------------------------
 export type Capability =
@@ -297,7 +297,7 @@ export type Capability =
   | "material.request"
   | "site.execution"
   | "accounts.manage"      // invoices, payments, receivables, payables
-  | "invoice.create"       // raising an invoice — Accounts only
+  | "invoice.create"       // raising an invoice - Accounts only
   | "management.analytics";
 
 const MATRIX: Record<Capability, Department[]> = {
@@ -321,7 +321,7 @@ const MATRIX: Record<Capability, Department[]> = {
 };
 
 /**
- * Capabilities Management deliberately does NOT inherit — Management reviews
+ * Capabilities Management deliberately does NOT inherit - Management reviews
  * and approves this work rather than performing it.
  */
 const ADMIN_EXCLUDED: Capability[] = ["report.fill", "invoice.create", "stock.item.create", "jobnumber.create"];

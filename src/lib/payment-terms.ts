@@ -81,7 +81,7 @@ export async function evaluateProjectPaymentTerms(
         .eq("id", term.id);
 
       await notifyDepartments(supabase, ["accounts", "admin"], {
-        title: `Invoice due — ${project.project_number} ${term.percent}%`,
+        title: `Invoice due - ${project.project_number} ${term.percent}%`,
         message: `${term.milestone || TRIGGER_LABELS[term.trigger_type] || "Milestone"} reached on ${
           project.name
         }. Raise an invoice for ${amount} ${project.currency || "BHD"}.`,

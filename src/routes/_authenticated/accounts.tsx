@@ -197,7 +197,7 @@ function AccountsPage() {
       await requestApproval({
         data: {
           approval_type: "final_review",
-          title: `A6 — Final review ${i.reference}`,
+          title: `A6 - Final review ${i.reference}`,
           details: `${i.title || "Invoice"} · ${i.total_amount} ${i.currency} · paid ${i.amount_paid}`,
           project_id: i.project_id ?? null,
           job_number_id: i.job_number_id ?? null,
@@ -226,7 +226,7 @@ function AccountsPage() {
           remarks: payForm.remarks,
         },
       });
-      toast.success(res?.settled ? "Payment recorded — invoice fully paid" : "Payment recorded");
+      toast.success(res?.settled ? "Payment recorded - invoice fully paid" : "Payment recorded");
       setPayOpen(false);
       setPayForm(emptyPayment);
       refresh();
@@ -236,21 +236,21 @@ function AccountsPage() {
   };
 
   const customerOptions: [string, string][] = [
-    ["", "— none —"],
+    ["", "- none -"],
     ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string]),
   ];
   const projectOptions: [string, string][] = [
-    ["", "— none —"],
-    ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string]),
+    ["", "- none -"],
+    ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} - ${p.name}`] as [string, string]),
   ];
   const jobOptions: [string, string][] = [
-    ["", "— none —"],
+    ["", "- none -"],
     ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string]),
   ];
   const invoiceOptions: [string, string][] = [
-    ["", "— select invoice —"],
+    ["", "- select invoice -"],
     ...((invoices as any[]) ?? []).map(
-      (i) => [i.id, `${i.invoice_number || i.reference} — ${i.total_amount} ${i.currency}`] as [string, string],
+      (i) => [i.id, `${i.invoice_number || i.reference} - ${i.total_amount} ${i.currency}`] as [string, string],
     ),
   ];
 
@@ -414,7 +414,7 @@ function AccountsPage() {
                       <p className="mt-1 text-sm">{i.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {[i.customers?.name, i.projects?.project_number, i.job_numbers?.job_number, i.invoice_date]
-                          .filter(Boolean).join(" · ") || "—"}
+                          .filter(Boolean).join(" · ") || "-"}
                       </p>
                       <p className="mt-1 text-xs">
                         Total {Number(i.total_amount ?? 0).toFixed(2)} {i.currency} · paid{" "}
@@ -477,7 +477,7 @@ function AccountsPage() {
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {[p.invoices?.invoice_number || p.invoices?.reference, p.customers?.name, p.reference]
-                        .filter(Boolean).join(" · ") || "—"}
+                        .filter(Boolean).join(" · ") || "-"}
                     </p>
                     {p.remarks && <p className="mt-1 text-xs text-muted-foreground">{p.remarks}</p>}
                   </div>

@@ -70,7 +70,7 @@ export const saveInvoice = createServerFn({ method: "POST" })
     if (id) {
       const { data: prev } = await supabase.from("invoices").select("*").eq("id", id).maybeSingle();
       if (prev && prev.status !== "draft") {
-        throw new Error("An issued invoice can no longer be edited — raise a credit/debit note instead.");
+        throw new Error("An issued invoice can no longer be edited - raise a credit/debit note instead.");
       }
       const { error } = await supabase.from("invoices").update({ ...fields, ...totals }).eq("id", id);
       if (error) throw new Error(error.message);
@@ -200,7 +200,7 @@ export const setInvoiceStage = createServerFn({ method: "POST" })
       supabase,
       data.stage === "final_review" || data.stage === "closed" ? ["admin"] : ["accounts", "admin"],
       {
-        title: `${inv.reference} — ${data.stage.replace(/_/g, " ")}`,
+        title: `${inv.reference} - ${data.stage.replace(/_/g, " ")}`,
         message: inv.title ?? "",
         category: "accounts",
         link: "/accounts",
@@ -285,7 +285,7 @@ export const recordPayment = createServerFn({ method: "POST" })
     if (settled) {
       await notifyDepartments(supabase, ["admin", "accounts"], {
         title: `${inv.reference} fully paid`,
-        message: `${paid} ${inv.currency} received — ready for A6 final review`,
+        message: `${paid} ${inv.currency} received - ready for A6 final review`,
         category: "accounts",
         link: "/accounts",
         entity_table: "invoices",

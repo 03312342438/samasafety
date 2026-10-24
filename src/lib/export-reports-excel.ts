@@ -42,7 +42,7 @@ export async function downloadReportsExcel(reports: ReportRecord[]) {
   const lastCol = COLUMNS.length;
   ws.mergeCells(1, 1, 1, lastCol);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = "Sama Safety & Security — Maintenance Service Reports";
+  titleCell.value = "Sama Safety & Security - Maintenance Service Reports";
   titleCell.font = { name: "Calibri", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
   titleCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };

@@ -16,7 +16,7 @@ export function useUoms() {
 }
 
 /**
- * The ONLY way a unit is chosen anywhere in the app — free text is not allowed
+ * The ONLY way a unit is chosen anywhere in the app - free text is not allowed
  * so every module speaks the same units.
  */
 export function UomSelect({
@@ -43,12 +43,12 @@ export function UomSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >
-      <option value="">— unit —</option>
+      <option value="">- unit -</option>
       {missing && <option value={value}>{value} (retired)</option>}
       {uoms.map((u) => (
         <option key={u.id} value={u.code}>
           {u.code}
-          {u.name ? ` — ${u.name}` : ""}
+          {u.name ? ` - ${u.name}` : ""}
         </option>
       ))}
     </select>

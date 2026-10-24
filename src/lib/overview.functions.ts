@@ -18,7 +18,7 @@ const sum = (rows: any[], key: string) =>
 const countBy = (rows: any[], key: string) => {
   const map: Record<string, number> = {};
   (rows ?? []).forEach((r) => {
-    const k = String(r?.[key] ?? "—");
+    const k = String(r?.[key] ?? "-");
     map[k] = (map[k] ?? 0) + 1;
   });
   return Object.entries(map)
@@ -167,7 +167,7 @@ export const getManagementOverview = createServerFn({ method: "GET" })
           id: p.id,
           project_number: p.project_number,
           name: p.name,
-          customer: customerNames.get(p.customer_id) ?? "—",
+          customer: customerNames.get(p.customer_id) ?? "-",
           stage: p.stage,
           status: p.status,
           progress_percent: p.progress_percent ?? 0,
@@ -180,7 +180,7 @@ export const getManagementOverview = createServerFn({ method: "GET" })
         id: p.id,
         project_number: p.project_number,
         name: p.name,
-        customer: customerNames.get(p.customer_id) ?? "—",
+        customer: customerNames.get(p.customer_id) ?? "-",
         stage: p.stage,
         progress_percent: p.progress_percent ?? 0,
         contract_value: Number(p.contract_value ?? 0),

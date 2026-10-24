@@ -166,15 +166,15 @@ function ExecutionPage() {
   };
 
   const projectOptions: [string, string][] = [
-    ["", "— none —"],
-    ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string]),
+    ["", "- none -"],
+    ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} - ${p.name}`] as [string, string]),
   ];
   const jobOptions: [string, string][] = [
-    ["", "— none —"],
+    ["", "- none -"],
     ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string]),
   ];
   const customerOptions: [string, string][] = [
-    ["", "— none —"],
+    ["", "- none -"],
     ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string]),
   ];
 
@@ -301,7 +301,7 @@ function ExecutionPage() {
                     <p className="mt-1 text-sm">{l.work_description}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {[l.projects?.project_number, l.job_numbers?.job_number, l.site_location]
-                        .filter(Boolean).join(" · ") || "—"}
+                        .filter(Boolean).join(" · ") || "-"}
                       {" · "}{l.manpower_count} men · {l.hours_worked} h
                     </p>
                     {l.issues && <p className="mt-1 text-xs text-destructive">Issue: {l.issues}</p>}
@@ -354,7 +354,7 @@ function ExecutionPage() {
                     <p className="mt-1 text-sm">{c.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {[c.projects?.project_number, c.job_numbers?.job_number, c.customers?.name, c.completion_date]
-                        .filter(Boolean).join(" · ") || "—"}
+                        .filter(Boolean).join(" · ") || "-"}
                     </p>
                     {c.snag_list && <p className="mt-1 text-xs text-muted-foreground">Snags: {c.snag_list}</p>}
                   </div>

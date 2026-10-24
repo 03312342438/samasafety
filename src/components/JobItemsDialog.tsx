@@ -108,11 +108,11 @@ export function JobItemsDialog({
 
         {job && (
           <div className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-2">
-            <Info label="Project" value={[job.projects?.project_number, job.projects?.name].filter(Boolean).join(" — ")} />
+            <Info label="Project" value={[job.projects?.project_number, job.projects?.name].filter(Boolean).join(" - ")} />
             <Info label="Customer" value={job.customers?.name} />
             <Info label="Scope" value={humanize(job.scope_type)} />
             <Info label="Site" value={job.site_location} />
-            <Info label="BOM / BOS" value={[job.boms?.reference, job.boms?.title].filter(Boolean).join(" — ")} />
+            <Info label="BOM / BOS" value={[job.boms?.reference, job.boms?.title].filter(Boolean).join(" - ")} />
             <Info label="Target date" value={job.target_date} />
             <div className="sm:col-span-2 flex items-center gap-2">
               <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(job.status)}`}>
@@ -138,7 +138,7 @@ export function JobItemsDialog({
             <tbody>
               {rows.map((r, idx) => (
                 <tr key={idx} className="border-t">
-                  <td className="px-2 py-1.5">{r.description || "—"}</td>
+                  <td className="px-2 py-1.5">{r.description || "-"}</td>
                   <td className="px-2 py-1.5 text-right">{r.quantity}</td>
                   <td className="px-2 py-1.5">{r.unit}</td>
                   <td className="px-2 py-1.5">
@@ -152,7 +152,7 @@ export function JobItemsDialog({
                         }
                       />
                     ) : (
-                      <span className="text-muted-foreground">{r.remarks || "—"}</span>
+                      <span className="text-muted-foreground">{r.remarks || "-"}</span>
                     )}
                   </td>
                 </tr>
@@ -172,7 +172,7 @@ export function JobItemsDialog({
           <p className="flex items-center gap-1 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" />
             {status === "approved"
-              ? "Approved by the Project Manager — these remarks can no longer be changed and only Management can delete this job number."
+              ? "Approved by the Project Manager - these remarks can no longer be changed and only Management can delete this job number."
               : "Waiting for the Project Manager's approval."}
           </p>
         )}
@@ -204,7 +204,7 @@ function Info({ label, value }: { label: string; value?: string | null }) {
   return (
     <p>
       <span className="text-xs text-muted-foreground">{label}: </span>
-      <span>{value || "—"}</span>
+      <span>{value || "-"}</span>
     </p>
   );
 }

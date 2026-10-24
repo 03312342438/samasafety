@@ -62,7 +62,7 @@ export const grantAdmin = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
 
-    // RLS allows admins to insert roles — no service role key needed.
+    // RLS allows admins to insert roles - no service role key needed.
     const { data: existing } = await supabase
       .from("user_roles")
       .select("id")
@@ -97,7 +97,7 @@ export const revokeAdmin = createServerFn({ method: "POST" })
       throw new Error("This account's admin rights cannot be changed.");
     }
 
-    // RLS allows admins to delete roles — no service role key needed.
+    // RLS allows admins to delete roles - no service role key needed.
     const { error } = await supabase
       .from("user_roles")
       .delete()
@@ -121,7 +121,7 @@ export const createEmployee = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
 
-    // Create the auth account through the public sign-up endpoint — no service
+    // Create the auth account through the public sign-up endpoint - no service
     // role key required. A throwaway client keeps the new session isolated from
     // the admin's own session.
     const { createClient } = await import("@supabase/supabase-js");
@@ -230,7 +230,7 @@ export const deleteEmployee = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.auth.admin.deleteUser(data.id);
     } catch {
-      /* login account removal unavailable — app access is already revoked */
+      /* login account removal unavailable - app access is already revoked */
     }
 
     return { ok: true };
@@ -247,7 +247,7 @@ export const setEmployeeStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
 
-    // RLS allows admins to update profiles — no service role key needed.
+    // RLS allows admins to update profiles - no service role key needed.
     const { error } = await supabase
       .from("profiles")
       .update({ status: data.status })

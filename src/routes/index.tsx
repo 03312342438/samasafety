@@ -7,13 +7,13 @@ import { ShieldCheck, FileText, PenLine, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sama Safety & Security — Sama Portal" },
+      { title: "Sama Safety & Security - Sama Portal" },
       {
         name: "description",
         content:
-          "Sama Portal — the official platform for Sama Safety & Security teams to manage sales, projects, inventory, accounts, approvals and maintenance reports.",
+          "Sama Portal - the official platform for Sama Safety & Security teams to manage sales, projects, inventory, accounts, approvals and maintenance reports.",
       },
-      { property: "og:title", content: "Sama Safety & Security — Sama Portal" },
+      { property: "og:title", content: "Sama Safety & Security - Sama Portal" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       {
@@ -31,7 +31,7 @@ function Index() {
 
   const features = [
     { icon: FileText, title: "Structured reports", desc: "Capture every device check, spare part and action taken." },
-    { icon: PenLine, title: "E-signatures", desc: "Employee and client sign on screen — captured into the report." },
+    { icon: PenLine, title: "E-signatures", desc: "Employee and client sign on screen - captured into the report." },
     { icon: ShieldCheck, title: "Instant PDF", desc: "Generate the official Maintenance Service Report and download." },
   ];
 
@@ -51,7 +51,7 @@ function Index() {
           <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">Sama Portal</h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
             The official platform for Sama Safety &amp; Security teams to manage sales, projects,
-            inventory, accounts, approvals and maintenance reports — all in one place.
+            inventory, accounts, approvals and maintenance reports - all in one place.
           </p>
           <div className="mt-8">
             <Button size="lg" className="w-full sm:w-auto" disabled={isNavigating} onClick={handleSignIn}>

@@ -92,20 +92,20 @@ export function AnalyticsCharts() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel
           title="This month by project count"
-          description={`${data.month} — quotations sent, work in progress and completed`}
+          description={`${data.month} - quotations sent, work in progress and completed`}
         >
           <SlicePie data={data.currentMonthCounts} valueFormatter={fmt} />
         </Panel>
         <Panel
           title="This month by value"
-          description={`${data.month} — value quoted, in progress and completed (${CURRENCY})`}
+          description={`${data.month} - value quoted, in progress and completed (${CURRENCY})`}
         >
           <SlicePie data={data.currentMonthValues} valueFormatter={money} />
         </Panel>
       </div>
 
       <Panel
-        title="Last 12 months — volume"
+        title="Last 12 months - volume"
         description="Quotations submitted vs projects completed each month"
       >
         <ResponsiveContainer width="100%" height="100%">
@@ -122,7 +122,7 @@ export function AnalyticsCharts() {
       </Panel>
 
       <Panel
-        title={`Last 12 months — value (${CURRENCY})`}
+        title={`Last 12 months - value (${CURRENCY})`}
         description="Quoted value, completed project value and gross margin per month"
       >
         <ResponsiveContainer width="100%" height="100%">

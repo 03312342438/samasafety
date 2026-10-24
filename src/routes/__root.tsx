@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Sama Safety & Security" },
-      { name: "description", content: "Sama Safety & Security — fire safety and security maintenance service report portal." },
+      { name: "description", content: "Sama Safety & Security - fire safety and security maintenance service report portal." },
       { name: "author", content: "Sama Safety & Security" },
       { property: "og:title", content: "Sama Safety & Security" },
       { property: "og:description", content: "Fire safety and security maintenance service report portal." },

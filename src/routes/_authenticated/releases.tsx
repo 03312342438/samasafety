@@ -80,12 +80,12 @@ function ReleasesPage() {
 
   const stockOptions = useMemo(
     () =>
-      [["", "— select item —"] as [string, string]].concat(
+      [["", "- select item -"] as [string, string]].concat(
         ((stock as any[]) ?? [])
           .filter((s) => (s.approval_status ?? "pending") === "approved")
           .map((s) => [
             s.id,
-            `${s.item_code} — ${s.description} (${s.quantity_on_hand} ${s.unit} on hand)`,
+            `${s.item_code} - ${s.description} (${s.quantity_on_hand} ${s.unit} on hand)`,
           ] as [string, string]),
       ),
     [stock],
@@ -122,7 +122,7 @@ function ReleasesPage() {
           items,
         },
       });
-      toast.success(`Release ${res?.reference ?? ""} done — stock deducted`);
+      toast.success(`Release ${res?.reference ?? ""} done - stock deducted`);
       setJobQty({});
       setJobTo("");
       setJobNotes("");
@@ -188,7 +188,7 @@ function ReleasesPage() {
           <div>
             <h1 className="text-xl font-semibold">Release Items</h1>
             <p className="text-sm text-muted-foreground">
-              Release against an approved job number — stock is deducted straight away. Releasing
+              Release against an approved job number - stock is deducted straight away. Releasing
               without a job number needs Management approval before stock moves.
             </p>
           </div>
@@ -222,7 +222,7 @@ function ReleasesPage() {
                     value={jobId}
                     onChange={(e) => { setJobId(e.target.value); setJobQty({}); }}
                   >
-                    <option value="">— select job —</option>
+                    <option value="">- select job -</option>
                     {((jobs as any[]) ?? []).map((j) => (
                       <option key={j.id} value={j.id}>
                         {j.job_number} {j.projects?.project_number ? `· ${j.projects.project_number}` : ""}
@@ -268,7 +268,7 @@ function ReleasesPage() {
                       <tbody>
                         {((jobItems as any).items as any[]).map((i) => (
                           <tr key={i.bom_item_id} className="border-t">
-                            <td className="whitespace-nowrap px-2 py-1.5">{i.item_code || "—"}</td>
+                            <td className="whitespace-nowrap px-2 py-1.5">{i.item_code || "-"}</td>
                             <td className="px-2 py-1.5">{i.description}</td>
                             <td className="px-2 py-1.5 text-right">{i.quantity_planned} {i.unit}</td>
                             <td className="px-2 py-1.5 text-right">{i.quantity_released}</td>
@@ -336,7 +336,7 @@ function ReleasesPage() {
                         <SearchSelect
                           value={r.stock_item_id}
                           options={stockOptions}
-                          placeholder="— select item —"
+                          placeholder="- select item -"
                           searchPlaceholder="Search item code or description…"
                           onChange={(v) => setFreeRows(freeRows.map((x, i) => (i === idx ? { ...x, stock_item_id: v } : x)))}
                         />
@@ -400,7 +400,7 @@ function ReleasesPage() {
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {[r.released_to && `to ${r.released_to}`, r.purpose, r.projects?.project_number]
-                          .filter(Boolean).join(" · ") || "—"} · {(r.stock_release_items ?? []).length} line(s) ·{" "}
+                          .filter(Boolean).join(" · ") || "-"} · {(r.stock_release_items ?? []).length} line(s) ·{" "}
                         {CURRENCY} {Number(r.total_value ?? 0).toFixed(3)}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -433,11 +433,11 @@ function ReleasesPage() {
                         {(r.stock_release_items ?? []).map((i: any) => (
                           <tr key={i.id} className="border-t">
                             <td className="whitespace-nowrap px-2 py-1.5">
-                              {i.stock_items?.item_code ?? "—"} — {i.description}
+                              {i.stock_items?.item_code ?? "-"} - {i.description}
                             </td>
                             <td className="px-2 py-1.5 text-right">{i.quantity} {i.unit}</td>
                             <td className="px-2 py-1.5 text-right">{Number(i.unit_cost ?? 0).toFixed(3)}</td>
-                            <td className="px-2 py-1.5">{i.remarks || "—"}</td>
+                            <td className="px-2 py-1.5">{i.remarks || "-"}</td>
                           </tr>
                         ))}
                         {(r.stock_release_items ?? []).length === 0 && (

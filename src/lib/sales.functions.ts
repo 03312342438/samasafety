@@ -205,7 +205,7 @@ export const saveQuotation = createServerFn({ method: "POST" })
       const { data: prev } = await supabase.from("quotations").select("*").eq("id", id).maybeSingle();
       if (prev?.created_by && prev.created_by !== userId) {
         throw new Error(
-          `Quotation ${prev.reference ?? ""} was prepared by someone else — only the person who created it can edit it.`,
+          `Quotation ${prev.reference ?? ""} was prepared by someone else - only the person who created it can edit it.`,
         );
       }
       await assertMutable(supabase, userId, {
@@ -378,11 +378,11 @@ export const deleteQuotation = createServerFn({ method: "POST" })
       .maybeSingle();
     if (prev?.created_by && prev.created_by !== userId) {
       throw new Error(
-        `Quotation ${prev.reference ?? ""} was prepared by someone else — only the person who created it can delete it.`,
+        `Quotation ${prev.reference ?? ""} was prepared by someone else - only the person who created it can delete it.`,
       );
     }
     if (["approved", "accepted", "won"].includes(prev?.status ?? "")) {
-      throw new Error(`Quotation ${prev?.reference ?? ""} has been approved — it is undeletable and can no longer be removed.`);
+      throw new Error(`Quotation ${prev?.reference ?? ""} has been approved - it is undeletable and can no longer be removed.`);
     }
     const { error } = await supabase.from("quotations").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -487,7 +487,7 @@ export const saveCustomerPo = createServerFn({ method: "POST" })
     return { ok: true, id: created.id, reference };
   });
 
-/** PO verification gate — nothing may move to project initiation until verified. */
+/** PO verification gate - nothing may move to project initiation until verified. */
 export const verifyCustomerPo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -509,7 +509,7 @@ export const verifyCustomerPo = createServerFn({ method: "POST" })
     if (!po) throw new Error("Customer PO not found");
 
     if (data.verification_status === "pending" && po.project_id) {
-      throw new Error("A project has already been initiated from this PO — verification cannot be undone.");
+      throw new Error("A project has already been initiated from this PO - verification cannot be undone.");
     }
 
     if (!["verified", "pending"].includes(data.verification_status) && !data.discrepancy_notes.trim()) {
@@ -585,7 +585,7 @@ export const convertPoToProject = createServerFn({ method: "POST" })
       .eq("decision", "approved")
       .maybeSingle();
     if (!approval)
-      throw new Error("Management approval (A2 — Project Initiation) is required for this PO.");
+      throw new Error("Management approval (A2 - Project Initiation) is required for this PO.");
 
     const project_number = await nextSequence(supabase, "projects", "project_number", "PRJ");
     const { data: project, error } = await supabase
@@ -620,7 +620,7 @@ export const convertPoToProject = createServerFn({ method: "POST" })
     });
     await notifyDepartments(supabase, ["project_manager", "admin"], {
       title: "Project initiated",
-      message: `${project.project_number} — ${data.name}`,
+      message: `${project.project_number} - ${data.name}`,
       category: "project",
       link: "/projects",
       entity_table: "projects",

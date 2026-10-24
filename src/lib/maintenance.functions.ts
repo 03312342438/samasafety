@@ -64,14 +64,14 @@ export const listMaintenanceContracts = createServerFn({ method: "GET" })
       return {
         id: j.id,
         job_number: j.job_number,
-        customer_name: j.customers?.name ?? "—",
+        customer_name: j.customers?.name ?? "-",
         project_id: j.project_id,
         customer_id: j.customer_id,
         project_name: j.projects
-          ? `${j.projects.project_number} — ${j.projects.name}`
-          : "—",
+          ? `${j.projects.project_number} - ${j.projects.name}`
+          : "-",
         project_label: j.projects?.name ?? "",
-        site_location: j.site_location || j.projects?.site_location || "—",
+        site_location: j.site_location || j.projects?.site_location || "-",
         maintenance_type: j.maintenance_type || "General maintenance",
         interval_months: j.maintenance_interval_months ?? 0,
         total_count: total,
@@ -231,7 +231,7 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
         .select("id, full_name, email")
         .in("id", ids);
       nameById = Object.fromEntries(
-        (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
+        (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "-"]),
       );
     }
     const enriched = await attachContractStatus(
@@ -241,7 +241,7 @@ export const listAllMaintenanceTasks = createServerFn({ method: "GET" })
         await attachReportFields(supabase, tasks),
       ),
     );
-    return enriched.map((t: any) => ({ ...t, employee_name: nameById[t.created_by] ?? "—" }));
+    return enriched.map((t: any) => ({ ...t, employee_name: nameById[t.created_by] ?? "-" }));
   });
 
 

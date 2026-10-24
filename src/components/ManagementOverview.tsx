@@ -210,7 +210,7 @@ export function ManagementOverview() {
             {data.recentInvoices.map((i) => (
               <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
                 <span className="min-w-0 truncate">
-                  {i.invoice_number} · {i.title || "—"}
+                  {i.invoice_number} · {i.title || "-"}
                 </span>
                 <span className="shrink-0 text-muted-foreground">
                   {money(i.total_amount, c)} · paid {money(i.amount_paid, c)}
@@ -231,7 +231,7 @@ export function ManagementOverview() {
             {data.recentQuotations.map((q) => (
               <div key={q.id} className="flex items-center justify-between gap-3 text-sm">
                 <span className="min-w-0 truncate">
-                  {q.reference} · {q.title || "—"}
+                  {q.reference} · {q.title || "-"}
                 </span>
                 <span className="shrink-0 text-muted-foreground">
                   {money(q.total_amount, c)} · {humanize(q.stage)}

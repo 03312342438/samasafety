@@ -15,7 +15,7 @@ export function SearchSelect({
   value,
   onChange,
   options,
-  placeholder = "— select —",
+  placeholder = "- select -",
   searchPlaceholder = "Search…",
   className,
   disabled,

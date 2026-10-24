@@ -69,7 +69,7 @@ export function SalesDashboard() {
             <TrendingUp className="h-4 w-4 text-primary" /> Performance
           </CardTitle>
           <CardDescription className="text-xs">
-            Purchase orders received vs quotations submitted — {data.performance.month}
+            Purchase orders received vs quotations submitted - {data.performance.month}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
@@ -90,7 +90,7 @@ export function SalesDashboard() {
         </CardContent>
       </Card>
 
-      <Panel title="Performance — last 12 months" description="Quotations submitted, POs received and conversion %">
+      <Panel title="Performance - last 12 months" description="Quotations submitted, POs received and conversion %">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data.monthly} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
@@ -106,16 +106,16 @@ export function SalesDashboard() {
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Last 30 days — count" description="Quotations sent vs customer POs received">
+        <Panel title="Last 30 days - count" description="Quotations sent vs customer POs received">
           <Slice data={data.last30Counts} valueFormatter={fmt} />
         </Panel>
-        <Panel title="Last 30 days — value" description={`Quotation value vs PO value (${CURRENCY})`}>
+        <Panel title="Last 30 days - value" description={`Quotation value vs PO value (${CURRENCY})`}>
           <Slice data={data.last30Values} valueFormatter={money} />
         </Panel>
       </div>
 
 
-      <Panel title="Last 12 months — count" description="Quotations sent vs POs received each month">
+      <Panel title="Last 12 months - count" description="Quotations sent vs POs received each month">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data.monthly} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
@@ -129,7 +129,7 @@ export function SalesDashboard() {
         </ResponsiveContainer>
       </Panel>
 
-      <Panel title={`Last 12 months — value (${CURRENCY})`} description="Value quoted vs value ordered each month">
+      <Panel title={`Last 12 months - value (${CURRENCY})`} description="Value quoted vs value ordered each month">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data.monthly} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
@@ -175,7 +175,7 @@ export function SalesDashboard() {
               {data.potential.items.map((i) => (
                 <li key={i.id} className="flex flex-wrap justify-between gap-2">
                   <span className="text-muted-foreground">
-                    {i.reference}{i.title ? ` — ${i.title}` : ""} · sent {i.sent_on || "—"}
+                    {i.reference}{i.title ? ` - ${i.title}` : ""} · sent {i.sent_on || "-"}
                   </span>
                   <span className="font-medium">{money(i.value)}</span>
                 </li>

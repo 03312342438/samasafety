@@ -216,7 +216,7 @@ export const listAllReports = createServerFn({ method: "GET" })
         (profiles ?? []).map((p: any) => [p.id, p.full_name || ""]),
       );
     }
-    return rows.map((r: any) => ({ ...r, employee_name: nameById[r.created_by] || r.performed_by || "—" }));
+    return rows.map((r: any) => ({ ...r, employee_name: nameById[r.created_by] || r.performed_by || "-" }));
   });
 
 export const updateReport = createServerFn({ method: "POST" })

@@ -119,7 +119,7 @@ export const saveProject = createServerFn({ method: "POST" })
     if (terms.length) {
       const total = Math.round(terms.reduce((s, t) => s + t.percent, 0) * 100) / 100;
       if (total !== 100) {
-        throw new Error(`Payment terms must add up to 100% — they currently total ${total}%.`);
+        throw new Error(`Payment terms must add up to 100% - they currently total ${total}%.`);
       }
     }
 
@@ -213,7 +213,7 @@ export const deleteProject = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!removed || removed.length === 0) {
       throw new Error(
-        "This project could not be deleted — it is either linked to job numbers/invoices or only Management can remove it.",
+        "This project could not be deleted - it is either linked to job numbers/invoices or only Management can remove it.",
       );
     }
     await logActivity(supabase, userId, {

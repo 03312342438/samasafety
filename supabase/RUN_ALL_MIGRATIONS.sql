@@ -1,5 +1,5 @@
 -- =============================================================================
--- SAMA SAFETY — COMPLETE DATABASE SETUP (run AFTER SETUP_OWN_PROJECT.sql)
+-- SAMA SAFETY - COMPLETE DATABASE SETUP (run AFTER SETUP_OWN_PROJECT.sql)
 -- Paste this ENTIRE file into Supabase Dashboard -> SQL Editor -> Run
 -- Generated 2026-09-05
 -- =============================================================================

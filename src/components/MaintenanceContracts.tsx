@@ -237,13 +237,13 @@ export function MaintenanceContracts() {
       key: "start_date",
       header: "Contract Start",
       value: (r) => r.start_date,
-      cell: (r) => prettyDate(r.start_date) || "—",
+      cell: (r) => prettyDate(r.start_date) || "-",
     },
     {
       key: "end_date",
       header: "Contract End",
       value: (r) => r.end_date,
-      cell: (r) => prettyDate(r.end_date) || "—",
+      cell: (r) => prettyDate(r.end_date) || "-",
     },
     { key: "system_type", header: "System", value: (r) => r.system_type },
     {
@@ -256,13 +256,13 @@ export function MaintenanceContracts() {
       key: "last_visit",
       header: "Last Visit",
       value: (r) => r.last_visit,
-      cell: (r) => prettyDate(r.last_visit) || "—",
+      cell: (r) => prettyDate(r.last_visit) || "-",
     },
     {
       key: "upcoming_visit",
       header: "Upcoming Visit",
       value: (r) => r.upcoming_visit,
-      cell: (r) => prettyDate(r.upcoming_visit) || "—",
+      cell: (r) => prettyDate(r.upcoming_visit) || "-",
     },
     {
       key: "remaining_count",

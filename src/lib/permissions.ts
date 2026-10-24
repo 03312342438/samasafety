@@ -55,9 +55,9 @@ export async function assertMutable(
   const action = opts.action ?? "edit";
   if (action === "delete" && (await isManagement(supabase, userId))) return;
   if (action === "edit") {
-    throw new Error(`${opts.label} has been approved — it can no longer be edited.`);
+    throw new Error(`${opts.label} has been approved - it can no longer be edited.`);
   }
-  throw new Error(`${opts.label} has been approved — only Management can delete it now.`);
+  throw new Error(`${opts.label} has been approved - only Management can delete it now.`);
 }
 
 

@@ -74,7 +74,7 @@ function ProjectsPage() {
   const [tab, setTab] = useState("projects");
   const [query, setQuery] = useState("");
   const [openJobId, setOpenJobId] = useState<string | null>(null);
-  // Sales staff never see job numbers — that is a PM / site responsibility.
+  // Sales staff never see job numbers - that is a PM / site responsibility.
   const salesOnly =
     !profile?.isAdmin &&
     hasDept(profile?.roles, "sales") &&
@@ -334,10 +334,10 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                          value={form.customer_id}
                          onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
                        >
-                         <option value="">— none —</option>
+                         <option value="">- none -</option>
                          {((customers as any[]) ?? []).map((c) => (
                            <option key={c.id} value={c.id}>
-                             {c.customer_number ? `${c.customer_number} — ` : ""}{c.name}
+                             {c.customer_number ? `${c.customer_number} - ` : ""}{c.name}
                            </option>
                          ))}
                        </select>
@@ -473,7 +473,7 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                           // A PO links to a project directly, or through the quotation it came from.
                           const projectId = po?.project_id ?? po?.quotations?.project_id ?? "";
                           const project = ((projects as any[]) ?? []).find((p) => p.id === projectId);
-                          // Main BOM/BOS only — preliminary (PBOM) references never drive a job.
+                          // Main BOM/BOS only - preliminary (PBOM) references never drive a job.
                           const mainBom = ((boms as any[]) ?? []).find(
                             (b) => b.project_id === projectId && b.status === "approved" &&
                               !String(b.reference ?? "").startsWith("PBOM"),
@@ -491,13 +491,13 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                           if (poId && !projectId) {
                             toast.error("This purchase order is not linked to a project yet.");
                           } else if (projectId && !mainBom) {
-                            toast.error("No approved Main BOM/BOS for this project — create and get the Main BOM/BOS approved first.");
+                            toast.error("No approved Main BOM/BOS for this project - create and get the Main BOM/BOS approved first.");
                           }
                         }}>
-                        <option value="">— select purchase order —</option>
+                        <option value="">- select purchase order -</option>
                         {availablePos.map((po: any) => (
                           <option key={po.id} value={po.id}>
-                            {po.po_number || po.reference} — {po.customers?.name ?? "Customer"}
+                            {po.po_number || po.reference} - {po.customers?.name ?? "Customer"}
                           </option>
                         ))}
                       </select>
@@ -509,17 +509,17 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                       <Label className="text-xs">Project (auto)</Label>
                       <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                         value={jobForm.project_id} disabled onChange={() => {}}>
-                        <option value="">— select a purchase order first —</option>
-                        {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} — {p.name}</option>)}
+                        <option value="">- select a purchase order first -</option>
+                        {((projects as any[]) ?? []).map((p) => <option key={p.id} value={p.id}>{p.project_number} - {p.name}</option>)}
                       </select>
                     </div>
                     <div>
                       <Label className="text-xs">Approved Main BOM / BOS (auto)</Label>
                       <select className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                         value={jobForm.bom_id} disabled onChange={() => {}}>
-                        <option value="">— no approved Main BOM/BOS —</option>
+                        <option value="">- no approved Main BOM/BOS -</option>
                         {((boms as any[]) ?? []).filter((b) => b.status === "approved" && !String(b.reference ?? "").startsWith("PBOM") && (!jobForm.project_id || b.project_id === jobForm.project_id)).map((b) => (
-                          <option key={b.id} value={b.id}>{b.reference} — {b.title}</option>
+                          <option key={b.id} value={b.id}>{b.reference} - {b.title}</option>
                         ))}
                       </select>
                     </div>
@@ -642,7 +642,7 @@ const availablePos = ((customerPos as any[]) ?? []).filter(
                     {j.description && <p className="text-xs text-muted-foreground">{j.description}</p>}
                     <p className="text-xs text-muted-foreground">
                       {j.job_kind === "maintenance"
-                        ? `Maintenance · every ${j.maintenance_interval_months ?? "—"} month(s)`
+                        ? `Maintenance · every ${j.maintenance_interval_months ?? "-"} month(s)`
                         : `Installation · progress ${j.progress_percent ?? 0}%`}
                     </p>
                     {j.job_kind !== "maintenance" && <JobSteps jobId={j.id} onChanged={refresh} />}

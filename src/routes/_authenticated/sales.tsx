@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/sales")({
   }),
 });
 
-/** Standard SAMA payment terms — editable per quotation. */
+/** Standard SAMA payment terms - editable per quotation. */
 const DEFAULT_PAYMENT_TERMS = "50% Advance, 40% on progress and 10% after testing & commissioning";
 
 type ItemRow = { description: string; unit: string; quantity: string; unit_price: string };
@@ -292,7 +292,7 @@ function SalesPage() {
                       }}
                       options={projectList.map((p: any) => ({
                         value: p.id,
-                        label: `${p.project_number ?? ""} — ${p.name}`,
+                        label: `${p.project_number ?? ""} - ${p.name}`,
                       }))}
                     />
                     <Field label="ATTN" value={qtnForm.attention} onChange={(v) => setQtnForm({ ...qtnForm, attention: v })} />
@@ -319,7 +319,7 @@ function SalesPage() {
                         onChange={() => {}}
                         options={bomList.map((b: any) => ({
                           value: b.id,
-                          label: `${b.reference} — ${b.title || b.projects?.project_number || ""}`,
+                          label: `${b.reference} - ${b.title || b.projects?.project_number || ""}`,
                         }))}
                       />
                       <div>
@@ -423,7 +423,7 @@ function SalesPage() {
                             approvalByEntity.get(x.id) === "approved" ||
                             ["approved", "accepted", "won"].includes(x.status),
                         )
-                        .map((x) => ({ value: x.id, label: `${x.reference} — ${money(x.total_amount)}` }))}
+                        .map((x) => ({ value: x.id, label: `${x.reference} - ${money(x.total_amount)}` }))}
                     />
                     <Field label="Document link" value={poForm.document_url} onChange={(v) => setPoForm({ ...poForm, document_url: v })} />
                     <div className="sm:col-span-2">
@@ -489,7 +489,7 @@ function SalesPage() {
                       {appr && <span className={`rounded-full px-2 py-0.5 text-[11px] ${appr.cls}`}>{appr.label}</span>}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[x.customers?.name, x.title, x.site_location].filter(Boolean).join(" · ") || "—"}
+                      {[x.customers?.name, x.title, x.site_location].filter(Boolean).join(" · ") || "-"}
                     </p>
                     <p className="mt-1 text-sm">
                       <span className="font-medium">{money(x.total_amount)} {x.currency}</span>
@@ -501,7 +501,7 @@ function SalesPage() {
                     {!appr && isMine && (
                       <Button variant="outline" size="sm" onClick={() => askApproval(
                         "quotation_commercial",
-                        `A1 — ${x.reference}`,
+                        `A1 - ${x.reference}`,
                         `${x.customers?.name ?? ""} · ${x.title ?? ""} · total ${money(x.total_amount)} ${x.currency}`,
                         Number(x.total_amount ?? 0),
                         "quotations",
@@ -570,7 +570,7 @@ function SalesPage() {
                     </div>
 
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[p.customers?.name, p.quotations?.reference, p.po_date].filter(Boolean).join(" · ") || "—"}
+                      {[p.customers?.name, p.quotations?.reference, p.po_date].filter(Boolean).join(" · ") || "-"}
                     </p>
                     <p className="mt-1 text-sm font-medium">{money(p.po_value)} {p.currency}</p>
                     {p.quotations && Number(p.po_value) !== Number(p.quotations.total_amount) && (
@@ -639,13 +639,13 @@ function SalesPage() {
                                 .slice()
                                 .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
                                 .map((it, i) =>
-                                  `${i + 1}. ${it.description || "—"} — ${num(it.quantity)} ${it.unit || ""} × ${money(it.unit_price)} = ${money(it.amount)}`,
+                                  `${i + 1}. ${it.description || "-"} - ${num(it.quantity)} ${it.unit || ""} × ${money(it.unit_price)} = ${money(it.amount)}`,
                                 )
                                 .join("\n");
                               const details = [
-                                `PO ${p.po_number || p.reference} dated ${p.po_date || "—"}`,
-                                `Customer: ${p.customers?.name ?? "—"}`,
-                                `Quotation: ${p.quotations?.reference ?? "—"} (${money(p.quotations?.total_amount ?? 0)} ${p.currency})`,
+                                `PO ${p.po_number || p.reference} dated ${p.po_date || "-"}`,
+                                `Customer: ${p.customers?.name ?? "-"}`,
+                                `Quotation: ${p.quotations?.reference ?? "-"} (${money(p.quotations?.total_amount ?? 0)} ${p.currency})`,
                                 `PO value: ${money(p.po_value)} ${p.currency}`,
                                 lines ? `\nLines:\n${lines}` : "",
                               ]
@@ -653,7 +653,7 @@ function SalesPage() {
                                 .join("\n");
                               askApproval(
                                 "project_initiation",
-                                `Customer PO ${p.po_number || p.reference} — project initiation`,
+                                `Customer PO ${p.po_number || p.reference} - project initiation`,
                                 details,
                                 num(p.po_value),
                                 "customer_pos",
@@ -743,7 +743,7 @@ function Select({
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       >
-        {allowEmpty && <option value="">— none —</option>}
+        {allowEmpty && <option value="">- none -</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}

@@ -13,7 +13,7 @@ const SOFT = "#eef5f8";
 const WHITE = "#ffffff";
 
 function fmtDate(value: string) {
-  if (!value) return "—";
+  if (!value) return "-";
   const parts = value.split("-");
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return value;
@@ -28,7 +28,7 @@ const box: CSSProperties = {
 };
 
 function Value({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return <div style={{ ...box, color: INK, fontSize: 9, fontWeight: 600, ...style }}>{children || "—"}</div>;
+  return <div style={{ ...box, color: INK, fontSize: 9, fontWeight: 600, ...style }}>{children || "-"}</div>;
 }
 
 function Label({ children, accent = false }: { children: ReactNode; accent?: boolean }) {
@@ -123,7 +123,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
       .filter((device) => data.devices[deviceKey(system, device.name)] === "faulty")
       .map((device) => {
         const quantity = data.devices[deviceKey(system, device.name, "qty")];
-        return `${system} — ${device.name}${quantity ? ` (Qty ${quantity})` : ""}`;
+        return `${system} - ${device.name}${quantity ? ` (Qty ${quantity})` : ""}`;
       }),
   );
   const reportNo = data.msr_no || "Pending";
@@ -278,7 +278,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
       </RuledSection>
 
       <RuledSection title="Comments / remarks" minHeight={42} grow={0.75}>
-        <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.remarks || "—"}</div>
+        <div style={{ fontSize: 8.5, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{data.remarks || "-"}</div>
       </RuledSection>
 
       <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0 }}>
@@ -287,7 +287,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
             <Label>Spare parts / consumables</Label>
             <div style={{ marginTop: 4, fontSize: 8, lineHeight: 1.4 }}>
               {filledSpares.length
-                ? filledSpares.map((part) => `${part.spare_no || "—"} · ${part.description || "—"} · Qty ${part.qty || "—"}`).join("\n")
+                ? filledSpares.map((part) => `${part.spare_no || "-"} · ${part.description || "-"} · Qty ${part.qty || "-"}`).join("\n")
                 : "None used"}
             </div>
           </div>
@@ -295,8 +295,8 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
             <Label>Next maintenance</Label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 4, fontSize: 8 }}>
               <span><strong>Interval:</strong> {intervalLabel(data.maintenance_interval_value, data.maintenance_interval_unit)}</span>
-              <span><strong>Visits:</strong> {data.maintenance_count || "—"}</span>
-              <span style={{ gridColumn: "span 2" }}><strong>Notes:</strong> {data.next_maintenance || "—"}</span>
+              <span><strong>Visits:</strong> {data.maintenance_count || "-"}</span>
+              <span style={{ gridColumn: "span 2" }}><strong>Notes:</strong> {data.next_maintenance || "-"}</span>
               {filledSpares.length ? <span style={{ gridColumn: "span 2" }}><strong>Parts total:</strong> {total.toFixed(2)}</span> : null}
             </div>
           </div>
@@ -317,7 +317,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
             <div style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {data.client_signature ? <img src={data.client_signature} alt="Client signature" style={{ maxHeight: 35, maxWidth: "75%" }} /> : null}
             </div>
-            <Field label="Client name" value={`${data.client_sign_name || "—"}${data.client_designation ? ` · ${data.client_designation}` : ""}`} />
+            <Field label="Client name" value={`${data.client_sign_name || "-"}${data.client_designation ? ` · ${data.client_designation}` : ""}`} />
           </div>
         </div>
       </section>
