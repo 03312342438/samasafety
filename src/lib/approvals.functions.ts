@@ -190,7 +190,7 @@ export const submitApproval = createServerFn({ method: "POST" })
         .maybeSingle();
       if (qtn?.created_by && qtn.created_by !== userId) {
         throw new Error(
-          `Quotation ${qtn.reference ?? ""} was prepared by someone else — only its author can send it for approval.`,
+          `Quotation ${qtn.reference ?? ""} was prepared by someone else - only its author can send it for approval.`,
         );
       }
     }
@@ -225,12 +225,12 @@ export const submitApproval = createServerFn({ method: "POST" })
     });
 
     if (isManagement) {
-      // Management does not wait on anyone — the action goes through immediately
+      // Management does not wait on anyone - the action goes through immediately
       // and they simply get a confirmation.
       await applyDecisionEffects(supabase, userId, created, "approved");
       await notifyUsers(supabase, [userId], {
         title: "Approved automatically",
-        message: `${data.title} — raised by Management, no approval needed.`,
+        message: `${data.title} - raised by Management, no approval needed.`,
         category: "approval",
         link: "/approvals",
         entity_table: "approvals",
@@ -309,7 +309,7 @@ async function applyDecisionEffects(
     // Everyone who acts on a confirmed order is told straight away.
     await notifyDepartments(supabase, ["project_manager", "accounts", "maintenance"], {
       title: "Customer purchase order approved",
-      message: `PO ${po?.po_number || po?.reference || ""} has been approved by Management — a job number can now be raised.`,
+      message: `PO ${po?.po_number || po?.reference || ""} has been approved by Management - a job number can now be raised.`,
       category: "order",
       link: "/sales",
       entity_table: "customer_pos",

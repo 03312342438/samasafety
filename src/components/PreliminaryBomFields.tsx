@@ -75,12 +75,12 @@ export function PreliminaryBomFields({
             <div className="col-span-4">
               <SearchSelect
                 value={l.stock_item_id}
-                placeholder="— item code / description —"
+                placeholder="- item code / description -"
                 searchPlaceholder="Search item code or description…"
                 options={[
-                  ["", "— item code / description —"] as [string, string],
+                  ["", "- item code / description -"] as [string, string],
                   ...approvedStock.map(
-                    (s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string],
+                    (s) => [s.id, `${s.item_code} - ${s.description}`] as [string, string],
                   ),
                 ]}
                 onChange={(v) => pickItem(idx, v)}
@@ -119,7 +119,7 @@ export function PreliminaryBomFields({
       })}
       {lines.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          Add the materials expected for this project — this becomes the preliminary BOM/BOS.
+          Add the materials expected for this project - this becomes the preliminary BOM/BOS.
         </p>
       )}
       <p className="text-right text-sm">

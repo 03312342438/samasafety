@@ -73,7 +73,7 @@ export const saveStockLot = createServerFn({ method: "POST" })
     if (id) {
       const { data: prev } = await supabase.from("stock_lots").select("*").eq("id", id).maybeSingle();
       if (!prev) throw new Error("Lot not found");
-      if (prev.status === "approved") throw new Error(`Lot ${prev.lot_number} is approved — it can no longer be edited.`);
+      if (prev.status === "approved") throw new Error(`Lot ${prev.lot_number} is approved - it can no longer be edited.`);
       if (prev.status === "pending") throw new Error(`Lot ${prev.lot_number} is waiting for Management approval.`);
       const { error } = await supabase.from("stock_lots").update({ ...fields, total_value: total }).eq("id", id);
       if (error) throw new Error(error.message);
@@ -131,7 +131,7 @@ export const deleteStockLot = createServerFn({ method: "POST" })
     if (!prev) throw new Error("Lot not found");
     const admin = await isManagement(supabase, userId);
     if (prev.status !== "draft" && !admin) {
-      throw new Error(`Lot ${prev.lot_number} has been submitted — only Management can remove it.`);
+      throw new Error(`Lot ${prev.lot_number} has been submitted - only Management can remove it.`);
     }
     const { error } = await supabase.from("stock_lots").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -181,7 +181,7 @@ export const submitStockLot = createServerFn({ method: "POST" })
       .insert({
         approval_type: "stock_lot",
         title: `Restock lot ${lot.lot_number}`,
-        details: `${(lot.stock_lot_items ?? []).length} item(s) · supplier ${lot.supplier || "—"}`,
+        details: `${(lot.stock_lot_items ?? []).length} item(s) · supplier ${lot.supplier || "-"}`,
         entity_table: "stock_lots",
         entity_id: lot.id,
         amount: total,
@@ -343,7 +343,7 @@ export const saveJobRemarks = createServerFn({ method: "POST" })
       .select("status")
       .eq("job_number_id", data.job_number_id);
     if ((existing ?? []).some((r: any) => r.status === "approved") && !roles.includes("admin")) {
-      throw new Error("These remarks have been approved — they can no longer be changed.");
+      throw new Error("These remarks have been approved - they can no longer be changed.");
     }
 
     const status = data.submit ? "pending" : "draft";

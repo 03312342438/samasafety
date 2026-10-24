@@ -60,13 +60,13 @@ function ProgressPage() {
                 <CardContent className="space-y-3 p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{p.project_number} — {p.name}</span>
+                    <span className="font-medium">{p.project_number} - {p.name}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(p.stage)}`}>
                       {humanize(p.stage)}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {p.customers?.name ?? "—"}
+                    {p.customers?.name ?? "-"}
                     {p.site_location ? ` · ${p.site_location}` : ""}
                   </p>
                   <div className="flex items-center gap-3">

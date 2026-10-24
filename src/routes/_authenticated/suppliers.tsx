@@ -145,7 +145,7 @@ function SuppliersPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {[s.contact_person, s.phone, s.email, s.address].filter(Boolean).join(" · ") || "—"}
+                      {[s.contact_person, s.phone, s.email, s.address].filter(Boolean).join(" · ") || "-"}
                     </p>
                     {s.payment_terms && <p className="text-xs text-muted-foreground">Terms: {s.payment_terms}</p>}
                   </div>

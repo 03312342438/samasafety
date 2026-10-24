@@ -96,9 +96,9 @@ function StockPage() {
                     <ItemImage path={s.image_url} alt={s.description} className="mx-auto h-40 w-full max-w-[220px] object-contain" />
                     <p className="text-sm font-semibold text-primary uppercase">{s.item_code}</p>
                     <p className="line-clamp-2 text-xs text-muted-foreground">{s.description}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.category || "—"}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.category || "-"}</p>
                     <p className="text-base font-semibold">{money(s.unit_cost)}</p>
-                    <p className="text-xs text-muted-foreground">Supplier: {s.supplier || "—"}</p>
+                    <p className="text-xs text-muted-foreground">Supplier: {s.supplier || "-"}</p>
                     <p className="text-xs text-muted-foreground">UOM: {s.unit}</p>
                     <p className="text-xs">
                       Available Stock: <span className={available > 0 ? "font-semibold" : "font-semibold text-destructive"}>{available}</span>
@@ -128,7 +128,7 @@ function StockPage() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "—"}
+                        {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "-"}
                       </p>
                     </div>
                     <div className="grid grid-cols-4 gap-4 text-center">
@@ -163,8 +163,8 @@ function StockPage() {
               <div className="grid gap-5 md:grid-cols-2">
                 <ItemImage path={active.image_url} alt={active.description} className="h-64 w-full object-contain" />
                 <div className="space-y-3 text-sm">
-                  <Detail icon={MapPin} label="Store location" value={active.store_location || "—"} />
-                  <Detail icon={Truck} label="Supplier" value={active.supplier || "—"} />
+                  <Detail icon={MapPin} label="Store location" value={active.store_location || "-"} />
+                  <Detail icon={Truck} label="Supplier" value={active.supplier || "-"} />
                   <div className="grid grid-cols-2 gap-3">
                     <Stat label="Unit price" value={money(active.unit_cost)} strong />
                     <Stat label="UOM" value={active.unit} />
@@ -177,7 +177,7 @@ function StockPage() {
                     />
                     <Stat label="Reorder level" value={`${Number(active.reorder_level ?? 0)}`} />
                   </div>
-                  <p className="text-xs text-muted-foreground">Category: {active.category || "—"}</p>
+                  <p className="text-xs text-muted-foreground">Category: {active.category || "-"}</p>
                   {active.notes && <p className="text-xs text-muted-foreground">{active.notes}</p>}
                 </div>
               </div>

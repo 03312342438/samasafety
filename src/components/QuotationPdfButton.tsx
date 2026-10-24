@@ -35,7 +35,7 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
     .slice()
     .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
   const projectName =
-    quotation.projects?.name || quotation.boms?.title || quotation.site_location || "—";
+    quotation.projects?.name || quotation.boms?.title || quotation.site_location || "-";
   const cur = quotation.currency || CURRENCY;
   const preparer = quotation.prepared_by_profile ?? {};
   const preparerName = preparer.full_name || "";
@@ -81,7 +81,7 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
               <tr>
                 <td style={{ width: "60%", verticalAlign: "top" }}>
                   <div><strong>Ref No:</strong> {quotation.reference}{quotation.revision ? `-R${quotation.revision}` : ""}</div>
-                  <div style={{ marginTop: 6 }}><strong>Client Name:</strong> {customerName || quotation.customers?.name || "—"}</div>
+                  <div style={{ marginTop: 6 }}><strong>Client Name:</strong> {customerName || quotation.customers?.name || "-"}</div>
                   <div><strong>ATTN.:</strong> {quotation.attention || quotation.customers?.contact_person || ""}</div>
                 </td>
                 <td style={{ width: "40%", verticalAlign: "top", textAlign: "right" }}>
@@ -93,7 +93,7 @@ export function QuotationPdfButton({ quotation, customerName }: { quotation: any
 
           <p style={{ marginTop: 12 }}>Dear Sir/Madam,</p>
           <div><strong>PROJECT</strong> : {projectName}</div>
-          <div><strong>SUBJECT</strong> : {quotation.title || "—"}</div>
+          <div><strong>SUBJECT</strong> : {quotation.title || "-"}</div>
 
           <p style={{ marginTop: 12, fontSize: 11 }}>
             Further to the above mentioned subject &amp; Based on your inquiry we are please to submit our best

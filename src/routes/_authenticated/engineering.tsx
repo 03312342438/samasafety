@@ -214,7 +214,7 @@ function EngineeringPage() {
       await requestApproval({
         data: {
           approval_type: "bom_bos",
-          title: `A3 — BOM/BOS ${b.reference}`,
+          title: `A3 - BOM/BOS ${b.reference}`,
           details: `${b.title || "BOM"} · estimated cost ${b.estimated_cost} ${b.currency}`,
           project_id: b.project_id ?? null,
           entity_table: "boms",
@@ -296,7 +296,7 @@ function EngineeringPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Title" value={bomForm.title} onChange={(v) => setBomForm({ ...bomForm, title: v })} />
                     <Select label="Type" value={bomForm.bom_type} onChange={(v) => setBomForm({ ...bomForm, bom_type: v })}
-                      options={[["material", "BOM — Material"], ["service", "BOS — Service"]]} />
+                      options={[["material", "BOM - Material"], ["service", "BOS - Service"]]} />
                      <div className="sm:col-span-2">
                        <Select label="Purchase order number" value={bomPoId}
                          onChange={(v) => {
@@ -312,7 +312,7 @@ function EngineeringPage() {
                            setBomSite(project?.site_location ?? po?.quotations?.site_location ?? "");
                            if (v && !projectId) toast.error("This purchase order is not linked to a project yet.");
                          }}
-                         options={[["", "— select purchase order —"], ...poOptions.map((po: any) => [po.id, `${po.po_number || po.reference} — ${po.customers?.name ?? "Customer"}`] as [string, string])]} />
+                         options={[["", "- select purchase order -"], ...poOptions.map((po: any) => [po.id, `${po.po_number || po.reference} - ${po.customers?.name ?? "Customer"}`] as [string, string])]} />
                      </div>
                      <Select label="Project (from PO)" value={bomForm.project_id} disabled={Boolean(bomPoId)}
                        onChange={(v) => {
@@ -320,9 +320,9 @@ function EngineeringPage() {
                          setBomForm({ ...bomForm, project_id: v, customer_id: project?.customer_id ?? "" });
                          setBomSite(project?.site_location ?? "");
                        }}
-                       options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
+                       options={[["", "- none -"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} - ${p.name}`] as [string, string])]} />
                      <Select label="Customer (from project)" value={bomForm.customer_id} disabled onChange={() => {}}
-                      options={[["", "— select a project —"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
+                      options={[["", "- select a project -"], ...((customers as any[]) ?? []).map((c) => [c.id, c.name] as [string, string])]} />
                     <div>
                       <Label className="text-xs">Site (auto)</Label>
                       <Input className="mt-1 disabled:cursor-not-allowed disabled:opacity-60" value={bomSite} disabled readOnly />
@@ -342,7 +342,7 @@ function EngineeringPage() {
                       {preliminaryForProject.map((p: any) => (
                         <div key={p.id} className="mt-2">
                           <p className="text-xs font-medium">
-                            {p.reference} — {p.title || "Preliminary"} ·{" "}
+                            {p.reference} - {p.title || "Preliminary"} ·{" "}
                             {Number(p.estimated_cost ?? 0).toFixed(3)} {p.currency}
                           </p>
                           <ul className="mt-1 space-y-0.5">
@@ -350,7 +350,7 @@ function EngineeringPage() {
                               .sort((a: any, b: any) => a.sequence - b.sequence)
                               .map((i: any) => (
                                 <li key={i.id} className="text-[11px] text-muted-foreground">
-                                  {i.description} — {i.quantity} {i.unit} @ {Number(i.unit_cost ?? 0).toFixed(3)}
+                                  {i.description} - {i.quantity} {i.unit} @ {Number(i.unit_cost ?? 0).toFixed(3)}
                                 </li>
                               ))}
                           </ul>
@@ -374,12 +374,12 @@ function EngineeringPage() {
                           <div className="sm:col-span-3">
                             <SearchSelect
                               value={it.stock_item_id}
-                              placeholder="— item code —"
+                              placeholder="- item code -"
                               searchPlaceholder="Search item code or description…"
                               options={[
-                                ["", "— item code —"] as [string, string],
+                                ["", "- item code -"] as [string, string],
                                 ...approvedItems.map(
-                                  (s: any) => [s.id, `${s.item_code} — ${s.description}`] as [string, string],
+                                  (s: any) => [s.id, `${s.item_code} - ${s.description}`] as [string, string],
                                 ),
                               ]}
                               onChange={(value) => {
@@ -438,9 +438,9 @@ function EngineeringPage() {
                       <Field label="Task title" value={taskForm.title} onChange={(v) => setTaskForm({ ...taskForm, title: v })} />
                     </div>
                     <Select label="Project" value={taskForm.project_id} onChange={(v) => setTaskForm({ ...taskForm, project_id: v })}
-                      options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
+                      options={[["", "- none -"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} - ${p.name}`] as [string, string])]} />
                     <Select label="Job number" value={taskForm.job_number_id} onChange={(v) => setTaskForm({ ...taskForm, job_number_id: v })}
-                      options={[["", "— none —"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
+                      options={[["", "- none -"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
                     <Field label="Planned start" type="date" value={taskForm.planned_start} onChange={(v) => setTaskForm({ ...taskForm, planned_start: v })} />
                     <Field label="Planned end" type="date" value={taskForm.planned_end} onChange={(v) => setTaskForm({ ...taskForm, planned_end: v })} />
                     <Field label="Actual start" type="date" value={taskForm.actual_start} onChange={(v) => setTaskForm({ ...taskForm, actual_start: v })} />
@@ -512,7 +512,7 @@ function EngineeringPage() {
                     )}
                     {b.used_in_quotation ? (
                       <span className="self-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                        Locked — used in quotation {b.used_in_quotation}
+                        Locked - used in quotation {b.used_in_quotation}
                       </span>
                     ) : (
                       <Button variant="outline" size="sm" onClick={() => editBom(b)}>
@@ -551,10 +551,10 @@ function EngineeringPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(t.priority)}`}>{humanize(t.priority)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[t.projects?.project_number, t.job_numbers?.job_number].filter(Boolean).join(" · ") || "—"}
+                      {[t.projects?.project_number, t.job_numbers?.job_number].filter(Boolean).join(" · ") || "-"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t.planned_start ?? "—"} → {t.planned_end ?? "—"} · progress {t.progress_percent ?? 0}%
+                      {t.planned_start ?? "-"} → {t.planned_end ?? "-"} · progress {t.progress_percent ?? 0}%
                     </p>
                   </div>
                   <div className="flex gap-2">

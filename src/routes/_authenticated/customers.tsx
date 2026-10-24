@@ -127,7 +127,7 @@ function CustomersPage() {
           <div>
             <h1 className="text-xl font-semibold">Customers & Assets</h1>
             <p className="text-sm text-muted-foreground">
-              One shared customer register — used by sales, projects, service and accounts.
+              One shared customer register - used by sales, projects, service and accounts.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ function CustomersPage() {
                         value={form.city}
                         onChange={(e) => setForm({ ...form, city: e.target.value })}
                       >
-                        <option value="">— select city —</option>
+                        <option value="">- select city -</option>
                         {BAHRAIN_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                         {form.city && !BAHRAIN_CITIES.includes(form.city) && (
                           <option value={form.city}>{form.city}</option>
@@ -190,7 +190,7 @@ function CustomersPage() {
                         value={assetForm.customer_id}
                         onChange={(e) => setAssetForm({ ...assetForm, customer_id: e.target.value })}
                       >
-                        <option value="">— none —</option>
+                        <option value="">- none -</option>
                         {((customers as any[]) ?? []).map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
@@ -277,7 +277,7 @@ function CustomersPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(a.status)}`}>{a.status}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[a.customers?.name, a.system_type, a.site_location].filter(Boolean).join(" · ") || "—"}
+                      {[a.customers?.name, a.system_type, a.site_location].filter(Boolean).join(" · ") || "-"}
                     </p>
                     {a.next_service_date && (
                       <p className="text-xs text-muted-foreground">Next service: {a.next_service_date}</p>

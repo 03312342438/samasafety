@@ -13,7 +13,7 @@ export type AuditEntry = {
   new_value?: unknown;
 };
 
-/** Append-only activity log. Never throws — logging must not break a write. */
+/** Append-only activity log. Never throws - logging must not break a write. */
 export async function logActivity(
   supabase: AnyClient,
   userId: string,

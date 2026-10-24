@@ -88,7 +88,7 @@ export function CalloutReports({ performedBy, canEdit = true }: { performedBy: s
                   {r.client_name || "Untitled"} <span className="text-muted-foreground">· {r.reference}</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {r.project || r.site_location || "—"} · Call {new Date(r.call_received_at).toLocaleString()}
+                  {r.project || r.site_location || "-"} · Call {new Date(r.call_received_at).toLocaleString()}
                 </p>
                 {r.reported_problem && <p className="mt-1 text-sm">{r.reported_problem}</p>}
                 {quotationMessage(r.spare_parts_quotation_status) && <p className="mt-1 text-sm font-semibold text-primary">{quotationMessage(r.spare_parts_quotation_status)}{r.spare_parts_quotation_reference ? ` · ${r.spare_parts_quotation_reference}` : ""}</p>}
@@ -238,7 +238,7 @@ function CalloutForm({
           <div className="space-y-1">
             <Label>System type</Label>
             <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={f.system_type} onChange={set("system_type")}>
-              <option value="">—</option>
+              <option value="">-</option>
               {SYSTEM_TYPES.map((s) => <option key={s} value={s}>{SYSTEM_LABELS[s] ?? s}</option>)}
             </select>
           </div>
@@ -259,7 +259,7 @@ function CalloutForm({
           <h3 className="text-base font-semibold">Spare Parts / Consumables</h3>
           {f.spare_parts.map((part, i) => (
             <div key={i} className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-12">
-              <div className="sm:col-span-6"><SearchSelect value={part.spare_no} onChange={(code) => pickPart(i, code)} options={stock.map((item: any) => [item.item_code, `${item.item_code} — ${item.description}`] as [string, string])} placeholder="— select item from store —" searchPlaceholder="Search store items…" disabled={partsLocked || busy} /></div>
+              <div className="sm:col-span-6"><SearchSelect value={part.spare_no} onChange={(code) => pickPart(i, code)} options={stock.map((item: any) => [item.item_code, `${item.item_code} - ${item.description}`] as [string, string])} placeholder="- select item from store -" searchPlaceholder="Search store items…" disabled={partsLocked || busy} /></div>
               <Input className="sm:col-span-6 sm:col-start-1" aria-label={`Spare part ${i + 1} description`} placeholder="Description" value={part.description} onChange={(e) => setPart(i, "description", e.target.value)} disabled={partsLocked || busy} />
               <Input className="sm:col-span-2" aria-label={`Spare part ${i + 1} quantity`} type="number" min="0.01" step="any" placeholder="Qty" value={part.qty} onChange={(e) => setPart(i, "qty", e.target.value)} disabled={partsLocked || busy} />
               <div className="flex gap-2 sm:col-span-2"><Button title="Remove spare part" aria-label={`Remove spare part ${i + 1}`} type="button" variant="ghost" size="icon" disabled={partsLocked || busy} onClick={() => setF((p) => ({ ...p, spare_parts: p.spare_parts.filter((_, index) => index !== i) }))}><Trash2 className="h-4 w-4" /></Button></div>
@@ -286,12 +286,12 @@ function CalloutForm({
         <div className="flex flex-wrap gap-2">
           {!awaitingQuotation && <>
             <Button variant="outline" disabled={busy} onClick={() => submit("pending")}>Log call (not attended)</Button>
-            <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended – needs follow-up</Button>
-            <Button disabled={busy} onClick={() => submit("closed")}>{partsRequired && !partsLocked ? "Submit & request spare parts quotation" : "Attended – close call"}</Button>
+            <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended - needs follow-up</Button>
+            <Button disabled={busy} onClick={() => submit("closed")}>{partsRequired && !partsLocked ? "Submit & request spare parts quotation" : "Attended - close call"}</Button>
           </>}
           {awaitingQuotation && <>
-            <Button variant="outline" disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("follow_up", true)}>Resubmit – needs follow-up</Button>
-            <Button disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("closed", true)}>Resubmit – approved spare parts quotation</Button>
+            <Button variant="outline" disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("follow_up", true)}>Resubmit - needs follow-up</Button>
+            <Button disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("closed", true)}>Resubmit - approved spare parts quotation</Button>
           </>}
           {initial?.id && <CalloutDownloadButton data={{ ...initial, ...f, reference: initial.reference }} />}
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}

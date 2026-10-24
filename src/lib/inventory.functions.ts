@@ -102,7 +102,7 @@ export const saveStockItem = createServerFn({ method: "POST" })
       action: "create",
       entity_table: "stock_items",
       entity_id: created.id,
-      entity_label: `${item_code} — ${fields.description}`,
+      entity_label: `${item_code} - ${fields.description}`,
       new_value: fields,
     });
     return { ok: true, id: created.id, item_code };
@@ -123,13 +123,13 @@ export const deleteStockItem = createServerFn({ method: "POST" })
       label: `Item ${prev?.item_code ?? ""}`.trim(),
       action: "delete",
     });
-    // An item is frozen 24 hours after it was added — only Management may remove it then.
+    // An item is frozen 24 hours after it was added - only Management may remove it then.
     const ageHours = prev?.created_at
       ? (Date.now() - new Date(prev.created_at).getTime()) / 3_600_000
       : 0;
     if (ageHours > 24 && !(await isManagement(supabase, userId))) {
       throw new Error(
-        `Item ${prev?.item_code ?? ""} was created more than 24 hours ago — only Management can delete it now.`.trim(),
+        `Item ${prev?.item_code ?? ""} was created more than 24 hours ago - only Management can delete it now.`.trim(),
       );
     }
     const { error } = await supabase.from("stock_items").delete().eq("id", data.id);
@@ -179,7 +179,7 @@ export const setStockItemApproval = createServerFn({ method: "POST" })
       action: `item_${data.approval_status}`,
       entity_table: "stock_items",
       entity_id: data.id,
-      entity_label: `${item?.item_code ?? ""} — ${item?.description ?? ""}`,
+      entity_label: `${item?.item_code ?? ""} - ${item?.description ?? ""}`,
       new_value: { approval_status: data.approval_status },
     });
     await notifyDepartments(supabase, ["project_manager", "technician", "inventory"], {
@@ -254,7 +254,7 @@ export const recordStockMovement = createServerFn({ method: "POST" })
       action: `stock_${data.movement_type}`,
       entity_table: "stock_items",
       entity_id: data.stock_item_id,
-      entity_label: `${item.item_code} — ${item.description}`,
+      entity_label: `${item.item_code} - ${item.description}`,
       previous_value: { quantity_on_hand: item.quantity_on_hand },
       new_value: { quantity_on_hand: next },
     });
@@ -262,7 +262,7 @@ export const recordStockMovement = createServerFn({ method: "POST" })
     if (next <= Number(item.reorder_level ?? 0)) {
       await notifyDepartments(supabase, ["inventory", "admin"], {
         title: "Stock below reorder level",
-        message: `${item.item_code} — ${item.description}: ${next} ${item.unit} left`,
+        message: `${item.item_code} - ${item.description}: ${next} ${item.unit} left`,
         category: "inventory",
         link: "/inventory",
         entity_table: "stock_items",
@@ -534,7 +534,7 @@ export const issueMaterialRequest = createServerFn({ method: "POST" })
       new_value: { received_by: data.received_by },
     });
     await notifyDepartments(supabase, ["technician", "project_manager"], {
-      title: `Material issued — ${request.reference}`,
+      title: `Material issued - ${request.reference}`,
       message: `${request.title} released from store`,
       category: "inventory",
       link: "/inventory",

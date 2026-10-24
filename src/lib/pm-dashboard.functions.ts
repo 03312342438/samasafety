@@ -63,7 +63,7 @@ export const getProjectDashboard = createServerFn({ method: "GET" })
         id: p.id,
         project_number: p.project_number,
         name: p.name,
-        customer: names.get(p.customer_id) ?? "—",
+        customer: names.get(p.customer_id) ?? "-",
         site_location: p.site_location ?? "",
         stage: p.stage,
         status: p.status,

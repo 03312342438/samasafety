@@ -83,7 +83,7 @@ export const saveCustomer = createServerFn({ method: "POST" })
       action: "create",
       entity_table: "customers",
       entity_id: created.id,
-      entity_label: `${customerNumber} — ${fields.name}`,
+      entity_label: `${customerNumber} - ${fields.name}`,
       new_value: { ...fields, customer_number: customerNumber },
     });
     return { ok: true, id: created.id, customer_number: customerNumber };
@@ -108,7 +108,7 @@ export const deleteCustomer = createServerFn({ method: "POST" })
         .map((p: any) => `${p.project_number}${p.name ? ` (${p.name})` : ""}`)
         .join(", ");
       throw new Error(
-        `Customer ${prev?.customer_number ?? ""} cannot be deleted — it is entered in project ${list}.`,
+        `Customer ${prev?.customer_number ?? ""} cannot be deleted - it is entered in project ${list}.`,
       );
     }
 

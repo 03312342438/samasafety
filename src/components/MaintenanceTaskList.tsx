@@ -111,7 +111,7 @@ export function MaintenanceTaskList({
                       {t.system_type}
                     </span>
                   )}
-                  {t.client_name || "—"}
+                  {t.client_name || "-"}
                   {t.project ? ` · ${t.project}` : ""}
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
                     Visit #{t.sequence}
@@ -125,7 +125,7 @@ export function MaintenanceTaskList({
                     month: "short",
                     year: "numeric",
                   })}
-                  {showEmployee && ` · Pending with ${t.employee_name ?? "—"}`}
+                  {showEmployee && ` · Pending with ${t.employee_name ?? "-"}`}
                 </p>
                 <div className="mt-1 flex gap-2">
                   {expired && (

@@ -14,7 +14,7 @@ describe("dynamic maintenance scheduling", () => {
   });
   it("expired contract with visits left shows remaining count", () => {
     expect(contractStatus({ endDate: "2020-01-01", upcoming: "2020-06-01", remaining: 2 })).toBe(
-      "Expired – 2 Visits Remaining",
+      "Expired - 2 Visits Remaining",
     );
   });
 });
@@ -58,12 +58,12 @@ describe("pending visit status labels", () => {
   it("an expired contract with visits left labels the visit with the remaining count", () => {
     expect(
       visitStatusLabel({ status: "pending", due_date: "2020-06-01", contract_end_date: "2020-01-01", contract_remaining: 3 }, "2026-10-22"),
-    ).toBe("Expired – 3 Visits Remaining");
+    ).toBe("Expired - 3 Visits Remaining");
   });
-  it("an expired contract with no remaining visits falls back to the due date", () => {
+  it("an expired contract with no remaining visits is labelled Expired", () => {
     expect(
       visitStatusLabel({ status: "pending", due_date: "2020-06-01", contract_end_date: "2020-01-01", contract_remaining: 0 }, "2026-10-22"),
-    ).toBe("Overdue");
+    ).toBe("Expired");
   });
   it("due dates within the next week are Due soon and later ones Upcoming", () => {
     expect(visitStatusLabel({ status: "pending", due_date: "2026-10-25" }, "2026-10-22")).toBe("Due soon");

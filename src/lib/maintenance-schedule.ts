@@ -62,7 +62,7 @@ export function buildSchedule(opts: {
 
 export function intervalLabel(value: number | string, unit: string): string {
   const v = typeof value === "string" ? value : String(value);
-  if (!v) return "—";
+  if (!v) return "-";
   const n = Number(v);
   const u = unit || "months";
   const singular = u.endsWith("s") ? u.slice(0, -1) : u;

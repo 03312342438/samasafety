@@ -4,14 +4,14 @@ export const SYSTEM_TYPES = ["FF", "FA", "CCTV", "GAS", "FS", "FE", "FSCP", "FSC
 export type SystemType = (typeof SYSTEM_TYPES)[number];
 
 export const SYSTEM_LABELS: Record<SystemType, string> = {
-  FF: "FF — Fire Fighting",
-  FA: "FA — Fire Alarm",
+  FF: "FF - Fire Fighting",
+  FA: "FA - Fire Alarm",
   CCTV: "CCTV",
   GAS: "GAS Suppression",
-  FS: "FS — Fire Suppression",
-  FE: "FE — Fire Extinguisher",
-  FSCP: "FSCP — Fire Suppression Control Panel",
-  FSC: "FSC — Fire Suppression Cylinder",
+  FS: "FS - Fire Suppression",
+  FE: "FE - Fire Extinguisher",
+  FSCP: "FSCP - Fire Suppression Control Panel",
+  FSC: "FSC - Fire Suppression Cylinder",
 };
 
 /** Default months between two visits for each system. */
@@ -109,7 +109,7 @@ export function contractStatus(opts: {
   if (opts.remaining <= 0) return "Completed";
   // Every contracted visit must still be done after the contract ends.
   if (opts.endDate && String(opts.endDate).slice(0, 10) < today)
-    return `Expired – ${opts.remaining} Visit${opts.remaining === 1 ? "" : "s"} Remaining`;
+    return `Expired - ${opts.remaining} Visit${opts.remaining === 1 ? "" : "s"} Remaining`;
   if (opts.upcoming && opts.upcoming < today) return "Overdue";
   if (opts.upcoming && opts.upcoming <= addDays(today, 30)) return "Due soon";
   return "On schedule";
@@ -138,7 +138,7 @@ export function isExpiredContract(
 
 /**
  * Label of a pending visit whose contract has already ended: "Expired", or
- * "Expired – N Visits Remaining" while contracted visits are still outstanding.
+ * "Expired - N Visits Remaining" while contracted visits are still outstanding.
  * Empty when the contract is still running (or there is no contract).
  */
 export function expiredVisitLabel(
@@ -147,12 +147,12 @@ export function expiredVisitLabel(
 ): string {
   if (!isExpiredContract(t, today)) return "";
   const remaining = t.contract_remaining ?? 0;
-  return remaining > 0 ? `Expired – ${remaining} Visit${remaining === 1 ? "" : "s"} Remaining` : "Expired";
+  return remaining > 0 ? `Expired - ${remaining} Visit${remaining === 1 ? "" : "s"} Remaining` : "Expired";
 }
 
 /**
  * Status label of a scheduled visit in Maintenance Pending: Completed,
- * Expired (or "Expired – N Visits Remaining" when visits are still outstanding),
+ * Expired (or "Expired - N Visits Remaining" when visits are still outstanding),
  * Overdue, Due soon or Upcoming.
  */
 export function visitStatusLabel(

@@ -92,7 +92,7 @@ export const saveDailyProgress = createServerFn({ method: "POST" })
 
     if (fields.issues.trim()) {
       await notifyDepartments(supabase, ["project_manager", "admin"], {
-        title: `Site issue reported — ${created.reference}`,
+        title: `Site issue reported - ${created.reference}`,
         message: fields.issues.slice(0, 200),
         category: "execution",
         link: "/execution",
@@ -255,7 +255,7 @@ export const setCompletionStage = createServerFn({ method: "POST" })
           ? ["accounts", "admin"]
           : ["project_manager"];
     await notifyDepartments(supabase, audience, {
-      title: `${row.reference} — ${data.stage.replace(/_/g, " ")}`,
+      title: `${row.reference} - ${data.stage.replace(/_/g, " ")}`,
       message: row.title ?? "",
       category: "execution",
       link: "/execution",

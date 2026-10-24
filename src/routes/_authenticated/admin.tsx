@@ -249,7 +249,7 @@ function Employees() {
             <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div>
                 <p className="font-semibold">
-                  {emp.full_name || "—"}{" "}
+                  {emp.full_name || "-"}{" "}
                   {emp.roles?.includes("admin") && (
                     <span className="ml-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                       Manager
@@ -329,7 +329,7 @@ function Employees() {
       <Dialog open={!!resetFor} onOpenChange={(o) => !o && setResetFor(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset Password{resetFor ? ` — ${resetFor.name}` : ""}</DialogTitle>
+            <DialogTitle>Reset Password{resetFor ? ` - ${resetFor.name}` : ""}</DialogTitle>
           </DialogHeader>
           <form onSubmit={submitReset} className="space-y-4">
             <div className="space-y-2">
@@ -543,7 +543,7 @@ function Maintenance() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            These addresses are emailed for every scheduled maintenance — 2 days before (orange notice)
+            These addresses are emailed for every scheduled maintenance - 2 days before (orange notice)
             and again on the due date (green notice).
           </p>
           <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
@@ -728,15 +728,15 @@ function SpareParts() {
                 {!isFetching &&
                   rows.map((r: any, i: number) => (
                     <TableRow key={i}>
-                      <TableCell className="font-medium">{r.spare_no || "—"}</TableCell>
-                      <TableCell>{r.description || "—"}</TableCell>
+                      <TableCell className="font-medium">{r.spare_no || "-"}</TableCell>
+                      <TableCell>{r.description || "-"}</TableCell>
                       <TableCell className="text-right">{r.qty || 0}</TableCell>
                       <TableCell className="text-right">{fmt(r.unit_price || 0)}</TableCell>
                       <TableCell className="text-right font-medium">{fmt(r.total || 0)}</TableCell>
-                      <TableCell>{r.msr_no || "—"}</TableCell>
-                      <TableCell>{r.order_no || "—"}</TableCell>
-                      <TableCell>{r.report_date || "—"}</TableCell>
-                      <TableCell>{r.performed_by || "—"}</TableCell>
+                      <TableCell>{r.msr_no || "-"}</TableCell>
+                      <TableCell>{r.order_no || "-"}</TableCell>
+                      <TableCell>{r.report_date || "-"}</TableCell>
+                      <TableCell>{r.performed_by || "-"}</TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -748,7 +748,7 @@ function SpareParts() {
   );
 }
 
-// Department assignment — controls which workflow modules a user can reach.
+// Department assignment - controls which workflow modules a user can reach.
 function DepartmentChips({ userId, roles }: { userId: string; roles: string[] }) {
   const qc = useQueryClient();
   const setDepartments = useServerFn(setUserDepartments);

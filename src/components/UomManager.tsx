@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 
 /**
  * Project Manager's master unit list. Every quantity field in the app picks
- * from here — nothing else may be typed in.
+ * from here - nothing else may be typed in.
  */
 export function UomManager() {
   const qc = useQueryClient();
@@ -74,7 +74,7 @@ export function UomManager() {
             <div key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
               <div>
                 <span className="font-medium">{u.code}</span>
-                {u.name ? <span className="text-muted-foreground"> — {u.name}</span> : null}
+                {u.name ? <span className="text-muted-foreground"> - {u.name}</span> : null}
               </div>
               <Button variant="ghost" size="sm" onClick={() => drop(u.id)}>
                 <Trash2 className="h-4 w-4" />
@@ -83,7 +83,7 @@ export function UomManager() {
           ))}
           {rows.length === 0 && (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              No units yet — add the first one above.
+              No units yet - add the first one above.
             </p>
           )}
         </div>

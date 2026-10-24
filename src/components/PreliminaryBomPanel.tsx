@@ -161,7 +161,7 @@ export function PreliminaryBomPanel() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {[b.projects?.project_number, b.title].filter(Boolean).join(" · ") || "—"}
+                {[b.projects?.project_number, b.title].filter(Boolean).join(" · ") || "-"}
               </p>
               <p className="mt-1 text-sm">
                 <span className="font-medium">{money(b.estimated_cost)}</span>
@@ -206,10 +206,10 @@ export function PreliminaryBomPanel() {
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
               >
-                <option value="">— select project —</option>
+                <option value="">- select project -</option>
                 {projectList.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.project_number} — {p.name}
+                    {p.project_number} - {p.name}
                   </option>
                 ))}
               </select>
@@ -236,12 +236,12 @@ export function PreliminaryBomPanel() {
                     <div className="col-span-4">
                       <SearchSelect
                         value={l.stock_item_id}
-                        placeholder="— item code / description —"
+                        placeholder="- item code / description -"
                         searchPlaceholder="Search item code or description…"
                         options={[
-                          ["", "— item code / description —"] as [string, string],
+                          ["", "- item code / description -"] as [string, string],
                           ...approvedStock.map(
-                            (s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string],
+                            (s) => [s.id, `${s.item_code} - ${s.description}`] as [string, string],
                           ),
                         ]}
                         onChange={(v) => pickItem(idx, v)}

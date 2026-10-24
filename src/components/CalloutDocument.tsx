@@ -17,12 +17,12 @@ const LINE = "#26343d";
 const WHITE = "#ffffff";
 
 const fmtDate = (v?: string | null) => {
-  if (!v) return "—";
+  if (!v) return "-";
   const p = String(v).slice(0, 10).split("-");
   return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : String(v);
 };
 const fmtDateTime = (v?: string | null) => {
-  if (!v) return "—";
+  if (!v) return "-";
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -35,20 +35,20 @@ const Lbl = ({ children, accent }: { children: ReactNode; accent?: boolean }) =>
 const Field = ({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) => (
   <div style={{ display: "grid", gridTemplateColumns: "88px 1fr", alignItems: "center", gap: 5, minWidth: 0 }}>
     <Lbl accent={accent}>{label}</Lbl>
-    <div style={{ ...box, fontSize: 9, fontWeight: 600 }}>{value || "—"}</div>
+    <div style={{ ...box, fontSize: 9, fontWeight: 600 }}>{value || "-"}</div>
   </div>
 );
 const Ruled = ({ title, text, grow = 1 }: { title: string; text?: string; grow?: number }) => (
   <section style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px", flex: `${grow} 1 60px`, minHeight: 60 }}>
     <Lbl>{title}</Lbl>
-    <div style={{ marginTop: 4, fontSize: 9, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>{text || "—"}</div>
+    <div style={{ marginTop: 4, fontSize: 9, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>{text || "-"}</div>
   </section>
 );
 
 const STATUS: Record<string, string> = { pending: "Not attended", follow_up: "Needs follow-up", closed: "Closed" };
 
 export const CalloutDocument = forwardRef<HTMLDivElement, { data: any }>(({ data }, ref) => {
-  const sys = data.system_type ? SYSTEM_LABELS[data.system_type as SystemType] ?? data.system_type : "—";
+  const sys = data.system_type ? SYSTEM_LABELS[data.system_type as SystemType] ?? data.system_type : "-";
   const parts: SparePart[] = Array.isArray(data.spare_parts) ? data.spare_parts.filter((p: SparePart) => p.spare_no || p.description) : [];
   const spareMessage = quotationMessage(data.spare_parts_quotation_status);
   const Sign = ({ who, name, sig, date }: { who: string; name: string; sig: string; date: string }) => (
@@ -106,10 +106,10 @@ export const CalloutDocument = forwardRef<HTMLDivElement, { data: any }>(({ data
 
       {(parts.length > 0 || spareMessage) && <section style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px" }}>
         <Lbl>Spare Parts / Consumables</Lbl>
-        {spareMessage && <div style={{ fontSize: 9, fontWeight: 800, margin: "4px 0" }}>{spareMessage}{data.spare_parts_quotation_reference ? ` — ${data.spare_parts_quotation_reference}` : ""}</div>}
+        {spareMessage && <div style={{ fontSize: 9, fontWeight: 800, margin: "4px 0" }}>{spareMessage}{data.spare_parts_quotation_reference ? ` - ${data.spare_parts_quotation_reference}` : ""}</div>}
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 8, marginTop: 4 }}>
           <thead><tr>{["Part No.", "Description", "Qty", "Unit Price", "Total"].map((label) => <th key={label} style={{ ...box, textAlign: "left" }}>{label}</th>)}</tr></thead>
-          <tbody>{parts.map((part, i) => <tr key={i}>{[part.spare_no, part.description, part.qty, part.unit_price, part.total].map((value, index) => <td key={index} style={box}>{value || "—"}</td>)}</tr>)}</tbody>
+          <tbody>{parts.map((part, i) => <tr key={i}>{[part.spare_no, part.description, part.qty, part.unit_price, part.total].map((value, index) => <td key={index} style={box}>{value || "-"}</td>)}</tr>)}</tbody>
         </table>
       </section>}
 

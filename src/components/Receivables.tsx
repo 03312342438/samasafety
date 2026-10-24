@@ -125,7 +125,7 @@ export function ReceivablesOverview() {
               {s.dueTerms.map((t: any) => (
                 <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-xs">
                   <span className="font-medium">
-                    {t.project_number} · {t.percent}% — {t.milestone || TRIGGER_LABELS[t.trigger_type]}
+                    {t.project_number} · {t.percent}% - {t.milestone || TRIGGER_LABELS[t.trigger_type]}
                   </span>
                   <span className="text-muted-foreground">{money(t.amount)}</span>
                 </div>
@@ -137,14 +137,14 @@ export function ReceivablesOverview() {
 
       <Card>
         <CardContent className="p-4">
-          <p className="mb-3 text-sm font-medium">Ongoing projects — payment progress</p>
+          <p className="mb-3 text-sm font-medium">Ongoing projects - payment progress</p>
           {s.ongoing.length === 0 && <p className="text-xs text-muted-foreground">No ongoing projects.</p>}
           <div className="space-y-4">
             {s.ongoing.map((r: any) => (
               <div key={r.id}>
                 <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="font-medium">
-                    {r.project_number} — {r.name}
+                    {r.project_number} - {r.name}
                     {r.customer ? ` · ${r.customer}` : ""}
                   </span>
                   <span className="text-muted-foreground">
@@ -199,7 +199,7 @@ export function ReceivablesTable() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-medium">
-                      {r.project_number} — {r.name}
+                      {r.project_number} - {r.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {[r.customer, `${r.invoice_count} invoice(s)`].filter(Boolean).join(" · ")}
@@ -226,7 +226,7 @@ export function ReceivablesTable() {
                     {r.terms.map((t: any) => (
                       <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-[11px]">
                         <span>
-                          {t.percent}% — {t.milestone || TRIGGER_LABELS[t.trigger_type]}
+                          {t.percent}% - {t.milestone || TRIGGER_LABELS[t.trigger_type]}
                           <span className="ml-1 text-muted-foreground">
                             ({TRIGGER_LABELS[t.trigger_type]}
                             {t.trigger_type === "steps_completed" ? ` · ${t.trigger_steps} steps` : ""})

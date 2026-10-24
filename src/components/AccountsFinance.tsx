@@ -83,8 +83,8 @@ export function FinanceDashboard() {
   if (!s) return <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>;
 
   const agingRows: [string, number][] = [
-    ["Current", s.aging.current], ["1–30", s.aging.d1_30], ["31–60", s.aging.d31_60],
-    ["61–90", s.aging.d61_90], ["91–120", s.aging.d91_120], ["120+", s.aging.d120_plus],
+    ["Current", s.aging.current], ["1-30", s.aging.d1_30], ["31-60", s.aging.d31_60],
+    ["61-90", s.aging.d61_90], ["91-120", s.aging.d91_120], ["120+", s.aging.d120_plus],
   ];
 
   return (
@@ -208,7 +208,7 @@ export function FinanceDashboard() {
             {s.projectProfitability.map((p: any) => (
               <div key={p.id} className="rounded-md border p-2 text-xs">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium">{p.project_number} — {p.name}</span>
+                  <span className="font-medium">{p.project_number} - {p.name}</span>
                   <span className={p.profit >= 0 ? "text-primary" : "text-destructive"}>
                     profit {money(p.profit)} · {p.margin}%
                   </span>
@@ -288,7 +288,7 @@ export function SuppliersTab() {
                 <span className={`rounded-full px-2 py-0.5 text-xs ${statusBadgeClass(s.status)}`}>{humanize(s.status)}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {[s.contact_person, s.email, s.phone, s.payment_terms].filter(Boolean).join(" · ") || "—"}
+                {[s.contact_person, s.email, s.phone, s.payment_terms].filter(Boolean).join(" · ") || "-"}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => { setForm({ ...emptySupplier, ...s }); setOpen(true); }}>
@@ -329,7 +329,7 @@ export function PayablesTab({
   const { data: lots } = useQuery({ queryKey: ["stock-lots"], queryFn: () => fetchLots() });
 
   const lotOptions: [string, string][] = [
-    ["", "— select lot —"],
+    ["", "- select lot -"],
     ...((lots as any[]) ?? []).map(
       (l) => [l.id, `${l.lot_number}${l.supplier ? ` · ${l.supplier}` : ""}`] as [string, string],
     ),
@@ -345,7 +345,7 @@ export function PayablesTab({
   };
 
   const supplierOptions: [string, string][] = [
-    ["", "— select supplier —"],
+    ["", "- select supplier -"],
     ...((suppliers as any[]) ?? []).map((s) => [s.id, s.name] as [string, string]),
   ];
 
@@ -384,7 +384,7 @@ export function PayablesTab({
           remarks: "",
         },
       });
-      toast.success("Payment logged — awaiting Management approval");
+      toast.success("Payment logged - awaiting Management approval");
       refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not record payment");
@@ -429,7 +429,7 @@ export function PayablesTab({
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {[i.suppliers?.name, i.projects?.project_number, i.stock_lots?.lot_number, i.due_date && `due ${i.due_date}`]
-                    .filter(Boolean).join(" · ") || "—"}
+                    .filter(Boolean).join(" · ") || "-"}
                 </p>
                 <p className="mt-1 text-xs">
                   {money(i.amount)} · paid {money(i.amount_paid)} · balance {money(balance)}
@@ -453,7 +453,7 @@ export function PayablesTab({
             {((payments as any[]) ?? []).map((p) => (
               <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-xs">
                 <span>
-                  {money(p.amount)} · {p.suppliers?.name ?? "—"} ·{" "}
+                  {money(p.amount)} · {p.suppliers?.name ?? "-"} ·{" "}
                   {p.supplier_invoices?.invoice_number || p.supplier_invoices?.reference} · {p.payment_date}
                 </span>
                 {p.approved ? (
@@ -520,7 +520,7 @@ export function CreditNotesTab({
           note_date: form.note_date,
         },
       });
-      toast.success("Note raised — awaiting Management approval");
+      toast.success("Note raised - awaiting Management approval");
       setOpen(false);
       setForm(emptyNote);
       refresh();

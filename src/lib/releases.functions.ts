@@ -24,7 +24,7 @@ export const listStockReleases = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-/** Job numbers that Management has approved — only these can be released against. */
+/** Job numbers that Management has approved - only these can be released against. */
 export const listReleasableJobs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -53,7 +53,7 @@ export const getJobReleasableItems = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!job) throw new Error("Job number not found");
     if (job.status !== "approved") {
-      throw new Error(`Job ${job.job_number} is not approved yet — material cannot be released.`);
+      throw new Error(`Job ${job.job_number} is not approved yet - material cannot be released.`);
     }
     if (!job.bom_id) {
       throw new Error(`Job ${job.job_number} has no BOM / BOS attached, so it contains no items.`);
@@ -66,7 +66,7 @@ export const getJobReleasableItems = createServerFn({ method: "GET" })
       .limit(1);
     if ((priorRelease ?? []).length > 0) {
       throw new Error(
-        `Job ${job.job_number} has already been used for release ${(priorRelease as any[])[0].reference} — a job number can only be used once.`,
+        `Job ${job.job_number} has already been used for release ${(priorRelease as any[])[0].reference} - a job number can only be used once.`,
       );
     }
 
@@ -182,7 +182,7 @@ export const createStockRelease = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!j) throw new Error("Job number not found");
       if (j.status !== "approved") {
-        throw new Error(`Job ${j.job_number} is not approved — material cannot be released against it.`);
+        throw new Error(`Job ${j.job_number} is not approved - material cannot be released against it.`);
       }
       if (!j.bom_id) throw new Error(`Job ${j.job_number} has no BOM / BOS, so it contains no items.`);
       const { data: prior } = await supabase
@@ -193,7 +193,7 @@ export const createStockRelease = createServerFn({ method: "POST" })
         .limit(1);
       if ((prior ?? []).length > 0) {
         throw new Error(
-          `Job ${j.job_number} has already been used for release ${(prior as any[])[0].reference} — a job number can only be used once.`,
+          `Job ${j.job_number} has already been used for release ${(prior as any[])[0].reference} - a job number can only be used once.`,
         );
       }
       job = j;
@@ -227,7 +227,7 @@ export const createStockRelease = createServerFn({ method: "POST" })
     if (short) {
       const s = byId.get(short.stock_item_id);
       throw new Error(
-        `Not enough stock for ${s?.item_code ?? "item"} — ${s?.quantity_on_hand ?? 0} ${s?.unit ?? ""} on hand.`,
+        `Not enough stock for ${s?.item_code ?? "item"} - ${s?.quantity_on_hand ?? 0} ${s?.unit ?? ""} on hand.`,
       );
     }
 
@@ -289,8 +289,8 @@ export const createStockRelease = createServerFn({ method: "POST" })
         .from("approvals")
         .insert({
           approval_type: "stock_release",
-          title: `Release without job number — ${reference}`,
-          details: `${lines.length} item(s) · to ${data.released_to || "—"}${data.purpose ? ` · ${data.purpose}` : ""}`,
+          title: `Release without job number - ${reference}`,
+          details: `${lines.length} item(s) · to ${data.released_to || "-"}${data.purpose ? ` · ${data.purpose}` : ""}`,
           entity_table: "stock_releases",
           entity_id: created.id,
           amount: total,
@@ -307,7 +307,7 @@ export const createStockRelease = createServerFn({ method: "POST" })
         await applyStockReleaseDecision(supabase, userId, created.id, "approved");
         await notifyUsers(supabase, [userId], {
           title: "Release approved automatically",
-          message: `${reference} · ${lines.length} item(s) — raised by Management, no approval needed.`,
+          message: `${reference} · ${lines.length} item(s) - raised by Management, no approval needed.`,
           category: "inventory",
           link: "/releases",
           entity_table: "approvals",
@@ -347,7 +347,7 @@ export const deleteStockRelease = createServerFn({ method: "POST" })
     if (!prev) throw new Error("Release not found");
     const admin = await isManagement(supabase, userId);
     if (prev.status === "released" && !admin) {
-      throw new Error(`Release ${prev.reference} already left the store — only Management can remove it.`);
+      throw new Error(`Release ${prev.reference} already left the store - only Management can remove it.`);
     }
     const { error } = await supabase.from("stock_releases").delete().eq("id", data.id);
     if (error) throw new Error(error.message);

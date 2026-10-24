@@ -107,7 +107,7 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Create the account using the public client only — no service key required.
+      // Create the account using the public client only - no service key required.
       const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
         email,
         password,

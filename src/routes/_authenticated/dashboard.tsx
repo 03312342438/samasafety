@@ -97,7 +97,7 @@ function Dashboard() {
   const { pending, carried } = splitCarriedOver(taskList);
   const done = taskList.filter((t) => t.status === "completed");
   // Status filter (Overdue, Due soon, Upcoming, Completed,
-  // "Expired – N Visits Remaining", …) narrows the pending/completed lists.
+  // "Expired - N Visits Remaining", …) narrows the pending/completed lists.
   const matchStatus = (t: any) => !statusFilter || visitStatusLabel(t) === statusFilter;
   const pendingShown = pending.filter(matchStatus);
   const doneShown = done.filter(matchStatus);
@@ -132,7 +132,7 @@ function Dashboard() {
     );
   }
 
-  // Sales staff get a pure sales dashboard — no maintenance reports at all.
+  // Sales staff get a pure sales dashboard - no maintenance reports at all.
   if (isSalesOnly && view !== "history") {
     return (
       <div className="min-h-screen bg-secondary/40">
@@ -150,12 +150,12 @@ function Dashboard() {
     );
   }
 
-  // Accounts staff have no maintenance section — send them to the finance area.
+  // Accounts staff have no maintenance section - send them to the finance area.
   if (accountsOnly && view !== "history") {
     return <Navigate to="/accounts" replace />;
   }
 
-  // Store staff have no dashboard section — send them straight to the Store.
+  // Store staff have no dashboard section - send them straight to the Store.
   if (isInventoryOnly && view !== "history") {
     return <Navigate to="/stock" replace />;
   }
@@ -397,7 +397,7 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
                 {r.msr_no && <span className="text-muted-foreground">· MSR {r.msr_no}</span>}
               </p>
               <p className="text-sm text-muted-foreground">
-                {r.project || r.site_location || "—"} ·{" "}
+                {r.project || r.site_location || "-"} ·{" "}
                 {new Date(r.created_at).toLocaleString()}
                 {(r as any).employee_name && (
                   <span className="ml-1">· by {(r as any).employee_name}</span>
@@ -442,7 +442,7 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
   );
 }
 
-/** Dropdown listing every visit status present (Overdue, Completed, "Expired – N Visits Remaining", …). */
+/** Dropdown listing every visit status present (Overdue, Completed, "Expired - N Visits Remaining", …). */
 function StatusFilter({
   tasks,
   value,

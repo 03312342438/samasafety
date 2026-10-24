@@ -39,7 +39,7 @@ export async function downloadPendingExcel(rows: PendingRow[]) {
   ws.columns = cols.map(([, w]) => ({ width: w }));
   ws.mergeCells(1, 1, 1, cols.length);
   const t = ws.getCell(1, 1);
-  t.value = "Sama Safety & Security — Maintenance Pending";
+  t.value = "Sama Safety & Security - Maintenance Pending";
   t.font = { name: "Calibri", size: 15, bold: true, color: { argb: "FFFFFFFF" } };
   t.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
   t.alignment = { vertical: "middle", indent: 1 };

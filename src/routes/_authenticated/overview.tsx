@@ -189,7 +189,7 @@ function ProjectDashboard() {
                             {p.project_number} · {p.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {p.customer} · {p.site_location || "—"}
+                            {p.customer} · {p.site_location || "-"}
                             {p.target_date ? ` · target ${p.target_date}` : ""}
                           </p>
                         </div>
@@ -245,7 +245,7 @@ function ProjectDashboard() {
                       <div>
                         <p className="font-semibold">{p.project_number} · {p.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {p.customer} · completed {p.completed_date ?? "—"}
+                          {p.customer} · completed {p.completed_date ?? "-"}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-4 text-xs">

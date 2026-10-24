@@ -148,15 +148,15 @@ export const Route = createFileRoute("/api/public/hooks/maintenance-reminders")(
             .select("id, full_name, email")
             .in("id", ids);
           nameById = Object.fromEntries(
-            (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "—"]),
+            (profiles ?? []).map((p: any) => [p.id, p.full_name || p.email || "-"]),
           );
         }
 
         let sent = 0;
 
         for (const task of soonTasks ?? []) {
-          const employeeName = nameById[task.created_by] ?? "—";
-          const subject = `Maintenance due in 2 days${task.client_name ? ` — ${task.client_name}` : ""}`;
+          const employeeName = nameById[task.created_by] ?? "-";
+          const subject = `Maintenance due in 2 days${task.client_name ? ` - ${task.client_name}` : ""}`;
           await sendEmail(recipients, subject, buildHtml({ variant: "soon", task, employeeName }));
           await supabaseAdmin
             .from("maintenance_tasks")
@@ -166,8 +166,8 @@ export const Route = createFileRoute("/api/public/hooks/maintenance-reminders")(
         }
 
         for (const task of dueTasks ?? []) {
-          const employeeName = nameById[task.created_by] ?? "—";
-          const subject = `Maintenance due today${task.client_name ? ` — ${task.client_name}` : ""}`;
+          const employeeName = nameById[task.created_by] ?? "-";
+          const subject = `Maintenance due today${task.client_name ? ` - ${task.client_name}` : ""}`;
           await sendEmail(recipients, subject, buildHtml({ variant: "due", task, employeeName }));
           await supabaseAdmin
             .from("maintenance_tasks")

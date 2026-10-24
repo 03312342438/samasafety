@@ -106,7 +106,7 @@ export const saveBom = createServerFn({ method: "POST" })
         .maybeSingle();
       if (usedIn) {
         throw new Error(
-          `BOM ${prev?.reference ?? ""} is used in quotation ${usedIn.reference} — it can no longer be edited.`,
+          `BOM ${prev?.reference ?? ""} is used in quotation ${usedIn.reference} - it can no longer be edited.`,
         );
       }
       const { error } = await supabase.from("boms").update(fields).eq("id", id);

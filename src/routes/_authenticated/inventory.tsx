@@ -210,7 +210,7 @@ function InventoryPage() {
           notes: cell(row, "note").trim() || cell(row, "notes").trim(),
         });
       });
-      if (rows.length === 0) throw new Error("No item rows found — check the column headings.");
+      if (rows.length === 0) throw new Error("No item rows found - check the column headings.");
 
       // Upload embedded pictures to the item bucket and use their storage paths.
       for (const p of pendingImages) {
@@ -221,7 +221,7 @@ function InventoryPage() {
         }
       }
       const res: any = await runImport({ data: { rows } });
-      toast.success(`${res.created} item(s) imported — waiting for Management approval.` + (res.skipped ? ` ${res.skipped} skipped (code already exists).` : ""));
+      toast.success(`${res.created} item(s) imported - waiting for Management approval.` + (res.skipped ? ` ${res.skipped} skipped (code already exists).` : ""));
       qc.invalidateQueries({ queryKey: ["stock-items"] });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not read that file.");
@@ -294,7 +294,7 @@ function InventoryPage() {
         await requestApproval({
           data: {
             approval_type: "item_code",
-            title: `Item code approval — ${item.item_code ?? ""}`.trim(),
+            title: `Item code approval - ${item.item_code ?? ""}`.trim(),
             details: item.description ?? "",
             entity_table: "stock_items",
             entity_id: item.id,
@@ -314,8 +314,8 @@ function InventoryPage() {
 
   const stockOptions = useMemo(
     () =>
-      [["", "— free text —"] as [string, string]].concat(
-        ((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string]),
+      [["", "- free text -"] as [string, string]].concat(
+        ((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} - ${s.description}`] as [string, string]),
       ),
     [stock],
   );
@@ -329,10 +329,10 @@ function InventoryPage() {
 
   const lotItemOptions = useMemo(
     () =>
-      [["", "— select item —"] as [string, string]].concat(
+      [["", "- select item -"] as [string, string]].concat(
         ((stock as any[]) ?? [])
           .filter((s) => (s.approval_status ?? "pending") === "approved")
-          .map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string]),
+          .map((s) => [s.id, `${s.item_code} - ${s.description}`] as [string, string]),
       ),
     [stock],
   );
@@ -390,7 +390,7 @@ function InventoryPage() {
       };
       setStockForm(emptyStock);
       refresh();
-      // A new code is not live until Management clears it — ask before sending.
+      // A new code is not live until Management clears it - ask before sending.
       if (isNew && !canApproveItems && created.id) setApprovalPrompt(created);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save item");
@@ -403,7 +403,7 @@ function InventoryPage() {
       await requestApproval({
         data: {
           approval_type: "item_code",
-          title: `Item code approval — ${item.item_code ?? ""}`.trim(),
+          title: `Item code approval - ${item.item_code ?? ""}`.trim(),
           details: item.description ?? "",
           entity_table: "stock_items",
           entity_id: item.id,
@@ -552,7 +552,7 @@ function InventoryPage() {
       await requestApproval({
         data: {
           approval_type: "additional_material",
-          title: `A5 — Additional material ${r.reference}`,
+          title: `A5 - Additional material ${r.reference}`,
           details: `${r.title} · shortage / extra material requested`,
           project_id: r.project_id ?? null,
           job_number_id: r.job_number_id ?? null,
@@ -651,7 +651,7 @@ function InventoryPage() {
                     </div>
                     <div className="sm:col-span-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
                       Quantity, unit price, store location and supplier are captured by the Store when a
-                      restock lot is approved — they are not entered here.
+                      restock lot is approved - they are not entered here.
                     </div>
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
@@ -680,7 +680,7 @@ function InventoryPage() {
                         value={lotForm.supplier ?? ""}
                         onChange={(e) => setLotForm({ ...lotForm, supplier: e.target.value })}
                       >
-                        <option value="">— select supplier —</option>
+                        <option value="">- select supplier -</option>
                         {approvedSuppliers.map((s: any) => (
                           <option key={s.id} value={s.name}>{s.name}</option>
                         ))}
@@ -711,7 +711,7 @@ function InventoryPage() {
                             <SearchSelect
                               value={l.stock_item_id}
                               options={lotItemOptions}
-                              placeholder="— select item —"
+                              placeholder="- select item -"
                               searchPlaceholder="Search item code or description…"
                               onChange={(v) => setLotLines(lotLines.map((r, i) => (i === idx ? { ...r, stock_item_id: v } : r)))}
                             />
@@ -754,11 +754,11 @@ function InventoryPage() {
                     <Field label="Title" value={requestForm.title} onChange={(v) => setRequestForm({ ...requestForm, title: v })} />
                     <Field label="Required date" type="date" value={requestForm.required_date} onChange={(v) => setRequestForm({ ...requestForm, required_date: v })} />
                     <Select label="Project" value={requestForm.project_id} onChange={(v) => setRequestForm({ ...requestForm, project_id: v })}
-                      options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} — ${p.name}`] as [string, string])]} />
+                      options={[["", "- none -"], ...((projects as any[]) ?? []).map((p) => [p.id, `${p.project_number} - ${p.name}`] as [string, string])]} />
                     <Select label="Job number" value={requestForm.job_number_id} onChange={(v) => setRequestForm({ ...requestForm, job_number_id: v })}
-                      options={[["", "— none —"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
+                      options={[["", "- none -"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
                     <Select label="Source BOM / BOS" value={requestForm.bom_id} onChange={(v) => setRequestForm({ ...requestForm, bom_id: v })}
-                      options={[["", "— none —"], ...((boms as any[]) ?? []).map((b) => [b.id, `${b.reference} — ${b.title}`] as [string, string])]} />
+                      options={[["", "- none -"], ...((boms as any[]) ?? []).map((b) => [b.id, `${b.reference} - ${b.title}`] as [string, string])]} />
                     <Field label="Site location" value={requestForm.site_location} onChange={(v) => setRequestForm({ ...requestForm, site_location: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Notes</Label>
@@ -780,7 +780,7 @@ function InventoryPage() {
                             <SearchSelect
                               value={l.stock_item_id}
                               options={stockOptions}
-                              placeholder="— free text —"
+                              placeholder="- free text -"
                               searchPlaceholder="Search item code or description…"
                               onChange={(value) => {
                                 const picked = ((stock as any[]) ?? []).find((s) => s.id === value);
@@ -829,9 +829,9 @@ function InventoryPage() {
                       <div className="mt-1">
                         <SearchSelect
                           value={moveForm.stock_item_id}
-                          placeholder="— select item —"
+                          placeholder="- select item -"
                           searchPlaceholder="Search item code or description…"
-                          options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} — ${s.description}`] as [string, string])}
+                          options={((stock as any[]) ?? []).map((s) => [s.id, `${s.item_code} - ${s.description}`] as [string, string])}
                           onChange={(v) => setMoveForm({ ...moveForm, stock_item_id: v })}
                         />
                       </div>
@@ -841,9 +841,9 @@ function InventoryPage() {
                     <Field label="Quantity" value={moveForm.quantity} onChange={(v) => setMoveForm({ ...moveForm, quantity: v })} />
                     <Field label="Unit cost" value={moveForm.unit_cost} onChange={(v) => setMoveForm({ ...moveForm, unit_cost: v })} />
                     <Select label="Project" value={moveForm.project_id} onChange={(v) => setMoveForm({ ...moveForm, project_id: v })}
-                      options={[["", "— none —"], ...((projects as any[]) ?? []).map((p) => [p.id, p.project_number] as [string, string])]} />
+                      options={[["", "- none -"], ...((projects as any[]) ?? []).map((p) => [p.id, p.project_number] as [string, string])]} />
                     <Select label="Job number" value={moveForm.job_number_id} onChange={(v) => setMoveForm({ ...moveForm, job_number_id: v })}
-                      options={[["", "— none —"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
+                      options={[["", "- none -"], ...((jobs as any[]) ?? []).map((j) => [j.id, j.job_number] as [string, string])]} />
                     <Field label="Reference (DN / invoice)" value={moveForm.reference} onChange={(v) => setMoveForm({ ...moveForm, reference: v })} />
                     <div className="sm:col-span-2">
                       <Label className="text-xs">Remarks</Label>
@@ -902,7 +902,7 @@ function InventoryPage() {
                         On hand <span className="font-medium">{s.quantity_on_hand} {s.unit}</span> · reserved {s.quantity_reserved} · reorder at {s.reorder_level}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "—"}
+                        {[s.category, s.store_location, s.supplier].filter(Boolean).join(" · ") || "-"}
                       </p>
                     </div>
                   </div>
@@ -961,7 +961,7 @@ function InventoryPage() {
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {[l.supplier, l.reference, l.received_date].filter(Boolean).join(" · ") || "—"} ·{" "}
+                        {[l.supplier, l.reference, l.received_date].filter(Boolean).join(" · ") || "-"} ·{" "}
                         {(l.stock_lot_items ?? []).length} item(s) · {CURRENCY} {Number(l.total_value ?? 0).toFixed(3)}
                       </p>
                     </div>
@@ -1003,12 +1003,12 @@ function InventoryPage() {
                         {(l.stock_lot_items ?? []).map((i: any) => (
                           <tr key={i.id} className="border-t">
                             <td className="whitespace-nowrap px-2 py-1.5">
-                              {i.stock_items?.item_code ?? "—"} — {i.description}
+                              {i.stock_items?.item_code ?? "-"} - {i.description}
                             </td>
-                            <td className="px-2 py-1.5">{i.supplier || l.supplier || "—"}</td>
+                            <td className="px-2 py-1.5">{i.supplier || l.supplier || "-"}</td>
                             <td className="px-2 py-1.5 text-right">{i.quantity} {i.unit}</td>
                             <td className="px-2 py-1.5 text-right">{Number(i.unit_cost ?? 0).toFixed(3)}</td>
-                            <td className="px-2 py-1.5">{i.store_location || "—"}</td>
+                            <td className="px-2 py-1.5">{i.store_location || "-"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1031,11 +1031,11 @@ function InventoryPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(r.stage)}`}>{humanize(r.stage)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[r.projects?.project_number, r.job_numbers?.job_number, r.boms?.reference].filter(Boolean).join(" · ") || "—"}
+                      {[r.projects?.project_number, r.job_numbers?.job_number, r.boms?.reference].filter(Boolean).join(" · ") || "-"}
                       {r.required_date ? ` · required ${r.required_date}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {(r.material_request_items ?? []).length} line(s) · issued to {r.received_by || "—"}
+                      {(r.material_request_items ?? []).length} line(s) · issued to {r.received_by || "-"}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1076,7 +1076,7 @@ function InventoryPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[11px] ${statusBadgeClass(m.movement_type)}`}>{humanize(m.movement_type)}</span>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {m.quantity} {m.unit} · {m.reference || "—"} · {[m.projects?.project_number, m.job_numbers?.job_number].filter(Boolean).join(" · ") || "no job"}
+                      {m.quantity} {m.unit} · {m.reference || "-"} · {[m.projects?.project_number, m.job_numbers?.job_number].filter(Boolean).join(" · ") || "no job"}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(m.created_at).toLocaleString()} {m.remarks ? `· ${m.remarks}` : ""}
@@ -1099,7 +1099,7 @@ function InventoryPage() {
             <DialogHeader><DialogTitle>Send item code for approval?</DialogTitle></DialogHeader>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{approvalPrompt?.item_code}</span>
-              {approvalPrompt?.description ? ` — ${approvalPrompt.description}` : ""} is saved but not live.
+              {approvalPrompt?.description ? ` - ${approvalPrompt.description}` : ""} is saved but not live.
               It can only be used in BOM / BOS once a Project Manager approves it.
             </p>
             <DialogFooter>

@@ -56,7 +56,7 @@ export const saveSupplier = createServerFn({ method: "POST" })
         .eq("id", id)
         .maybeSingle();
       if ((prev as any)?.approval_status === "approved" && !admin) {
-        throw new Error("This supplier is approved — only Management can change it.");
+        throw new Error("This supplier is approved - only Management can change it.");
       }
       const { error } = await supabase.from("suppliers").update(fields).eq("id", id);
       if (error) throw new Error(error.message);
@@ -86,7 +86,7 @@ export const saveSupplier = createServerFn({ method: "POST" })
         approval_type: "supplier",
         entity_table: "suppliers",
         entity_id: row.id,
-        title: `Supplier approval — ${fields.name}`,
+        title: `Supplier approval - ${fields.name}`,
         details: [fields.contact_person, fields.phone, fields.email, fields.address]
           .filter(Boolean)
           .join(" · "),
@@ -325,7 +325,7 @@ export const saveCreditNote = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await notifyDepartments(supabase, ["admin"], {
       title: `${data.note_type === "credit" ? "Credit" : "Debit"} note ${reference} awaiting approval`,
-      message: `${data.amount} ${data.currency} — ${data.reason}`,
+      message: `${data.amount} ${data.currency} - ${data.reason}`,
       category: "accounts",
       link: "/accounts",
       entity_table: "credit_notes",
@@ -497,7 +497,7 @@ export const financeSummary = createServerFn({ method: "GET" })
     const balances = new Map<string, { name: string; invoiced: number; paid: number }>();
     invoices.forEach((i) => {
       if (!i.customer_id) return;
-      const cur = balances.get(i.customer_id) ?? { name: i.customers?.name ?? "—", invoiced: 0, paid: 0 };
+      const cur = balances.get(i.customer_id) ?? { name: i.customers?.name ?? "-", invoiced: 0, paid: 0 };
       cur.invoiced = round2(cur.invoiced + num(i.total_amount));
       cur.paid = round2(cur.paid + num(i.amount_paid));
       balances.set(i.customer_id, cur);

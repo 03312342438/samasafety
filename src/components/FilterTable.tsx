@@ -18,7 +18,7 @@ export type Column<T> = {
   className?: string;
 };
 
-const text = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : String(v));
+const text = (v: unknown) => (v === null || v === undefined || v === "" ? "-" : String(v));
 
 /**
  * Excel-style data table: every column has its own filter (search + tick list)

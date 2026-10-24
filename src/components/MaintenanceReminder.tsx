@@ -101,7 +101,7 @@ export function MaintenanceReminder() {
         : `${fresh.length} maintenances are due`;
     const body =
       fresh.length === 1
-        ? `${first.project || first.site_location || "Visit"} #${first.sequence} — due ${fmtDate(first.due_date)}`
+        ? `${first.project || first.site_location || "Visit"} #${first.sequence} - due ${fmtDate(first.due_date)}`
         : "Open the Maintenance tab to review the due visits.";
     toast.warning(title, { description: body, duration: 10000 });
 
@@ -159,7 +159,7 @@ export function MaintenanceReminder() {
                   </span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t.site_location || t.project || "—"} · due {fmtDate(t.due_date)}
+                  {t.site_location || t.project || "-"} · due {fmtDate(t.due_date)}
                 </p>
                 <span
                   className={`mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-medium ${
