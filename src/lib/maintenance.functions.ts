@@ -141,7 +141,7 @@ async function attachSystemType(supabase: any, tasks: any[]) {
 
 /**
  * Attach the contract's end date and remaining-visit count to each visit so
- * the pending list can label and filter "Expired – N Visits Remaining".
+ * the pending list can label and filter "Expired - N Visits Remaining".
  */
 async function attachContractStatus(supabase: any, tasks: any[]) {
   const contractIds = Array.from(

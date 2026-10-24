@@ -286,12 +286,12 @@ function CalloutForm({
         <div className="flex flex-wrap gap-2">
           {!awaitingQuotation && <>
             <Button variant="outline" disabled={busy} onClick={() => submit("pending")}>Log call (not attended)</Button>
-            <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended – needs follow-up</Button>
-            <Button disabled={busy} onClick={() => submit("closed")}>{partsRequired && !partsLocked ? "Submit & request spare parts quotation" : "Attended – close call"}</Button>
+            <Button variant="outline" disabled={busy} onClick={() => submit("follow_up")}>Attended - needs follow-up</Button>
+            <Button disabled={busy} onClick={() => submit("closed")}>{partsRequired && !partsLocked ? "Submit & request spare parts quotation" : "Attended - close call"}</Button>
           </>}
           {awaitingQuotation && <>
-            <Button variant="outline" disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("follow_up", true)}>Resubmit – needs follow-up</Button>
-            <Button disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("closed", true)}>Resubmit – approved spare parts quotation</Button>
+            <Button variant="outline" disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("follow_up", true)}>Resubmit - needs follow-up</Button>
+            <Button disabled={busy || !f.spare_parts_quotation_number.trim()} onClick={() => submit("closed", true)}>Resubmit - approved spare parts quotation</Button>
           </>}
           {initial?.id && <CalloutDownloadButton data={{ ...initial, ...f, reference: initial.reference }} />}
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}

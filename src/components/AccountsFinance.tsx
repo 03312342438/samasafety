@@ -83,8 +83,8 @@ export function FinanceDashboard() {
   if (!s) return <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>;
 
   const agingRows: [string, number][] = [
-    ["Current", s.aging.current], ["1–30", s.aging.d1_30], ["31–60", s.aging.d31_60],
-    ["61–90", s.aging.d61_90], ["91–120", s.aging.d91_120], ["120+", s.aging.d120_plus],
+    ["Current", s.aging.current], ["1-30", s.aging.d1_30], ["31-60", s.aging.d31_60],
+    ["61-90", s.aging.d61_90], ["91-120", s.aging.d91_120], ["120+", s.aging.d120_plus],
   ];
 
   return (

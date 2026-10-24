@@ -97,7 +97,7 @@ function Dashboard() {
   const { pending, carried } = splitCarriedOver(taskList);
   const done = taskList.filter((t) => t.status === "completed");
   // Status filter (Overdue, Due soon, Upcoming, Completed,
-  // "Expired – N Visits Remaining", …) narrows the pending/completed lists.
+  // "Expired - N Visits Remaining", …) narrows the pending/completed lists.
   const matchStatus = (t: any) => !statusFilter || visitStatusLabel(t) === statusFilter;
   const pendingShown = pending.filter(matchStatus);
   const doneShown = done.filter(matchStatus);
@@ -442,7 +442,7 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
   );
 }
 
-/** Dropdown listing every visit status present (Overdue, Completed, "Expired – N Visits Remaining", …). */
+/** Dropdown listing every visit status present (Overdue, Completed, "Expired - N Visits Remaining", …). */
 function StatusFilter({
   tasks,
   value,

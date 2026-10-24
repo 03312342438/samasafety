@@ -225,7 +225,7 @@ function ApprovalsPage() {
                 ? "Every request raised by the departments lands here for your decision."
                 : isSales
                   ? "Send quotations, purchase orders and commercial reviews to management for approval."
-                  : "Approval gates A1–A6. Nothing downstream may proceed until management decides."}
+                  : "Approval gates A1-A6. Nothing downstream may proceed until management decides."}
             </p>
           </div>
           {/* Management decides on requests - it never raises them.
