@@ -284,8 +284,8 @@ export function MaintenanceContracts() {
   ];
 
   return (
-    <div className="min-w-0 space-y-4">
-      <div className="flex min-w-0 flex-col gap-3">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-sm text-muted-foreground">
           Maintenance contracts are added manually. Visits, due dates and status update
           automatically from the reports filed against each contract.
@@ -347,7 +347,7 @@ export function MaintenanceContracts() {
                 <Plus className="mr-1 h-4 w-4" /> Add contract
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{form.id
                     ? "Edit contract"
@@ -475,7 +475,6 @@ export function MaintenanceContracts() {
             onChange={setSearch}
             placeholder="Search contracts by number, customer, project, site, system, status…"
           />
-          <div className="min-w-0 max-w-full overflow-x-auto">
           <FilterTable
             columns={columns}
             rows={visibleRows}
@@ -508,7 +507,6 @@ export function MaintenanceContracts() {
             </div>
           )}
           />
-          </div>
         </>
       )}
     </div>
