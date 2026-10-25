@@ -475,7 +475,7 @@ export function ReportForm({
           {isModernInspection(form.devices) ? <ReportInspections answers={form.devices} onChange={(answers) => set("devices", answers)} /> : checklistSystems.map((sys) => (
             <div key={sys || "general"} className="space-y-2">
               {sys && <h4 className="text-sm font-semibold">{sys}</h4>}
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 @min-[46rem]:grid-cols-2">
                 {devicesFor(sys).map((d) => {
                   const k = sys ? deviceKey(sys, d.name) : d.name;
                   const qk = deviceKey(sys, d.name, "qty");
