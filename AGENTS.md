@@ -11,7 +11,6 @@
 
 - Maintenance reports use a fixed A4-proportioned one-page document marked with `data-pdf-one-page`, explicit unitless line height, and a naturally sized inner layout scaled only when oversized to prevent text overlap or clipping; other printable documents retain section-boundary pagination.
 - Issued maintenance reports persist a per-system visit-progress snapshot so historical PDFs do not change when contracts advance.
-- New maintenance inspection selections and answers are versioned in the existing devices string map, with shared inspection definitions driving form, grouped defects and PDF tables; legacy reports retain their original checklist rendering to preserve saved data.
 - Report email previews are captured from the same document as the attached PDF; recipients and report details are resolved from saved records server-side to avoid arbitrary browser-controlled email delivery.
 - Contract visit-count overrides store the report-count baseline so future reports increment edited progress without altering historical reports.
 - Call-out spare-parts resubmission updates the original saved report and verifies the linked quotation's approval server-side and with a database trigger, preventing approval bypass.
