@@ -174,7 +174,7 @@ function Dashboard() {
     <div className="min-h-screen bg-secondary/40">
       <AppHeader isAdmin={profile?.isAdmin} name={profile?.profile?.full_name} roles={profile?.roles} />
 
-      <main className={isAdmin || activeTab === "contracts" ? "mx-auto max-w-7xl px-4 py-6" : "mx-auto max-w-5xl px-4 py-6"}>
+       <main className={isAdmin || activeTab === "contracts" ? "maintenance-workspace mx-auto min-w-0 max-w-7xl px-4 py-6 lg:px-6" : "maintenance-workspace mx-auto min-w-0 max-w-5xl px-4 py-6 lg:px-6"}>
         {profileError && (
           <div className="mb-5 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
             <p className="font-semibold">Server configuration problem</p>
@@ -283,10 +283,12 @@ function Dashboard() {
               onChange={setTaskQuery}
               placeholder="Search client, contract, order no, project, site, MSR no, our ref, date…"
             />
-            <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
-            <StatusFilter tasks={allTasks} value={statusFilter} onChange={setStatusFilter} />
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+              <SiteFilter tasks={allTasks} value={siteFilter} onChange={setSiteFilter} />
+              <StatusFilter tasks={allTasks} value={statusFilter} onChange={setStatusFilter} />
+            </div>
             <div>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <h2 className="text-base font-semibold">
                   Pending ({pendingShown.length}
                   {statusFilter ? ` of ${pending.length}` : ""})
@@ -390,8 +392,8 @@ export function ReportList({ reports }: { reports: ReportRecord[] }) {
       {filtered.map((r) => (
 
         <Card key={r.id}>
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-            <div>
+          <CardContent className="grid min-w-0 gap-3 py-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="min-w-0 break-words">
               <p className="font-semibold">
                 {r.client_name || "Untitled"}{" "}
                 {r.msr_no && <span className="text-muted-foreground">· MSR {r.msr_no}</span>}
@@ -459,7 +461,7 @@ function StatusFilter({
     ...[...labels].sort((a, b) => a.localeCompare(b)).map((l): [string, string] => [l, l]),
   ];
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <ListFilter className="h-4 w-4 shrink-0 text-muted-foreground" />
       <SearchSelect
         value={value}
@@ -467,7 +469,7 @@ function StatusFilter({
         options={options}
         placeholder="All statuses"
         searchPlaceholder="Search status…"
-        className="max-w-xs"
+        className="w-full"
       />
     </div>
   );
