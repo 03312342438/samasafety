@@ -1,5 +1,6 @@
 # Active work
 
+- [ ] Fix Maintenance alignment, sizing and spacing for laptops and tablets; preserve controls and verify preview.
 - [ ] Apply the attached maintenance inspection instructions: grouped systems, dropdown results, horizontal extinguisher quantities, automatic defects, and one-page SAMA reports; verify controls and PDF.
 
 - [x] Status filter in Maintenance Pending (Overdue, Due soon, Upcoming, Completed, Expired – N Visits Remaining) plus a Status column in the pending Excel; tests pass, build OK.
