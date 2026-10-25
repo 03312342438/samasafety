@@ -23,8 +23,6 @@ import { buildSchedule, INTERVAL_UNITS } from "@/lib/maintenance-schedule";
 import { emailReport } from "@/lib/email.functions";
 import { elementToPdfBase64, elementToReportImageBase64 } from "@/lib/generate-pdf";
 import { ReportDocument } from "@/components/ReportDocument";
-import { ReportInspections } from "@/components/ReportInspections";
-import { inspectionDefaults, isModernInspection } from "@/lib/report-inspections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,7 +73,7 @@ export function ReportForm({
   const [form, setForm] = useState<ReportData>(() =>
     initial
       ? recordToForm(initial)
-      : { ...emptyReport(), devices: inspectionDefaults([]), performed_by: defaultPerformedBy ?? "" },
+      : { ...emptyReport(), performed_by: defaultPerformedBy ?? "" },
   );
   const [saving, setSaving] = useState(false);
   const [savedData, setSavedData] = useState<ReportData | null>(null);
@@ -152,7 +150,6 @@ export function ReportForm({
       ...f,
       contract_ids: list.map((x) => x.id),
       system_types: list.map((x) => x.system_type),
-      devices: inspectionDefaults(list.map((x) => x.system_type)),
       visit_summary: visitSummaryFor(list),
       system_type: list.map((x) => x.system_type).join(", "),
       client_name: c.customer_name || f.client_name,
@@ -286,7 +283,7 @@ export function ReportForm({
         qc.invalidateQueries({ queryKey: ["maintenance-contracts"] });
         toast.success("Report submitted");
         // Empty the sheet so the same report can't be submitted twice.
-        setForm({ ...emptyReport(), devices: inspectionDefaults([]), performed_by: defaultPerformedBy ?? "" });
+        setForm({ ...emptyReport(), performed_by: defaultPerformedBy ?? "" });
         setContractNo("");
         onSaved?.();
         // Send even when the PDF could not be produced, so the client and the
@@ -349,7 +346,7 @@ export function ReportForm({
               variant="outline"
               onClick={() => {
                 setSavedData(null);
-                setForm({ ...emptyReport(), devices: inspectionDefaults([]), performed_by: defaultPerformedBy ?? "" });
+                setForm({ ...emptyReport(), performed_by: defaultPerformedBy ?? "" });
               }}
             >
               New Report
@@ -469,10 +466,10 @@ export function ReportForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Inspection Checklist</CardTitle>
+          <CardTitle>Device Checklist</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {isModernInspection(form.devices) ? <ReportInspections answers={form.devices} onChange={(answers) => set("devices", answers)} /> : checklistSystems.map((sys) => (
+          {checklistSystems.map((sys) => (
             <div key={sys || "general"} className="space-y-2">
               {sys && <h4 className="text-sm font-semibold">{sys}</h4>}
               <div className="grid gap-2 md:grid-cols-2">
