@@ -1,0 +1,5 @@
+import { MAIN_SYSTEMS, mainSelected, selectedSubsystems, inspectionRows, inspectionKey, EXTINGUISHER_TYPES } from "@/lib/report-inspections";
+
+export function ReportInspectionTables({ answers }: { answers: Record<string, string> }) {
+  return <div className="report-inspection-tables">{MAIN_SYSTEMS.filter((main) => mainSelected(answers, main)).map((main) => <table key={main} className="report-inspection-table"><thead><tr><th colSpan={2}>{main.toUpperCase()}</th></tr></thead><tbody>{inspectionRows(answers, main).map((row, index) => <tr key={`${row.label}-${index}`}><td>{row.label}</td><td>{row.value}</td></tr>)}{main === "Fire Fighting" && selectedSubsystems(answers, main).includes("Fire Extinguishers") && <tr><td colSpan={2}><div className="report-extinguisher-quantities">{EXTINGUISHER_TYPES.map((type) => <span key={type}><strong>{type === "Other" ? `Other: ${answers[inspectionKey("Fire Extinguishers", "Other Type")] || "-"}` : type}</strong><br />QTY: {answers[inspectionKey("Fire Extinguishers", `${type} QTY`)] || "-"}</span>)}</div></td></tr>}</tbody></table>)}</div>;
+}

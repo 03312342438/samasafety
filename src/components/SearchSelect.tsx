@@ -39,9 +39,9 @@ export function SearchSelect({
           variant="outline"
           role="combobox"
           disabled={disabled}
-          className={cn("h-9 w-full justify-between px-2 text-left text-sm font-normal", className)}
+          className={cn("h-9 w-full min-w-0 justify-between px-2 text-left text-sm font-normal", className)}
         >
-          <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          <span className={cn("min-w-0 truncate", !selected && "text-muted-foreground")}>
             {selected ? selected[1] : placeholder}
           </span>
           <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
