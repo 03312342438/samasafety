@@ -31,8 +31,8 @@ export function SegmentedTabs({
           className={cn(
             "h-auto min-h-10 min-w-0 flex-auto justify-center whitespace-normal rounded-md px-3 py-2 text-sm font-medium [&_svg]:shrink-0",
             value === t.value
-              ? "bg-card text-foreground shadow-sm"
-              : "hover:text-foreground",
+              ? "bg-card text-foreground shadow-sm hover:bg-card hover:text-foreground"
+              : "hover:bg-card/50 hover:text-foreground",
           )}
         >
           {t.label}
