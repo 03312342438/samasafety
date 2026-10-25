@@ -37,7 +37,7 @@ import { Loader2, Plus, Trash2, CheckCircle2 } from "lucide-react";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="min-w-0 space-y-1.5">
+    <div className="space-y-1.5">
       <Label className="text-sm">{label}</Label>
       {children}
     </div>
@@ -365,7 +365,7 @@ export function ReportForm({
   const checklistSystems = form.system_types.length ? form.system_types : [""];
 
   return (
-    <form onSubmit={handleSubmit} className="@container min-w-0 space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Report Details</CardTitle>
@@ -475,16 +475,16 @@ export function ReportForm({
           {isModernInspection(form.devices) ? <ReportInspections answers={form.devices} onChange={(answers) => set("devices", answers)} /> : checklistSystems.map((sys) => (
             <div key={sys || "general"} className="space-y-2">
               {sys && <h4 className="text-sm font-semibold">{sys}</h4>}
-              <div className="grid gap-2 @min-[46rem]:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {devicesFor(sys).map((d) => {
                   const k = sys ? deviceKey(sys, d.name) : d.name;
                   const qk = deviceKey(sys, d.name, "qty");
                   return (
                     <div
                       key={k}
-                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-2.5"
+                      className="flex items-center justify-between gap-3 rounded-md border p-2.5"
                     >
-                      <span className="min-w-0 break-words text-sm font-medium">{d.name}</span>
+                      <span className="text-sm font-medium">{d.name}</span>
                       <div className="flex shrink-0 items-center gap-1">
                         {d.kind !== "qty" &&
                           (["ok", "faulty"] as DeviceStatus[]).map((s) => (
@@ -523,8 +523,8 @@ export function ReportForm({
         </CardHeader>
         <CardContent className="space-y-3">
           {form.spare_parts.map((p, i) => (
-            <div key={i} className="grid min-w-0 grid-cols-3 gap-3 rounded-md border p-3 @min-[42rem]:grid-cols-12">
-              <div className="col-span-3 min-w-0 @min-[42rem]:col-span-12">
+            <div key={i} className="grid grid-cols-1 gap-2 rounded-md border p-3 sm:grid-cols-12">
+              <div className="sm:col-span-6">
                 <SearchSelect
                   value={p.spare_no}
                   onChange={(code) => pickStockItem(i, code)}
@@ -534,16 +534,16 @@ export function ReportForm({
                 />
               </div>
               <Input
-                className="col-span-3 min-w-0 @min-[42rem]:col-span-6"
+                className="sm:col-span-6 sm:col-start-1"
                 placeholder="Description"
                 value={p.description}
                 onChange={(e) => setSpare(i, "description", e.target.value)}
               />
-              <Input className="min-w-0 @min-[42rem]:col-span-2" placeholder="Qty" value={p.qty} onChange={(e) => setSpare(i, "qty", e.target.value)} />
-              <Input className="min-w-0 @min-[42rem]:col-span-2" placeholder="Unit Price" value={p.unit_price} onChange={(e) => setSpare(i, "unit_price", e.target.value)} />
-              <div className="flex min-w-0 gap-1 @min-[42rem]:col-span-2">
+              <Input className="sm:col-span-2" placeholder="Qty" value={p.qty} onChange={(e) => setSpare(i, "qty", e.target.value)} />
+              <Input className="sm:col-span-2" placeholder="Unit Price" value={p.unit_price} onChange={(e) => setSpare(i, "unit_price", e.target.value)} />
+              <div className="flex gap-2 sm:col-span-2">
                 <Input placeholder="Total" value={p.total} onChange={(e) => setSpare(i, "total", e.target.value)} />
-                <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label="Remove spare part" onClick={() => removeSpare(i)}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeSpare(i)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -576,7 +576,7 @@ export function ReportForm({
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Time between maintenances">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <div className="flex gap-2">
                 <Input
                   type="number"
                   min="1"
@@ -637,8 +637,8 @@ export function ReportForm({
         <CardHeader>
           <CardTitle>Sign Off</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-6 @min-[36rem]:grid-cols-2">
-          <div className="flex min-w-0 flex-col gap-4 [&>div:last-child]:mt-auto">
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
             <Field label="Performed by">
               <Input value={form.performed_by} onChange={(e) => set("performed_by", e.target.value)} />
             </Field>
@@ -648,7 +648,7 @@ export function ReportForm({
               onChange={(v) => set("employee_signature", v)}
             />
           </div>
-          <div className="flex min-w-0 flex-col gap-4 [&>div:last-child]:mt-auto">
+          <div className="space-y-4">
             <Field label="Client Name (signatory)">
               <Input value={form.client_sign_name} onChange={(e) => set("client_sign_name", e.target.value)} />
             </Field>

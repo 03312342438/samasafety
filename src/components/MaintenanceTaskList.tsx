@@ -56,7 +56,7 @@ export function SiteFilter({
     ...[...sites.entries()].sort((a, b) => a[1].localeCompare(b[1])),
   ];
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex items-center gap-2">
       <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
       <SearchSelect
         value={value}
@@ -103,8 +103,8 @@ export function MaintenanceTaskList({
           t.status === "pending" && t.due_date >= today && t.due_date <= soonCutoff;
         return (
           <Card key={t.id}>
-            <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-6">
-              <div className="min-w-0 break-words">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div>
                 <p className="font-semibold">
                   {t.system_type && (
                     <span className="mr-2 rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
@@ -127,7 +127,7 @@ export function MaintenanceTaskList({
                   })}
                   {showEmployee && ` · Pending with ${t.employee_name ?? "-"}`}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-1 flex gap-2">
                   {expired && (
                     <span className="rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
                       {expiredLabel}
@@ -150,7 +150,7 @@ export function MaintenanceTaskList({
                   )}
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
                 {t.status === "pending" ? (
                   <Button size="sm" variant="secondary" onClick={() => onToggle(t.id, "completed")}>
                     <CheckCircle2 className="mr-1 h-4 w-4" /> Mark done
