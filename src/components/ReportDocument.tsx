@@ -3,6 +3,8 @@ import samaLogo from "@/assets/sama-logo.png.asset.json";
 import { devicesFor, deviceKey, type ReportData } from "@/lib/report-constants";
 import { intervalLabel } from "@/lib/maintenance-schedule";
 import { SYSTEM_LABELS, type SystemType } from "@/lib/maintenance-contracts";
+import { ReportInspectionTables } from "@/components/ReportInspectionTables";
+import { isModernInspection, inspectionDefects, MAIN_SYSTEMS, mainSelected } from "@/lib/report-inspections";
 
 const BLUE = "#579bd3";
 const NAVY = "#113f57";
@@ -118,7 +120,9 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
     const value = Number.parseFloat(part.total);
     return sum + (Number.isNaN(value) ? 0 : value);
   }, 0);
-  const faulty = systemTypes.flatMap((system) =>
+  const modern = isModernInspection(data.devices);
+  const displayedSystems = modern ? MAIN_SYSTEMS.filter((main) => mainSelected(data.devices, main)) : systemTypes;
+  const faulty = modern ? inspectionDefects(data.devices) : systemTypes.flatMap((system) =>
     devicesFor(system)
       .filter((device) => data.devices[deviceKey(system, device.name)] === "faulty")
       .map((device) => {
@@ -200,7 +204,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
         <div style={{ display: "grid", gridTemplateColumns: "92px 1fr", gap: 7 }}>
           <Label>System details</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
-            {(systemTypes.length ? systemTypes : ["General"]).map((system) => (
+            {(displayedSystems.length ? displayedSystems : [modern ? "None selected" : "General"]).map((system) => (
               <span key={system} style={{ fontSize: 8.5, fontWeight: 700 }}>
                 <span style={{ color: RED, marginRight: 4 }}>■</span>
                 {SYSTEM_LABELS[system as SystemType] ?? system}
@@ -223,7 +227,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
 
       <section data-pdf-section="true" style={{ border: `1px solid ${LINE}`, borderTop: 0, padding: "5px 6px" }}>
         <Label>Inspection checklist</Label>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 5, marginTop: 4 }}>
+        {modern ? <ReportInspectionTables answers={data.devices} /> : <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 5, marginTop: 4 }}>
           {(systemTypes.length ? systemTypes : [""]).map((system, index, systems) => (
             <div
               key={system || "general"}
@@ -264,12 +268,12 @@ export const ReportDocument = forwardRef<HTMLDivElement, Props>(({ data }, ref) 
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </section>
 
-      <RuledSection title="Defects" minHeight={44} grow={1.35}>
+      <RuledSection title="There are defects in:" minHeight={44} grow={1.35}>
         <div style={{ fontSize: 8.5, lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
-          {faulty.length ? faulty.join("; ") : "No defects recorded."}
+          {faulty.length ? faulty.join("\n") : "No Defects Reported"}
         </div>
       </RuledSection>
 

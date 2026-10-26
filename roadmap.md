@@ -1,5 +1,8 @@
 # Active work
 
+- [x] Fix Maintenance alignment, sizing and spacing for laptops and tablets; verified signed-in preview at 768, 1024, 1062 and 1366px, contract selection, inspection results/quantities, pending search, contracts dialog and history; 19 tests pass.
+- [ ] Apply the attached maintenance inspection instructions: grouped systems, dropdown results, horizontal extinguisher quantities, automatic defects, and one-page SAMA reports; verify controls and PDF.
+
 - [x] Status filter in Maintenance Pending (Overdue, Due soon, Upcoming, Completed, Expired – N Visits Remaining) plus a Status column in the pending Excel; tests pass, build OK.
 - [x] Report OK/Faulty buttons toggle off when clicked again; keyword search added to Maintenance Contracts; Maintenance Pending search now matches contract numbers; build OK.
 - [x] Marking a pending visit done now counts it on the contract (done/remaining) and reschedules the next visit from the completion date; tests pass, build OK.
