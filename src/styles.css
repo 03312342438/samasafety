@@ -104,7 +104,9 @@
 /* Reserve room for the fixed navigation rail on desktop. */
 @media (min-width: 768px) {
   .has-rail body {
-    padding-left: 16rem;
+    /* !important: dropdown/dialog scroll-locks overwrite body padding with an
+     * inline shorthand; without this the whole page jumps left when one opens. */
+    padding-left: 16rem !important;
   }
 }
 
