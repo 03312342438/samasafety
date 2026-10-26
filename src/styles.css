@@ -104,7 +104,9 @@
 /* Reserve room for the fixed navigation rail on desktop. */
 @media (min-width: 768px) {
   .has-rail body {
-    padding-left: 16rem;
+    /* !important: dropdown/dialog scroll-locks overwrite body padding with an
+     * inline shorthand; without this the whole page jumps left when one opens. */
+    padding-left: 16rem !important;
   }
 }
 
@@ -154,6 +156,12 @@
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  /* Keep a stable scrollbar gutter so scroll-locking overlays (dropdowns,
+   * dialogs) never shift the centered page content sideways. */
+  html {
+    scrollbar-gutter: stable;
   }
 
   body {
