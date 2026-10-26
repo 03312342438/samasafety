@@ -156,6 +156,12 @@
     border-color: var(--color-border);
   }
 
+  /* Keep a stable scrollbar gutter so scroll-locking overlays (dropdowns,
+   * dialogs) never shift the centered page content sideways. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
