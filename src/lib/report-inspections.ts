@@ -1,6 +1,6 @@
 export const MAIN_SYSTEMS = ["Fire Alarm", "Fire Fighting", "CCTV"] as const;
 export type MainSystem = (typeof MAIN_SYSTEMS)[number];
-export const ALARM_RESULTS = ["OK", "Fault", "N/A"];
+export const ALARM_RESULTS = ["OK", "Fault"];
 export const CONDITIONS = ["Good", "Requires Rectification", "Defective", "Not Checked"];
 export const EXTINGUISHER_TYPES = ["DCP", "CO2", "Water", "Foam", "ADCP", "Other"];
 export const SUBSYSTEMS: Record<MainSystem, string[]> = {

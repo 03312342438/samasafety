@@ -13,7 +13,7 @@ describe("requested inspection rules", () => {
     const answers = inspectionDefaults(["FA"]);
     answers[inspectionKey("Fire Alarm System", "Detectors")] = "Fault";
     expect(inspectionDefects(answers)).toHaveLength(1);
-    for (const result of ["OK", "N/A"]) {
+    for (const result of ["OK"]) {
       answers[inspectionKey("Fire Alarm System", "Detectors")] = result;
       expect(inspectionDefects(answers)).toEqual([]);
     }
