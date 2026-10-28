@@ -1,7 +1,8 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { MAIN_SYSTEMS, SUBSYSTEMS, INSPECTION_POINTS, ALARM_RESULTS, CONDITIONS, EXTINGUISHER_TYPES, inspectionKey, mainSelected, selectedSubsystems, toggleInspection, inspectionDefects } from "@/lib/report-inspections";
+import { MAIN_SYSTEMS, SUBSYSTEMS, INSPECTION_POINTS, CONDITIONS, EXTINGUISHER_TYPES, inspectionKey, mainSelected, selectedSubsystems, toggleInspection, inspectionDefects } from "@/lib/report-inspections";
 
 function Result({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
   return <Select value={value || "unanswered"} onValueChange={(v) => onChange(v === "unanswered" ? "" : v)}><SelectTrigger className="min-w-0 [&>span]:min-w-0 [&>svg]:shrink-0" aria-label={label}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unanswered">-</SelectItem>{options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select>;
