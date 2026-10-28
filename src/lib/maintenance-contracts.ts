@@ -21,7 +21,7 @@ export const SYSTEM_INTERVAL: Record<SystemType, number> = {
   CCTV: 3,
   GAS: 3,
   FS: 6,
-  FE: 12,
+  FE: 6,
   FSCP: 3,
   FSC: 6,
 };
