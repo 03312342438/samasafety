@@ -7,6 +7,11 @@ function Result({ label, value, options, onChange }: { label: string; value: str
   return <Select value={value || "unanswered"} onValueChange={(v) => onChange(v === "unanswered" ? "" : v)}><SelectTrigger className="min-w-0 [&>span]:min-w-0 [&>svg]:shrink-0" aria-label={label}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unanswered">-</SelectItem>{options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select>;
 }
 
+function AlarmResult({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const toggle = (stored: string) => onChange(value === stored ? "" : stored);
+  return <div className="flex shrink-0 gap-1.5" role="group" aria-label={label}>{[["OK", "OK"], ["Faulty", "Fault"]].map(([labelText, stored]) => <Button key={stored} type="button" variant={value === stored ? "default" : "outline"} size="sm" className={value === stored ? "h-8 px-3 text-xs font-semibold" : "h-8 px-3 text-xs"} aria-pressed={value === stored} aria-label={`${label} ${labelText}`} onClick={() => toggle(stored)}>{labelText}</Button>)}</div>;
+}
+
 export function ReportInspections({ answers, onChange }: { answers: Record<string, string>; onChange: (answers: Record<string, string>) => void }) {
   const set = (system: string, field: string, value: string) => onChange({ ...answers, [inspectionKey(system, field)]: value });
   const input = (sub: string, field: string, numeric = false) => <Input aria-label={`${sub} ${field}`} type={numeric ? "number" : "text"} min={numeric ? 0 : undefined} step={numeric ? 1 : undefined} maxLength={numeric ? undefined : 50} value={answers[inspectionKey(sub, field)] ?? ""} onChange={(e) => set(sub, field, e.target.value)} />;
